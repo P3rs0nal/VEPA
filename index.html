@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VEPA AutoCare</title>
+    <link rel="stylesheet" href="theme.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+</head>
+<body>
+    <a id="top"></a>
+    <div id="large-header" class="large-header">
+        <canvas id="demo-canvas"></canvas>
+    </div>  
+    <div id="headings" class="headings">
+        <h1><a class="link" href="#top">VEPA</a></h1>
+    </div>
+    <div class="timeline">
+        <div class="timeline-item" onmouseover="updateInfo(0)" onmouseleave="resetInfo(0)">
+            <h3>Student Intern</h3>
+            <img src="intern.jpg" class="timeline-img" alt="Student Intern">
+            <div class="timeline-content">
+                <p class="timeline-text">Hover over the image to see details.</p>
+                <a class="date"></a>
+            </div>
+        </div>
+        
+        <div class="timeline-item" onmouseover="updateInfo(1)" onmouseleave="resetInfo(1)">
+            <h3>Teaching Assistant</h3>
+            <img src="ta.jpg" class="timeline-img" alt="Teaching Assistant">
+            <div class="timeline-content">
+                <p class="timeline-text">Hover over the image to see details.</p>
+                <a class="date"></a>
+            </div>
+        </div>
+        
+        <div class="timeline-item" onmouseover="updateInfo(2)" onmouseleave="resetInfo(2)">
+            <h3>Cashier/Booker</h3>
+            <img src="cashier.jpg" class="timeline-img" alt="Cashier">
+            <div class="timeline-content">
+                <p class="timeline-text">Hover over the image to see details.</p>
+                <a class="date"></a>
+            </div>
+        </div>
+        
+        <div class="timeline-item" onmouseover="updateInfo(3)" onmouseleave="resetInfo(3)">
+            <h3>Shift Manager</h3>
+            <img src="shift_manager.jpg" class="timeline-img" alt="Shift Manager">
+            <div class="timeline-content">
+                <p class="timeline-text">Hover over the image to see details.</p>
+                <a class="date"></a>
+            </div>
+        </div>
+        
+    </div>            
+    <div class="footer">
+        <h1>Contact me</h1>
+        <!-- <p>TBD if i want to keep this</p> -->
+        <p>Email:<a class="link" href="mailto:ezguro@albany.edu">eneazguro02@gmail.com</a></p>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="code.js"></script>
+</body>
+</html>
