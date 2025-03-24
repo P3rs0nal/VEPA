@@ -38,6 +38,7 @@ async function displayCars() {
         // Create the image element
         const carImage = document.createElement("img");
         carImage.src = car.image || "vepa.jpg"; // Use default if no image
+        carImage.id = "img";
 
         // Create the make and model heading
         const makeModel = document.createElement("h3");
