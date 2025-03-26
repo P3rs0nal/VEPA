@@ -10,9 +10,14 @@
     <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/accounting-js/0.4.2/accounting.min.js"></script>
-    <script src="code.js" type="module"></script>
+    <script src="code.js" type="module"></script> 
+    <script>
+        if (!sessionStorage.getItem("admin-auth")) {
+            window.location.href = "admin-login.html";  // Redirect if not logged in
+        }
+    </script>   
 </head>
-<body>
+<body>  
     <a id="top"></a>
     <div id="large-header" class="large-header">
         <canvas id="demo-canvas"></canvas>
