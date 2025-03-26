@@ -35,7 +35,13 @@ async function fetchCarData() {
 async function displayCars() {
     const carDetails = await fetchCarData();
     const carsContainer = document.getElementById("cars-container");
-
+    const emptyDiv = document.getElementById("empty");
+    if(carDetails.length === 0){
+        const empty = document.createElement("h2");
+        empty.innerText = "No Inventory";
+        empty.classList.add("headings-below");
+        emptyDiv.appendChild(empty);
+    }
     carDetails.forEach(car => {
         const carItem = document.createElement("div");
         carItem.classList.add("car-item");
