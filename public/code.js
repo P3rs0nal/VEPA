@@ -115,22 +115,41 @@ setTimeout(() => {
 }, 3000) 
 
 function animate() {
-  
+  ctx.fillStyle = "rgba(0, 0, 0, 0.1)";  // Dark background with slight transparency
+  ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas every frame
+
   for (let i = 0; i < pipes.length; i++) {
-    pipes[i].update()
-    pipes[i].draw()
-    
-    if (pipes[i].hasEnteredScreen) {
-      if (pipes[i].x < 0 || pipes[i].x > canvas.width || pipes[i].y < 0 || pipes[i].y > canvas.height) {
-        pipes.splice(i, 1)
-        i--
+      pipes[i].update();
+      pipes[i].draw();
+
+      // If a pipe has completely left the screen, respawn it
+      if (pipes[i].hasEnteredScreen) {
+          if (pipes[i].x < -pipes[i].size || pipes[i].x > canvas.width + pipes[i].size ||
+              pipes[i].y < -pipes[i].size || pipes[i].y > canvas.height + pipes[i].size) {
+              
+              // Respawn the pipe with new properties
+              const speed = Math.random() * 0.4 + 0.25;
+              let x, y, xVel, yVel;
+              const size = (Math.random() + 0.5) * 1.5;
+
+              if (Math.random() >= 0.5) {
+                  x = Math.random() > 0.5 ? size * -1 : canvas.width + size;
+                  y = Math.random() * canvas.height;
+                  xVel = x < 0 ? speed : speed * -1;
+                  yVel = 0;
+              } else {
+                  x = Math.random() * canvas.width;
+                  y = Math.random() > 0.5 ? size * -1 : canvas.height + size;
+                  xVel = 0;
+                  yVel = y < 0 ? speed : speed * -1;
+              }
+
+              pipes[i] = new Pipe(x, y, size, xVel, yVel, pipes[i].color);
+          }
       }
-    }
   }
-  
-  console.log(pipes.length)
-  
-  requestAnimationFrame(animate)
+
+  requestAnimationFrame(animate); // Keep looping
 }
 animate()
 
@@ -165,6 +184,7 @@ async function displayCars() {
     const carDetails = await fetchCarData();
     const carsContainer = document.getElementById("cars-container");
     const emptyDiv = document.getElementById("empty");
+
     if(carDetails.length === 0){
         const empty = document.createElement("h2");
         empty.innerText = "No Inventory";
@@ -188,7 +208,10 @@ async function displayCars() {
         // Create the price element
         const carPrice = document.createElement("div");
         carPrice.classList.add("car-price");
-        carPrice.textContent = car.price;
+        const formattedPrice = window.accounting
+        ? window.accounting.formatMoney(car.price, "$", 2)
+        : `$${car.price}`;
+        carPrice.textContent = formattedPrice;
 
         // Append elements to the car item
         carItem.appendChild(carImage);
@@ -199,12 +222,12 @@ async function displayCars() {
         carsContainer.appendChild(carItem);
 
         // Hover functionality for car item
-        carItem.addEventListener('mouseenter', () => {
-            carPrice.style.opacity = 1; // Show price on hover
-        });
-        carItem.addEventListener('mouseleave', () => {
-            carPrice.style.opacity = 0; // Hide price when hover ends
-        });
+        // carItem.addEventListener('mouseenter', () => {
+        //     carPrice.style.opacity = 1; // Show price on hover
+        // });
+        // carItem.addEventListener('mouseleave', () => {
+        //     carPrice.style.opacity = 0; // Hide price when hover ends
+        // });
     });
 }
 
