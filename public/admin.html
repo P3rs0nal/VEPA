@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VEPA AutoCare Admin</title>
+    <link rel="stylesheet" href="theme.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/accounting-js/0.4.2/accounting.min.js"></script>
+    <script src="code.js" type="module"></script>
+</head>
+<body>
+    <a id="top"></a>
+    <div id="large-header" class="large-header">
+        <canvas id="demo-canvas"></canvas>
+    </div>
+    <h1 class ="headings-below">VEPA Inventory</h1> 
+    <div id="headings" class="headings-below">
+        <h3><a class="headings-below" href="index.html">Back to Main</a></h3>
+    </div>
+
+    <!-- Display the car list here -->
+    <div class="cars-container-admin" id="cars-container-admin">
+        <h1 class = "headings-below">Current Inventory</h1>
+        <table class="cars-table">
+        </table>
+    </div> 
+    <div class="admin-controls">
+        <h2>Add a Car</h2>
+        <input type="text" id="car-make" placeholder="Make">
+        <input type="text" id="car-model" placeholder="Model">
+        <input type="text" id="car-price" placeholder="Price">
+        <input type="text" id="car-image" placeholder="Image URL (Optional)">
+        <button onclick="addCar()">Add Car</button>
+    </div>          
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</body>
+</html>

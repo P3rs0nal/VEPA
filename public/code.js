@@ -1,28 +1,33 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs , addDoc, deleteDoc, doc} from "https://www.gstatic.com/firebasejs/11.5.0/firebase-firestore.js";
 
 // Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyCLcGYOHDRbDodauqsH-XRrXBh7cBBUluI",
-  authDomain: "vepa-2a6cb.firebaseapp.com",
-  projectId: "vepa-2a6cb",
-  storageBucket: "vepa-2a6cb.firebasestorage.app",
-  messagingSenderId: "949726559849",
-  appId: "1:949726559849:web:cc3752498f08c4ba2b6cf8",
-  measurementId: "G-8XH0325QZ6"
-};
+    apiKey: "AIzaSyBcKnjZm5LYqj5jx5VEqx9ywspgZyxNfsA",
+    authDomain: "vepa-24b46.firebaseapp.com",
+    projectId: "vepa-24b46",
+    storageBucket: "vepa-24b46.firebasestorage.app",
+    messagingSenderId: "170936495301",
+    appId: "1:170936495301:web:6f15b8fa08deeb01d5d4ac",
+    measurementId: "G-F8NFZ6SRKR"
+  };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+
+document.addEventListener("DOMContentLoaded", () => {
+    displayCarsAdmin();
+});
 
 // Function to fetch car data from Firestore
 async function fetchCarData() {
     const querySnapshot = await getDocs(collection(db, "cars"));
     const carDetails = [];
     querySnapshot.forEach((doc) => {
-        carDetails.push(doc.data());  // Add car details to the array
+        carDetails.push({id: doc.id, ...doc.data()});  // Add car details to the array
     });
+    console.log("Fetched: ", carDetails);
     return carDetails;
 }
 
@@ -68,5 +73,99 @@ async function displayCars() {
     });
 }
 
+async function addCar(){
+    const make = document.getElementById("car-make").value.trim();
+    const model = document.getElementById("car-model").value.trim();
+    const price = document.getElementById("car-price").value.trim();
+    const image = document.getElementById("car-image").value.trim() || "vepa.jpg"; // Default image if empty
+      
+    if (!make || !model || !price) {
+        alert("Please fill in all fields.");
+        return;
+    }
+
+    const formattedPrice = window.accounting
+        ? window.accounting.formatMoney(price, "$", 2)
+        : `$${price}`;
+
+    try {
+        await addDoc(collection(db, "cars"), {
+            make: make,
+            model: model,
+            price: price,
+            image: image
+        });
+
+        alert("Car added successfully!");
+
+        document.getElementById("car-make").value = "";
+        document.getElementById("car-model").value = "";
+        document.getElementById("car-price").value = "";
+        document.getElementById("car-image").value = "";
+
+        displayCarsAdmin();
+    } catch (error) {
+        console.error("Error adding car: ", error);
+    }
+}
+
+async function removeCar(carId) {
+    console.log("CAR ID ", carId);
+    if (!confirm("Are you sure you want to delete this car?")) return;
+
+    try {
+        await deleteDoc(doc(db, "cars", carId));  
+        alert("Car removed successfully!");
+        displayCarsAdmin();  // Refresh table
+    } catch (error) {
+        console.error("Error removing car: ", error);
+    }
+}
+
+async function displayCarsAdmin() {
+    const carDetails = await fetchCarData();
+    console.log(carDetails);
+    const carsTable = document.querySelector(".cars-table");
+
+    carsTable.innerHTML = `
+    <thead>
+        <tr>
+            <th>Image</th>
+            <th>Make</th>
+            <th>Model</th>
+            <th>Price</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody id="cars-table-body"></tbody>
+    `;
+
+    const tableBody = document.getElementById("cars-table-body");
+    
+   
+
+    carDetails.forEach(car => {
+        const row = document.createElement("tr");
+
+        const formattedPrice = window.accounting
+            ? window.accounting.formatMoney(car.price.replace(/[$,]/g, ""), "$", 2)
+            : `$${car.price}`;
+
+        row.innerHTML = `
+            <td><img src="${car.image || "vepa.jpg"}" alt="Car Image" style="width: 100px;"></td>
+            <td>${car.make}</td>
+            <td>${car.model}</td>
+            <td>${formattedPrice}</td>
+            <td><button onclick="removeCar('${car.id}')" class="delete-btn">Delete</button></td> 
+        `;
+
+        tableBody.appendChild(row);
+    });
+}
+
+window.removeCar = removeCar;
+window.addCar = addCar;
+
 // Call the displayCars function to load the data
 displayCars();
+displayCarsAdmin();
