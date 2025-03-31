@@ -6,6 +6,8 @@
     <title>Admin Login</title>
     <link rel="stylesheet" href="theme.css">
     <script type="module" src="admin-login.js"></script>
+    <link rel="stylesheet" href="theme.css">
+    <script src="code.js" type="module"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -13,11 +15,10 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
-            background-color: #f4f4f4;
             margin: 0;
         }
         .login-container {
-            background: white;
+            background: rgba(0, 0, 0, 0.452);
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
@@ -26,7 +27,7 @@
         }
         h2 {
             margin-bottom: 20px;
-            color: black;
+            color: rgb(255, 255, 255);
         }
         input {
             width: 90%;
@@ -40,7 +41,7 @@
             width: 100%;
             padding: 10px;
             border: none;
-            background: #007bff;
+            background: #64a0e0;
             color: white;
             font-size: 16px;
             border-radius: 5px;
@@ -57,6 +58,9 @@
     </style>
 </head>
 <body>
+    <div id="large-header" class="large-header">
+        <canvas id="demo-canvas"></canvas>
+    </div>
     <div class="login-container">
         <h2>Admin Login</h2>
         <input type="password" id="admin-password" placeholder="Enter Admin Password">

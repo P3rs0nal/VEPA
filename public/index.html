@@ -9,9 +9,10 @@
     <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js"></script>
-    <script src="code.js" type="module"></script>
-</head>
+    <script src="animation.js"></script>
+    <script src="userFunctions.js"></script>
 
+</head>
 <body>
     <div id="large-header" class="large-header">
         <canvas id="demo-canvas"></canvas>
@@ -22,7 +23,16 @@
     </div>
 
     <div id="empty"></div>
-
+    <div class="filter-controls">
+        <h2>Filter</h2>
+        <input type="text" id="filter-make" placeholder="Make">
+        <input type="text" id="filter-model" placeholder="Model">
+        <input type="number" id="filter-price-min" placeholder="Min Price">
+        <input type="number" id="filter-price-max" placeholder="Max Price">
+        <!-- <input type="text" id="car-image" placeholder="Image URL (Optional)"> -->
+        <button id="filter-button" onclick="filterCars()">Filter</button>
+        <button id="reset-button" onclick="resetFilters()">Reset</button>
+    </div>
     <!-- Display the car list here -->
     <div class="cars-container" id="cars-container"></div>            
 

@@ -231,6 +231,55 @@ async function displayCars() {
     });
 }
 
+async function filterCars() {
+  // Get user input and normalize it
+  const makeFilter = document.getElementById("filter-make").value.trim().toLowerCase();
+  const modelFilter = document.getElementById("filter-model").value.trim().toLowerCase();
+  const minPrice = parseFloat(document.getElementById("filter-price-min").value) || 0;
+  const maxPrice = parseFloat(document.getElementById("filter-price-max").value) || Infinity;
+
+  // Fetch all car data
+  const carDetails = await fetchCarData();
+
+  // Filter the data
+  const filteredCars = carDetails.filter(car => {
+    const carMake = car.make ? car.make.toLowerCase() : "";
+    const carModel = car.model ? car.model.toLowerCase() : "";
+    const carPrice = typeof car.price === "string" ? parseFloat(car.price.replace(/[$,]/g, "")) : parseFloat(car.price) || 0;
+
+    return (
+      (!makeFilter || carMake.includes(makeFilter)) &&
+      (!modelFilter || carModel.includes(modelFilter)) &&
+      (carPrice >= minPrice && carPrice <= maxPrice)
+    );
+  });
+
+  displayFilteredCars(filteredCars);
+}
+
+// Function to display filtered results efficiently
+function displayFilteredCars(filteredCars) {
+  const carsContainer = document.getElementById("cars-container");
+  carsContainer.innerHTML = filteredCars.length
+    ? filteredCars.map(car => `
+        <div class="car-item">
+          <img src="${car.image || 'vepa.jpg'}" id="img" alt="Car Image">
+          <h3>${car.make} ${car.model}</h3>
+          <div class="car-price">$${car.price}</div>
+        </div>
+      `).join("")
+    : "<h3>No cars match your criteria.</h3>";
+}
+
+function resetFilters() {
+  document.getElementById("filter-make").value = "";
+  document.getElementById("filter-model").value = "";
+  document.getElementById("filter-price-min").value = "";
+  document.getElementById("filter-price-max").value = "";
+  
+  displayCars();
+}
+
 async function addCar(){
     const make = document.getElementById("car-make").value.trim();
     const model = document.getElementById("car-model").value.trim();
@@ -323,6 +372,8 @@ async function displayCarsAdmin() {
 
 window.removeCar = removeCar;
 window.addCar = addCar;
+window.filterCars = filterCars;
+window.resetFilters = resetFilters;
 
 // Call the displayCars function to load the data
 displayCars();
