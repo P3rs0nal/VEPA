@@ -1,45 +1,85 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VEPA AutoCare</title>
-    <link rel="stylesheet" href="theme.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js"></script>
-    <script src="animation.js"></script>
-    <script src="userFunctions.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>VEPA AutoCare</title>
+  <link rel="stylesheet" href="theme.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js"></script>
+  <script src="animation.js" type="module"></script>
+  <script src="backend.js" type="module"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const toggleBtn = document.getElementById("filter-toggle");
+      const filterPanel = document.getElementById("filter-controls");
 
+      let open = false;
+
+      toggleBtn.addEventListener("click", () => {
+        open = !open;
+        filterPanel.classList.toggle("open", open);
+        toggleBtn.innerHTML = open ? "&#x25C0;" : "&#x25B6;";
+      });
+
+      // ESC to close user modal
+      document.addEventListener("keydown", e => {
+        if (e.key === "Escape") closeUserCarModal();
+      });
+    });
+  </script>
 </head>
 <body>
-    <div id="large-header" class="large-header">
-        <canvas id="demo-canvas"></canvas>
-    </div>
-    <div id="headings" class="headings-below">
-        <h1><a class="link">VEPA</a></h1>
-        <h3><a class="" href="admin-login.html">Admin Login</a></h3>
-    </div>
+  <div id="large-header" class="large-header">
+    <canvas id="demo-canvas"></canvas>
+  </div>
 
-    <div id="empty"></div>
-    <div class="filter-controls">
+  <!-- <div id="headings" class="headings-below">
+    <h1 class="site-logo"><a class="link">VEPA AutoCare</a></h1>
+  </div> -->
+
+  <section class="hero-intro">
+    <h2>Welcome to VEPA AutoCare</h2>
+    <p>Browse our current selection of quality vehicles available now. Hassle-free. Trusted. Local.</p>
+  </section>
+
+  <div id="empty"></div>
+
+  <div class="inventory-layout">
+    <div class="filter-sidebar" id="filter-sidebar">
+      <button id="filter-toggle" class="filter-toggle">&#x25B6;</button>
+      <div class="filter-controls" id="filter-controls">
         <h2>Filter</h2>
-        <input type="text" id="filter-make" placeholder="Make">
-        <input type="text" id="filter-model" placeholder="Model">
-        <input type="number" id="filter-price-min" placeholder="Min Price">
-        <input type="number" id="filter-price-max" placeholder="Max Price">
-        <!-- <input type="text" id="car-image" placeholder="Image URL (Optional)"> -->
-        <button id="filter-button" onclick="filterCars()">Filter</button>
-        <button id="reset-button" onclick="resetFilters()">Reset</button>
+        <input type="text" id="filter-make" placeholder="Make" />
+        <input type="text" id="filter-model" placeholder="Model" />
+        <input type="number" id="filter-price-min" placeholder="Min Price" />
+        <input type="number" id="filter-price-max" placeholder="Max Price" />
+        <button onclick="filterCars()">Filter</button>
+        <button onclick="resetFilters()">Reset</button>
+      </div>
     </div>
-    <!-- Display the car list here -->
-    <div class="cars-container" id="cars-container"></div>            
 
-    <div class="footer">
-        <h1>Contact Us</h1>
-        <p>Phone:<a class="link">(518) - 456 - 5682</a></p>
+    <div class="cars-section">
+      <h2 class="section-title">Available Inventory</h2>
+      <div class="cars-container" id="cars-container"></div>
     </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-contact">
+      <h2>Contact Us</h2>
+      <p><a href="https://www.google.com/maps/place/1904+Western+Ave,+Albany,+NY+12203" target="_blank" rel="noopener">📍 1904 Western Ave, Albany, NY 12203</a></p>      
+      <p>📞 <a class="link" href="tel:+15184565682">(518) - 456 - 5682</a></p>
+      <p>📧 <a class="link" href="mailto:vepaautoshop1904@gmail.com">vepaautoshop1904@gmail.com</a></p>
+    </div>
+  </footer>
+
+  <a href="tel:+15184565682" class="call-button" title="Call VEPA">📞</a>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <!-- Modal -->
+  <div id="user-car-modal" class="modal"></div>
 </body>
 </html>

@@ -4,13 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VEPA AutoCare Admin</title>
-    <link rel="stylesheet" href="theme.css">
+    <link rel="stylesheet" href="admin.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/accounting-js/0.4.2/accounting.min.js"></script>
-    <script src="code.js" type="module"></script> 
+    <script src="animation.js" type="module"></script>
+    <script src="backend.js" type="module"></script> 
     <script>
         if (!sessionStorage.getItem("admin-auth")) {
             window.location.href = "admin-login.html";  // Redirect if not logged in
@@ -42,7 +43,28 @@
         <input type="text" id="car-price" placeholder="Price">
         <input type="text" id="car-image" placeholder="Image URL (Optional)">
         <button onclick="addCar()">Add Car</button>
-    </div>          
+    </div>
+    <div class="admin-filter-sort">
+        <input type="text" id="admin-filter" placeholder="Filter by Make or Model">
+        <select id="admin-sort">
+          <option value="">Sort by</option>
+          <option value="make">Make (A-Z)</option>
+          <option value="model">Model (A-Z)</option>
+          <option value="price-asc">Price (Low to High)</option>
+          <option value="price-desc">Price (High to Low)</option>
+        </select>
+      </div>                
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <div id="edit-modal" class="modal">
+        <div class="modal-content">
+          <h2>Edit Car</h2>
+          <input id="edit-make" type="text" placeholder="Make">
+          <input id="edit-model" type="text" placeholder="Model">
+          <input id="edit-price" type="text" placeholder="Price">
+          <input id="edit-image" type="text" placeholder="Image URL">
+          <button onclick="saveEditCar()">Save</button>
+          <button onclick="closeModal()">Cancel</button>
+        </div>
+      </div>      
 </body>
 </html>
