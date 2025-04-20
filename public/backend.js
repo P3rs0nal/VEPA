@@ -56,17 +56,66 @@ async function displayCars() {
       carsContainer.appendChild(carItem);
     });
     animateCarItems();
+  }
+  
+  function openAdminImageModal(car) {
+    const modal = document.getElementById("view-images-modal");
+    modal.classList.add("show");
+  
+    const images = car.images || [car.image || 'GenCar.png'];
+    
+    // Generate the scrollable view of images
+    const imageScrollContainer = modal.querySelector(".image-scroll-container");
+    imageScrollContainer.innerHTML = "";
+    images.forEach(img => {
+      const imgElement = document.createElement("img");
+      imgElement.src = img;
+      imgElement.alt = "Car image";
+      imgElement.onclick = () => {
+        window.open(img, '_blank'); // Open image in new tab when clicked
+      };
+      imageScrollContainer.appendChild(imgElement);
+    });
+  }
+
+  function closeImageModal() {
+    document.getElementById("view-images-modal").classList.remove("show");
   }  
+  
  
   function openUserCarModal(car) {
     const modal = document.getElementById("user-car-modal");
     modal.classList.add("show");
   
+    // Create the modal content with a slideshow
+    const images = car.images || [car.image || 'GenCar.png']; // Ensure images is an array
+  
+    let currentImageIndex = 0;
+  
+    // Function to update the image being shown
+    const updateImage = () => {
+      const modalImage = modal.querySelector('.modal-image');
+      
+      // Add fade-out effect before changing the image
+      modalImage.classList.add('fade-out');
+  
+      // After the fade-out is complete, update the image source and apply the fade-in effect
+      setTimeout(() => {
+        modalImage.src = images[currentImageIndex];
+        modalImage.classList.remove('fade-out');
+        modalImage.classList.add('fade-in');
+      }, 300); // 300ms for fade-out duration
+    };
+  
     modal.innerHTML = `
       <div class="modal-content">
         <span class="close-btn" onclick="closeUserCarModal()">&times;</span>
         <h2>${car.make} ${car.model}</h2>
-        <img src="${car.image || 'GenCar.png'}" alt="${car.make} ${car.model}">
+        <div class="slideshow-container">
+          <img class="modal-image" src="${images[currentImageIndex]}" alt="${car.make} ${car.model}" />
+          <button class="prev" onclick="changeImage(-1)">&#10094;</button>
+          <button class="next" onclick="changeImage(1)">&#10095;</button>
+        </div>
         <p><strong>Price:</strong> $${car.price}</p>
         <p><strong>Mileage:</strong> 72,000 miles</p>
         <p><strong>Condition:</strong> Excellent</p>
@@ -74,7 +123,15 @@ async function displayCars() {
         <button onclick="closeUserCarModal()">Close</button>
       </div>
     `;
-  }
+  
+    // Function to change image
+    window.changeImage = (direction) => {
+      currentImageIndex = (currentImageIndex + direction + images.length) % images.length;
+      updateImage();
+    };
+  
+    updateImage();
+  }   
   
   function closeUserCarModal() {
     document.getElementById("user-car-modal").classList.remove("show");
@@ -155,24 +212,11 @@ function displayFilteredCars(filteredCars) {
 
 async function displayCarsAdmin() {
   const carDetails = await fetchCarData();
-  const filterValue = document.getElementById("admin-filter")?.value.toLowerCase() || "";
-  const sortValue = document.getElementById("admin-sort")?.value;
-
-  let filtered = carDetails.filter(car =>
-    car.make?.toLowerCase().includes(filterValue) ||
-    car.model?.toLowerCase().includes(filterValue)
-  );
-
-  if (sortValue === "make") filtered.sort((a, b) => a.make.localeCompare(b.make));
-  if (sortValue === "model") filtered.sort((a, b) => a.model.localeCompare(b.model));
-  if (sortValue === "price-asc") filtered.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
-  if (sortValue === "price-desc") filtered.sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
-
   const table = document.querySelector(".cars-table");
   table.innerHTML = `
     <thead>
       <tr>
-        <th>Image</th>
+        <th>Images</th>
         <th>Make</th>
         <th>Model</th>
         <th>Price</th>
@@ -181,15 +225,19 @@ async function displayCarsAdmin() {
     </thead>
     <tbody id="cars-table-body"></tbody>
   `;
-
   const body = document.getElementById("cars-table-body");
-  filtered.forEach(car => {
+  carDetails.forEach(car => {
     body.innerHTML += `
       <tr>
-        <td><img src="${car.image || 'GenCar.png'}" alt="Car" width="100"></td>
+        <td>
+          <button onclick='openAdminImageModal(${JSON.stringify(car)})'>View Images</button>
+        </td>
         <td>${car.make}</td>
         <td>${car.model}</td>
         <td>$${car.price}</td>
+        <td>
+          ${car.sold ? "<span>SOLD</span>" : `<button onclick='markCarAsSold("${car.id}")'>Mark as Sold</button>`}
+        </td>
         <td>
           <button class="edit-btn" onclick='openEditModal(${JSON.stringify(car)})'>Edit</button>
           <button class="delete-btn" onclick="removeCar('${car.id}')">Delete</button>
@@ -199,18 +247,55 @@ async function displayCarsAdmin() {
   });
 }
 
+function openAdminImageModal(car) {
+  const modal = document.getElementById("view-images-modal");
+  modal.classList.add("show");
+  const images = car.images || [];
+  const imageScrollContainer = modal.querySelector(".image-scroll-container");
+  imageScrollContainer.innerHTML = "";
+
+  images.forEach(img => {
+    const imgElement = document.createElement("img");
+    imgElement.src = img;
+    imgElement.alt = "Car image";
+    imgElement.onclick = () => window.open(img, '_blank');
+    imageScrollContainer.appendChild(imgElement);
+  });
+}
+
+async function markCarAsSold(carId) {
+  const carRef = doc(db, "cars", carId);
+  const soldTimestamp = new Date().toISOString();
+  await updateDoc(carRef, { sold: true, soldTimestamp });
+}
+
+async function removeSoldCars() {
+  const carDetails = await fetchCarData();
+  const now = new Date();
+  carDetails.forEach(car => {
+    if (car.sold) {
+      const soldTime = new Date(car.soldTimestamp);
+      const weekAgo = new Date(now - 7 * 24 * 60 * 60 * 1000); // 1 week ago
+      if (soldTime < weekAgo) {
+        deleteDoc(doc(db, "cars", car.id)); // Delete car after 1 week
+      }
+    }
+  });
+}
+
+
 async function addCar() {
   const make = document.getElementById("car-make").value.trim();
   const model = document.getElementById("car-model").value.trim();
   const price = document.getElementById("car-price").value.trim();
-  const image = document.getElementById("car-image").value.trim() || "GenCar.png";
+  const images = Array.from(document.getElementById("car-images").files).map(file => file.name); // Add images array
 
-  if (!make || !model || !price) return alert("Please fill in all fields.");
+  if (!make || !model || !price || images.length === 0) return alert("Please fill in all fields.");
 
   try {
-    await addDoc(collection(db, "cars"), { make, model, price, image });
+    // Add car data to Firestore with images array
+    await addDoc(collection(db, "cars"), { make, model, price, images });
     alert("Car added successfully!");
-    ["car-make", "car-model", "car-price", "car-image"].forEach(id => document.getElementById(id).value = "");
     displayCarsAdmin();
   } catch (err) {
     console.error("Error adding car:", err);
@@ -273,3 +358,5 @@ window.closeModal = closeModal;
 window.saveEditCar = saveEditCar;
 window.openUserCarModal = openUserCarModal;
 window.closeUserCarModal = closeUserCarModal;
+window.openAdminImageModal = openAdminImageModal;
+window.closeImageModal = closeImageModal;

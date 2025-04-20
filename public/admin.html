@@ -9,9 +9,9 @@
     <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/accounting-js/0.4.2/accounting.min.js"></script>
     <script src="animation.js" type="module"></script>
-    <script src="backend.js" type="module"></script> 
+    <script src="admin.js" type="module"></script> 
+    <script src="https://upload-widget.cloudinary.com/global/all.js"></script>
     <script>
         if (!sessionStorage.getItem("admin-auth")) {
             window.location.href = "admin-login.html";  // Redirect if not logged in
@@ -19,9 +19,6 @@
     </script>   
 </head>
 <body>  
-    <div id="large-header" class="large-header">
-        <canvas id="demo-canvas"></canvas>
-    </div>
     <div id="large-header" class="large-header">
         <canvas id="demo-canvas"></canvas>
     </div>
@@ -41,7 +38,7 @@
         <input type="text" id="car-make" placeholder="Make">
         <input type="text" id="car-model" placeholder="Model">
         <input type="text" id="car-price" placeholder="Price">
-        <input type="text" id="car-image" placeholder="Image URL (Optional)">
+        <input type="file" id="car-images" multiple>
         <button onclick="addCar()">Add Car</button>
     </div>
     <div class="admin-filter-sort">
@@ -53,8 +50,7 @@
           <option value="price-asc">Price (Low to High)</option>
           <option value="price-desc">Price (High to Low)</option>
         </select>
-      </div>                
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    </div>  
     <div id="edit-modal" class="modal">
         <div class="modal-content">
           <h2>Edit Car</h2>
@@ -65,6 +61,16 @@
           <button onclick="saveEditCar()">Save</button>
           <button onclick="closeModal()">Cancel</button>
         </div>
-      </div>      
+    </div>
+    <!-- Modal to view all images -->
+    <div id="view-images-modal" class="modal">
+        <div class="modal-content">
+            <h2>Car Images</h2>
+            <div class="image-scroll-container">
+                <!-- Image thumbnails will be added here dynamically -->
+            </div>
+            <button onclick="closeImageModal()">Close</button>
+        </div>
+    </div>  
 </body>
 </html>

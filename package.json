@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "accounting": "^0.4.1"
+    "accounting": "^0.4.1",
+    "cloudinary": "^2.6.0"
   }
 }
