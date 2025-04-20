@@ -9,7 +9,7 @@ const firebaseConfig = {
   };
   
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js";
-  import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-firestore.js";
+  import { getFirestore, collection, getDocs, getDoc, addDoc, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-firestore.js";
   import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-storage.js";
   
   const app = initializeApp(firebaseConfig);
@@ -68,12 +68,13 @@ const firebaseConfig = {
         <tr>
           <td>
             <img 
-                src="${car.images?.[0] || 'GenCar.png'}" 
+                src="${car.images?.[0]?.url || 'GenCar.png'}"
                 alt="Thumbnail" 
                 style="width: 100px; border-radius: 6px; cursor: pointer;" 
                 onclick='openAdminImageModal(${JSON.stringify(car)})' 
             />
-          </td>
+            </td>
+
           <td>${car.make}</td>
           <td>${car.model}</td>
           <td>$${car.price}</td>
@@ -96,19 +97,91 @@ const firebaseConfig = {
   function openAdminImageModal(car) {
     const modal = document.getElementById("view-images-modal");
     modal.classList.add("show");
+    modal.dataset.id = car.id;
   
-    const images = car.images || [];
     const imageScrollContainer = modal.querySelector(".image-scroll-container");
     imageScrollContainer.innerHTML = "";
   
-    images.forEach(img => {
-      const imgElement = document.createElement("img");
-      imgElement.src = img;
-      imgElement.alt = "Car image";
-      imgElement.onclick = () => window.open(img, '_blank');
-      imageScrollContainer.appendChild(imgElement);
+    (car.images || []).forEach((img, index) => {
+      const wrapper = document.createElement("div");
+      wrapper.classList.add("image-wrapper");
+  
+      const imageEl = document.createElement("img");
+      imageEl.src = img.url;
+      imageEl.alt = "Car image";
+  
+      const deleteBtn = document.createElement("button");
+      deleteBtn.classList.add("delete-icon");
+      deleteBtn.innerHTML = "×";
+      deleteBtn.onclick = () => {
+        if (confirm("Are you sure you want to delete this image?")) {
+          deleteImage(car.id, index, img.public_id);
+        }
+      };
+  
+      wrapper.appendChild(imageEl);
+      wrapper.appendChild(deleteBtn);
+      imageScrollContainer.appendChild(wrapper);
     });
   }
+  
+  async function deleteImage(carId, index, public_id) {
+    try {
+      // 1. Remove the image from Firestore
+      const docRef = doc(db, "cars", carId);
+      const snapshot = await getDoc(docRef);
+      const carData = snapshot.data();
+  
+      const updatedImages = (carData.images || []).filter((_, i) => i !== index);
+      await updateDoc(docRef, { images: updatedImages });
+  
+      // 2. Delete from Cloudinary (only if public_id is valid)
+      if (public_id) {
+        await fetch("https://your-render-url.onrender.com/delete-images", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ public_ids: [public_id] })
+        });
+      }
+  
+      alert("Image deleted!");
+      openAdminImageModal({ id: carId, images: updatedImages });
+    } catch (err) {
+      console.error("Failed to delete image:", err);
+      alert("Failed to delete image.");
+    }
+  }
+  
+  async function uploadNewImages() {
+    const modal = document.getElementById("view-images-modal");
+    const carId = modal.dataset.id;
+    const fileInput = document.getElementById("new-image-upload");
+    const files = Array.from(fileInput.files);
+  
+    if (files.length === 0) return alert("Please select image(s) to upload.");
+  
+    try {
+      const uploaded = [];
+  
+      for (const file of files) {
+        const { url, public_id } = await uploadImage(file);
+        uploaded.push({ url, public_id });
+      }
+  
+      const docRef = doc(db, "cars", carId);
+      const snapshot = await getDoc(docRef);
+      const current = snapshot.data().images || [];
+  
+      await updateDoc(docRef, { images: [...current, ...uploaded] });
+  
+      alert("Images uploaded!");
+      openAdminImageModal({ id: carId, images: [...current, ...uploaded] });
+      fileInput.value = "";
+    } catch (err) {
+      console.error("Image upload failed:", err);
+      alert("Upload failed.");
+    }
+  }  
   
   // Add car to Firestore
   async function addCar() {
@@ -116,25 +189,42 @@ const firebaseConfig = {
     const model = document.getElementById("car-model").value.trim();
     const price = document.getElementById("car-price").value.trim();
     const imageFiles = Array.from(document.getElementById("car-images").files);
-    const imageUrls = [];
+    const imageData = [];
   
-    for (const file of imageFiles) {
+    // Upload images if any were selected
+    if (imageFiles.length > 0) {
+      for (const file of imageFiles) {
         const { url, public_id } = await uploadImage(file);
         imageData.push({ url, public_id });
       }
-      
-      await addDoc(collection(db, "cars"), { make, model, price, images: imageData });
+    } else {
+      // Use default placeholder if no images provided
+      imageData.push({
+        url: "GenCar.png",  // relative path
+        public_id: null     // optional
+      });
+    }
   
-    if (!make || !model || !price || imageUrls.length === 0) return alert("Please fill in all fields.");
+    if (!make || !model || !price) {
+      alert("Please fill in all fields.");
+      return;
+    }
   
     try {
-      await addDoc(collection(db, "cars"), { make, model, price, images: imageUrls });
+      await addDoc(collection(db, "cars"), {
+        make,
+        model,
+        price,
+        images: imageData
+      });
       alert("Car added successfully!");
       displayCarsAdmin();
     } catch (err) {
       console.error("Error adding car:", err);
+      alert("Error adding car.");
     }
   }
+  
   
   // Remove a car from Firestore
   async function removeCar(carId) {
@@ -174,6 +264,11 @@ const firebaseConfig = {
       const modal = document.getElementById("view-images-modal");
       modal.classList.remove("show");
   }
+
+  function closeModal() {
+    document.getElementById("edit-modal").classList.remove("show");
+  }
+  
   
   // Function to edit car details
   function openEditModal(car) {
@@ -217,4 +312,7 @@ const firebaseConfig = {
   window.closeImageModal = closeImageModal;
   window.openEditModal = openEditModal;
   window.saveEditCar = saveEditCar;
+  window.closeModal = closeModal;
+  window.uploadNewImages = uploadNewImages;
+  window.deleteImage = deleteImage;
   

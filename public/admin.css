@@ -228,7 +228,34 @@
   
   .modal-content button:hover {
     background: #7b3ea6;
-  }  
+  }
+  
+  .image-wrapper {
+    position: relative;
+    display: inline-block;
+  }
+  
+  .image-wrapper img {
+    width: 150px;
+    border-radius: 8px;
+    object-fit: cover;
+  }
+  
+  .image-wrapper .delete-icon {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: rgba(255, 0, 0, 0.8);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    font-size: 16px;
+    line-height: 20px;
+    cursor: pointer;
+  }
+  
   
   .admin-filter-sort {
     width: 90%;

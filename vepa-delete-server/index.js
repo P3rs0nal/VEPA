@@ -5,7 +5,11 @@ const { v2: cloudinary } = require("cloudinary");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
+app.use(cors({
+  origin: ["http://127.0.0.1:5500", "http://localhost:5500", "https://your-prod-site.com"], // add others as needed
+  methods: ["POST"],
+  allowedHeaders: ["Content-Type"]
+}));
 app.use(express.json());
 
 cloudinary.config({

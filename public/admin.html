@@ -53,24 +53,36 @@
     </div>  
     <div id="edit-modal" class="modal">
         <div class="modal-content">
-          <h2>Edit Car</h2>
-          <input id="edit-make" type="text" placeholder="Make">
-          <input id="edit-model" type="text" placeholder="Model">
-          <input id="edit-price" type="text" placeholder="Price">
-          <input id="edit-image" type="text" placeholder="Image URL">
-          <button onclick="saveEditCar()">Save</button>
-          <button onclick="closeModal()">Cancel</button>
+          <h2>Edit Car Details</h2>
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <input id="edit-make" type="text" placeholder="Make">
+            <input id="edit-model" type="text" placeholder="Model">
+            <input id="edit-price" type="text" placeholder="Price">
+          </div>
+          <div style="margin-top: 20px; display: flex; justify-content: space-between;">
+            <button onclick="saveEditCar()">Save</button>
+            <button onclick="closeModal()">Cancel</button>
+          </div>
         </div>
-    </div>
+      </div>
+      
     <!-- Modal to view all images -->
     <div id="view-images-modal" class="modal">
         <div class="modal-content">
-            <h2>Car Images</h2>
-            <div class="image-scroll-container">
-                <!-- Image thumbnails will be added here dynamically -->
-            </div>
-            <button onclick="closeImageModal()">Close</button>
+          <h2>Manage Car Images</h2>
+          
+          <div class="image-scroll-container">
+            <!-- Images will be added dynamically here -->
+          </div>
+      
+          <div style="margin-top: 20px;">
+            <input type="file" id="new-image-upload" multiple />
+            <button onclick="uploadNewImages()">Upload</button>
+          </div>
+      
+          <button onclick="closeImageModal()" style="margin-top: 20px;">Close</button>
         </div>
-    </div>  
+      </div>
+        
 </body>
 </html>
