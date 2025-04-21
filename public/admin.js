@@ -242,7 +242,7 @@ const firebaseConfig = {
   
       // Step 2: Delete images from your Cloudinary delete server
       if (public_ids.length > 0) {
-        await fetch("https://vepa.onrender.com", {
+        await fetch("https://vepa.onrender.com/delete-images", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ public_ids })

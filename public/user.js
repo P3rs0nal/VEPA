@@ -27,10 +27,10 @@ async function displayCars() {
   const carsContainer = document.getElementById("cars-container");
   const emptyDiv = document.getElementById("empty");
   const carDetails = await fetchCarData();
+  console.log("Fetched cars: ", carDetails);
 
   carsContainer.innerHTML = "";
   emptyDiv.innerHTML = "";
-
   if (carDetails.length === 0) {
     const empty = document.createElement("h2");
     empty.innerText = "No Inventory";
@@ -55,24 +55,19 @@ async function displayCars() {
   animateCarItems();
 }
 
+document.addEventListener("DOMContentLoaded", () => {
+  if (document.querySelector("#cars-container")) displayCars();
+  if (document.querySelector(".cars-table")) displayCarsAdmin();
+});
 // Open the modal to show user car details
 function openUserCarModal(car) {
   const modal = document.getElementById("user-car-modal");
   modal.classList.add("show");
 
-  const images = car.images || [car.image || 'GenCar.png'];
-
+  const images = Array.isArray(car.images)
+  ? car.images.map(img => typeof img === "string" ? img : img.url)
+  : [car.image || "GenCar.png"];
   let currentImageIndex = 0;
-
-  const updateImage = () => {
-    const modalImage = modal.querySelector('.modal-image');
-    modalImage.classList.add('fade-out');
-    setTimeout(() => {
-      modalImage.src = images[currentImageIndex];
-      modalImage.classList.remove('fade-out');
-      modalImage.classList.add('fade-in');
-    }, 300);
-  };
 
   modal.innerHTML = `
     <div class="modal-content">
@@ -80,8 +75,8 @@ function openUserCarModal(car) {
       <h2>${car.make} ${car.model}</h2>
       <div class="slideshow-container">
         <img class="modal-image" src="${images[currentImageIndex]}" alt="${car.make} ${car.model}" />
-        <button class="prev" onclick="changeImage(-1)">&#10094;</button>
-        <button class="next" onclick="changeImage(1)">&#10095;</button>
+        <button class="prev">&#10094;</button>
+        <button class="next">&#10095;</button>
       </div>
       <p><strong>Price:</strong> $${car.price}</p>
       <p><strong>Mileage:</strong> 72,000 miles</p>
@@ -91,12 +86,28 @@ function openUserCarModal(car) {
     </div>
   `;
 
-  window.changeImage = (direction) => {
-    currentImageIndex = (currentImageIndex + direction + images.length) % images.length;
+  const modalImage = modal.querySelector('.modal-image');
+
+  const updateImage = () => {
+    modalImage.classList.remove("fade-in");
+    modalImage.classList.add("fade-out");
+
+    setTimeout(() => {
+      modalImage.src = images[currentImageIndex];
+      modalImage.classList.remove("fade-out");
+      modalImage.classList.add("fade-in");
+    }, 300);
+  };
+
+  modal.querySelector('.prev').onclick = () => {
+    currentImageIndex = (currentImageIndex - 1 + images.length) % images.length;
     updateImage();
   };
 
-  updateImage();
+  modal.querySelector('.next').onclick = () => {
+    currentImageIndex = (currentImageIndex + 1) % images.length;
+    updateImage();
+  };
 }
 
 // Close user modal
@@ -179,6 +190,7 @@ function resetFilters() {
 }
 
 window.displayCars = displayCars;
+window.fetchCarData = fetchCarData;
 window.openUserCarModal = openUserCarModal;
 window.closeUserCarModal = closeUserCarModal;
 window.animateCarItems = animateCarItems;

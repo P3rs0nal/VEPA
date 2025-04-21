@@ -232,29 +232,49 @@
   
   .image-wrapper {
     position: relative;
-    display: inline-block;
+    width: 160px;
+    height: 160px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
   }
   
   .image-wrapper img {
-    width: 150px;
-    border-radius: 8px;
-    object-fit: cover;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 6px;
   }
   
   .image-wrapper .delete-icon {
     position: absolute;
-    top: 5px;
-    right: 5px;
-    background: rgba(255, 0, 0, 0.8);
+    top: 6px;
+    right: 6px;
+    background: rgba(255, 0, 0, 0.85);
     color: white;
     border: none;
     border-radius: 50%;
     width: 22px;
     height: 22px;
     font-size: 16px;
-    line-height: 20px;
+    font-weight: bold;
+    line-height: 22px;
+    text-align: center;
     cursor: pointer;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: background 0.2s ease;
   }
+  
+  .image-wrapper .delete-icon:hover {
+    background: rgba(200, 0, 0, 0.95);
+  }
+  
   
   
   .admin-filter-sort {
