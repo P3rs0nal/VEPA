@@ -56,6 +56,12 @@
     border-collapse: collapse;
     margin-top: 10px;
   }
+
+  .cars-table td, .cars-table th {
+    font-size: 0.85rem;
+    padding: 8px 10px;
+    /* word-break: break-word; */
+  }
   
   .cars-table th,
   .cars-table td {

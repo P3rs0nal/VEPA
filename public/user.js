@@ -79,9 +79,16 @@ function openUserCarModal(car) {
         <button class="next">&#10095;</button>
       </div>
       <p><strong>Price:</strong> $${car.price}</p>
-      <p><strong>Mileage:</strong> 72,000 miles</p>
-      <p><strong>Condition:</strong> Excellent</p>
-      <p><strong>Color:</strong> Midnight Purple</p>
+      <p><strong>Condition:</strong> ${car.condition || "N/A"}</p>
+      <p><strong>Year:</strong> ${car.year || "N/A"}</p>
+      <p><strong>Body Type:</strong> ${car.bodyType || "N/A"}</p>
+      <p><strong>Color:</strong> ${car.color || "N/A"}</p>
+      <p><strong>Body Condition:</strong> ${car.bodyCondition || "N/A"}</p>
+      <p><strong>Interior Condition:</strong> ${car.interiorCondition || "N/A"}</p>
+      <p><strong>Transmission:</strong> ${car.transmission || "N/A"}</p>
+      <p><strong>Wheels:</strong> ${car.wheels || "N/A"}</p>
+      <p><strong>Capacity:</strong> ${car.capacity || "N/A"} passengers</p>
+      <p><strong>Features:</strong> ${(car.features || []).join(", ") || "None"}</p>
       <button onclick="closeUserCarModal()">Close</button>
     </div>
   `;

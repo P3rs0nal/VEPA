@@ -35,9 +35,23 @@
     </div> 
     <div class="admin-controls">
         <h2>Add a Car</h2>
-        <input type="text" id="car-make" placeholder="Make">
-        <input type="text" id="car-model" placeholder="Model">
-        <input type="text" id="car-price" placeholder="Price">
+        <input type="text" id="car-make" placeholder="Make" required>
+        <input type="text" id="car-model" placeholder="Model" required>
+        <input type="text" id="car-price" placeholder="Price" required>
+        <input type="text" id="car-year" placeholder="Model Year" required>
+        <input type="text" id="car-body-type" placeholder="Body Type" required>
+        <input type="text" id="car-color" placeholder="Color" required>
+        <input type="text" id="car-body-condition" placeholder="Body Condition" required>
+        <input type="text" id="car-interior-condition" placeholder="Interior Condition" required>
+        <input type="text" id="car-transmission" placeholder="Transmission Type" required>
+        <input type="text" id="car-wheels" placeholder="Wheels" required>
+        <input type="number" id="car-capacity" placeholder="Capacity (# of passengers)" required>
+        <select id="car-condition" required>
+          <option value="">Select Condition</option>
+          <option value="new">New</option>
+          <option value="used">Used</option>
+        </select>
+        <input type="text" id="car-features" placeholder="Features (comma separated)">
         <input type="file" id="car-images" multiple>
         <button onclick="addCar()">Add Car</button>
     </div>
@@ -52,19 +66,31 @@
         </select>
     </div>  
     <div id="edit-modal" class="modal">
-        <div class="modal-content">
-          <h2>Edit Car Details</h2>
-          <div style="display: flex; flex-direction: column; gap: 12px;">
-            <input id="edit-make" type="text" placeholder="Make">
-            <input id="edit-model" type="text" placeholder="Model">
-            <input id="edit-price" type="text" placeholder="Price">
-          </div>
-          <div style="margin-top: 20px; display: flex; justify-content: space-between;">
-            <button onclick="saveEditCar()">Save</button>
-            <button onclick="closeModal()">Cancel</button>
-          </div>
+      <div class="modal-content">
+        <h2>Edit Car</h2>
+        <input id="edit-make" type="text" placeholder="Make">
+        <input id="edit-model" type="text" placeholder="Model">
+        <input id="edit-price" type="text" placeholder="Price">
+        <input id="edit-year" type="text" placeholder="Model Year">
+        <input id="edit-body-type" type="text" placeholder="Body Type">
+        <input id="edit-color" type="text" placeholder="Color">
+        <input id="edit-body-condition" type="text" placeholder="Body Condition">
+        <input id="edit-interior-condition" type="text" placeholder="Interior Condition">
+        <input id="edit-transmission" type="text" placeholder="Transmission Type">
+        <input id="edit-wheels" type="text" placeholder="Wheels">
+        <input id="edit-capacity" type="number" placeholder="Capacity (# of passengers)">
+        <select id="edit-condition">
+          <option value="">Select Condition</option>
+          <option value="new">New</option>
+          <option value="used">Used</option>
+        </select>
+        <input id="edit-features" type="text" placeholder="Features (comma separated)">
+        <div style="margin-top: 20px;">
+          <button onclick="saveEditCar()">Save</button>
+          <button onclick="closeModal()">Cancel</button>
         </div>
       </div>
+    </div>    
       
     <!-- Modal to view all images -->
     <div id="view-images-modal" class="modal">

@@ -51,33 +51,36 @@ const firebaseConfig = {
   
     const table = document.querySelector(".cars-table");
     table.innerHTML = `
-      <thead>
-        <tr>
-          <th>Images</th>
-          <th>Make</th>
-          <th>Model</th>
-          <th>Price</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody id="cars-table-body"></tbody>
-    `;
+    <thead>
+      <tr>
+        <th>Images</th>
+        <th>Make</th>
+        <th>Model</th>
+        <th>Price</th>
+        <th>Year</th>
+        <th>Color</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="cars-table-body"></tbody>
+  `;
     const body = document.getElementById("cars-table-body");
     carDetails.forEach(car => {
       body.innerHTML += `
         <tr>
           <td>
             <img 
-                src="${car.images?.[0]?.url || 'GenCar.png'}"
-                alt="Thumbnail" 
-                style="width: 100px; border-radius: 6px; cursor: pointer;" 
-                onclick='openAdminImageModal(${JSON.stringify(car)})' 
+              src="${car.images?.[0]?.url || 'GenCar.png'}"
+              alt="Thumbnail" 
+              style="width: 100px; border-radius: 6px; cursor: pointer;" 
+              onclick='openAdminImageModal(${JSON.stringify(car)})' 
             />
-            </td>
-
+          </td>
           <td>${car.make}</td>
           <td>${car.model}</td>
           <td>$${car.price}</td>
+          <td>${car.year || "N/A"}</td>
+          <td>${car.color || "N/A"}</td>
           <td>
             <button class="edit-btn" onclick='openEditModal(${JSON.stringify(car)})'>Edit</button>
             <button class="delete-btn" onclick="removeCar('${car.id}')">Delete</button>
@@ -188,26 +191,31 @@ const firebaseConfig = {
     const make = document.getElementById("car-make").value.trim();
     const model = document.getElementById("car-model").value.trim();
     const price = document.getElementById("car-price").value.trim();
+    const year = document.getElementById("car-year").value.trim();
+    const bodyType = document.getElementById("car-body-type").value.trim();
+    const color = document.getElementById("car-color").value.trim();
+    const bodyCondition = document.getElementById("car-body-condition").value.trim();
+    const interiorCondition = document.getElementById("car-interior-condition").value.trim();
+    const transmission = document.getElementById("car-transmission").value.trim();
+    const wheels = document.getElementById("car-wheels").value.trim();
+    const capacity = document.getElementById("car-capacity").value.trim();
+    const condition = document.getElementById("car-condition").value;
+    const features = document.getElementById("car-features").value.trim();
     const imageFiles = Array.from(document.getElementById("car-images").files);
     const imageData = [];
   
-    // Upload images if any were selected
+    if (!make || !model || !price || !year || !bodyType || !color || !bodyCondition || !interiorCondition || !transmission || !wheels || !capacity || !condition) {
+      alert("Please fill in all required fields.");
+      return;
+    }
+  
     if (imageFiles.length > 0) {
       for (const file of imageFiles) {
         const { url, public_id } = await uploadImage(file);
         imageData.push({ url, public_id });
       }
     } else {
-      // Use default placeholder if no images provided
-      imageData.push({
-        url: "GenCar.png",  // relative path
-        public_id: null     // optional
-      });
-    }
-  
-    if (!make || !model || !price) {
-      alert("Please fill in all fields.");
-      return;
+      imageData.push({ url: "GenCar.png", public_id: null });
     }
   
     try {
@@ -215,6 +223,16 @@ const firebaseConfig = {
         make,
         model,
         price,
+        year,
+        bodyType,
+        color,
+        bodyCondition,
+        interiorCondition,
+        transmission,
+        wheels,
+        capacity,
+        condition,
+        features: features.split(",").map(f => f.trim()).filter(f => f !== ""),
         images: imageData
       });
       alert("Car added successfully!");
@@ -224,6 +242,7 @@ const firebaseConfig = {
       alert("Error adding car.");
     }
   }
+  
   
   
   // Remove a car from Firestore
@@ -272,16 +291,42 @@ const firebaseConfig = {
   
   // Function to edit car details
   function openEditModal(car) {
-      const modal = document.getElementById("edit-modal");
-      modal.classList.add("show");
-      modal.dataset.id = car.id;
-      document.getElementById("edit-make").value = car.make;
-      document.getElementById("edit-model").value = car.model;
-      document.getElementById("edit-price").value = car.price;
-  }
+    const modal = document.getElementById("edit-modal");
+    modal.classList.add("show");
+    modal.dataset.id = car.id;
+  
+    document.getElementById("edit-make").value = car.make || "";
+    document.getElementById("edit-model").value = car.model || "";
+    document.getElementById("edit-price").value = car.price || "";
+    document.getElementById("edit-year").value = car.year || "";
+    document.getElementById("edit-body-type").value = car.bodyType || "";
+    document.getElementById("edit-color").value = car.color || "";
+    document.getElementById("edit-body-condition").value = car.bodyCondition || "";
+    document.getElementById("edit-interior-condition").value = car.interiorCondition || "";
+    document.getElementById("edit-transmission").value = car.transmission || "";
+    document.getElementById("edit-wheels").value = car.wheels || "";
+    document.getElementById("edit-capacity").value = car.capacity || "";
+    document.getElementById("edit-condition").value = car.condition || "";
+    document.getElementById("edit-features").value = (car.features || []).join(", ");
+  }  
   
   // Save car edit changes
   async function saveEditCar() {
+    const updated = {
+      make: document.getElementById("edit-make").value.trim(),
+      model: document.getElementById("edit-model").value.trim(),
+      price: document.getElementById("edit-price").value.trim(),
+      year: document.getElementById("edit-year").value.trim(),
+      bodyType: document.getElementById("edit-body-type").value.trim(),
+      color: document.getElementById("edit-color").value.trim(),
+      bodyCondition: document.getElementById("edit-body-condition").value.trim(),
+      interiorCondition: document.getElementById("edit-interior-condition").value.trim(),
+      transmission: document.getElementById("edit-transmission").value.trim(),
+      wheels: document.getElementById("edit-wheels").value.trim(),
+      capacity: document.getElementById("edit-capacity").value.trim(),
+      condition: document.getElementById("edit-condition").value.trim(),
+      features: document.getElementById("edit-features").value.split(",").map(f => f.trim()).filter(f => f)
+    };    
     const modal = document.getElementById("edit-modal");
     const carId = modal.dataset.id;
     const make = document.getElementById("edit-make").value.trim();
