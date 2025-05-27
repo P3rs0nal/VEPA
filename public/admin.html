@@ -1,114 +1,127 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VEPA AutoCare Admin</title>
-    <link rel="stylesheet" href="admin.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js"></script>
-    <script src="animation.js" type="module"></script>
-    <script src="admin.js" type="module"></script> 
-    <script src="https://upload-widget.cloudinary.com/global/all.js"></script>
-    <script>
-        if (!sessionStorage.getItem("admin-auth")) {
-            window.location.href = "admin-login.html";  // Redirect if not logged in
-        }
-    </script>   
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VEPA AutoCare Admin</title>
+  <style>
+    :root {
+      --bg-light: #fff;
+      --bg-dark: #000;
+      --primary: #9d4edd;
+      --text-dark: #111;
+      --text-light: #555;
+      --accent: #474747;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; font-family: 'Helvetica Neue', Arial, sans-serif; background: var(--bg-light); color: var(--text-dark); }
+    a { text-decoration: none; color: inherit; }
+    header {
+      position: fixed; top: 0; width: 100%; display: flex; justify-content: space-between; align-items: center;
+      padding: 1rem 2rem; background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); z-index: 10;
+    }
+    .logo { font-size: 1.5rem; font-weight: bold; }
+    nav ul { list-style: none; display: flex; gap: 1.5rem; }
+    nav li a { font-weight: 500; text-transform: uppercase; font-size: 0.9rem; }
+    nav li a:hover { color: var(--primary); }
+    main { padding: 6rem 2rem 2rem; }
+    .cars-container-admin { width: 100%; overflow-x: auto; }
+    .cars-table {
+      width: 100%; border-collapse: collapse;
+      margin: 0 auto 2rem;
+    }
+    .cars-table th, .cars-table td {
+      padding: 12px; text-align: center;
+      border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+    .cars-table th { background: var(--primary); color: var(--bg-light); }
+    .edit-btn, .delete-btn, .mark-sold-btn { padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+    .edit-btn { background: #00d203; color: #fff; }
+    .delete-btn { background: #e74c3c; color: #fff; }
+    .mark-sold-btn { background: #9d4edd; color: #fff; }
+    .admin-controls { max-width: 600px; margin: 0 auto 2rem; display: flex; flex-wrap: wrap; gap: 1rem; }
+    .admin-controls input, .admin-controls button, .admin-filter-sort input, .admin-filter-sort select {
+      flex: 1 1 45%; padding: 12px; font-size: 1rem; border: 1px solid #ccc; border-radius: 6px;
+    }
+    .admin-controls button { background: var(--primary); color: var(--bg-light); border: none; font-weight: 500; }
+    .admin-filter-sort { display: flex; justify-content: space-between; margin-bottom: 2rem; }
+    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); justify-content: center; align-items: center; }
+    .modal.show { display: flex; }
+    .modal-content { background: var(--bg-light); padding: 2rem; border-radius: 10px; width: 90%; max-width: 400px; position: relative; }
+    .modal-content h2 { margin-bottom: 1rem; }
+    .modal-content .close-btn { position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; cursor: pointer; }
+    .modal-content .image-scroll-container { display: flex; overflow-x: auto; gap: 1rem; margin-bottom: 1rem; }
+    .modal-content .image-scroll-container img { width: 100px; border-radius: 6px; cursor: pointer; }
+    footer { background: var(--bg-dark); color: var(--bg-light); text-align: center; padding: 1rem; position: fixed; bottom: 0; width: 100%; }
+  </style>
+  <!-- <script>
+    if (!sessionStorage.getItem('admin-auth')) window.location.href = 'admin-login.html';
+  </script> -->
 </head>
-<body>  
-    <div id="large-header" class="large-header">
-        <canvas id="demo-canvas"></canvas>
+<body>
+  <header>
+    <div class="logo">VEPA Admin</div>
+    <nav>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="#cars-table-body">Inventory</a></li>
+        <li><a href="admin-login.html">Logout</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main>
+    <div class="cars-container-admin">
+      <table class="cars-table">
+        <thead>
+          <tr><th>Images</th><th>Make</th><th>Model</th><th>Price</th><th>Sold</th><th>Actions</th></tr>
+        </thead>
+        <tbody id="cars-table-body"></tbody>
+      </table>
     </div>
-    <h1 class ="headings-below">VEPA Inventory</h1> 
-    <div id="headings" class="headings-below">
-        <h3><a class="headings-below" href="index.html">Back to Main</a></h3>
-    </div>
-
-    <!-- Display the car list here -->
-    <div class="cars-container-admin" id="cars-container-admin">
-        <h1 class = "headings-below">Current Inventory</h1>
-        <table class="cars-table">
-        </table>
-    </div> 
     <div class="admin-controls">
-        <h2>Add a Car</h2>
-        <input type="text" id="car-make" placeholder="Make" required>
-        <input type="text" id="car-model" placeholder="Model" required>
-        <input type="text" id="car-price" placeholder="Price" required>
-        <input type="text" id="car-year" placeholder="Model Year" required>
-        <input type="text" id="car-body-type" placeholder="Body Type" required>
-        <input type="text" id="car-color" placeholder="Color" required>
-        <input type="text" id="car-body-condition" placeholder="Body Condition" required>
-        <input type="text" id="car-interior-condition" placeholder="Interior Condition" required>
-        <input type="text" id="car-transmission" placeholder="Transmission Type" required>
-        <input type="text" id="car-wheels" placeholder="Wheels" required>
-        <input type="number" id="car-capacity" placeholder="Capacity (# of passengers)" required>
-        <select id="car-condition" required>
-          <option value="">Select Condition</option>
-          <option value="new">New</option>
-          <option value="used">Used</option>
-        </select>
-        <input type="text" id="car-features" placeholder="Features (comma separated)">
-        <input type="file" id="car-images" multiple>
-        <button onclick="addCar()">Add Car</button>
+      <input id="car-make" type="text" placeholder="Make">
+      <input id="car-model" type="text" placeholder="Model">
+      <input id="car-price" type="text" placeholder="Price">
+      <input id="car-images" type="file" multiple>
+      <button onclick="addCar()">Add Car</button>
     </div>
     <div class="admin-filter-sort">
-        <input type="text" id="admin-filter" placeholder="Filter by Make or Model">
-        <select id="admin-sort">
-          <option value="">Sort by</option>
-          <option value="make">Make (A-Z)</option>
-          <option value="model">Model (A-Z)</option>
-          <option value="price-asc">Price (Low to High)</option>
-          <option value="price-desc">Price (High to Low)</option>
-        </select>
-    </div>  
+      <input id="admin-filter" type="text" placeholder="Filter make or model">
+      <select id="admin-sort">
+        <option value="">Sort by</option>
+        <option value="make">Make (A-Z)</option>
+        <option value="model">Model (A-Z)</option>
+        <option value="price-asc">Price ↑</option>
+        <option value="price-desc">Price ↓</option>
+      </select>
+    </div>
+
+    <!-- Edit & Image Modals -->
     <div id="edit-modal" class="modal">
       <div class="modal-content">
+        <button class="close-btn" onclick="closeModal()">×</button>
         <h2>Edit Car</h2>
         <input id="edit-make" type="text" placeholder="Make">
         <input id="edit-model" type="text" placeholder="Model">
         <input id="edit-price" type="text" placeholder="Price">
-        <input id="edit-year" type="text" placeholder="Model Year">
-        <input id="edit-body-type" type="text" placeholder="Body Type">
-        <input id="edit-color" type="text" placeholder="Color">
-        <input id="edit-body-condition" type="text" placeholder="Body Condition">
-        <input id="edit-interior-condition" type="text" placeholder="Interior Condition">
-        <input id="edit-transmission" type="text" placeholder="Transmission Type">
-        <input id="edit-wheels" type="text" placeholder="Wheels">
-        <input id="edit-capacity" type="number" placeholder="Capacity (# of passengers)">
-        <select id="edit-condition">
-          <option value="">Select Condition</option>
-          <option value="new">New</option>
-          <option value="used">Used</option>
-        </select>
-        <input id="edit-features" type="text" placeholder="Features (comma separated)">
-        <div style="margin-top: 20px;">
-          <button onclick="saveEditCar()">Save</button>
-          <button onclick="closeModal()">Cancel</button>
-        </div>
+        <input id="edit-image" type="text" placeholder="Image URL">
+        <button onclick="saveEditCar()">Save</button>
       </div>
-    </div>    
-      
-    <!-- Modal to view all images -->
+    </div>
     <div id="view-images-modal" class="modal">
-        <div class="modal-content">
-          <h2>Manage Car Images</h2>
-          
-          <div class="image-scroll-container">
-            <!-- Images will be added dynamically here -->
-          </div>
-      
-          <div style="margin-top: 20px;">
-            <input type="file" id="new-image-upload" multiple />
-            <button onclick="uploadNewImages()">Upload</button>
-          </div>
-      
-          <button onclick="closeImageModal()" style="margin-top: 20px;">Close</button>
-        </div>
+      <div class="modal-content">
+        <button class="close-btn" onclick="closeImageModal()">×</button>
+        <h2>Car Images</h2>
+        <div class="image-scroll-container"></div>
       </div>
-        
+    </div>
+  </main>
+  <footer>
+    &copy; 2025 VEPA AutoCare
+  </footer>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js" type="module"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.5.0/firebase-firestore.js" type="module"></script>
+  <script src="admin.js" type="module"></script>
 </body>
 </html>

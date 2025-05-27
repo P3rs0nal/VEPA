@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VEPA AutoCare Inventory</title>
+  <style>
+    /* Shared Tesla-inspired palette */
+    :root {
+      --bg-light: #fff;
+      --bg-dark: #000;
+      --primary: #9d4edd;
+      --text-dark: #111;
+      --text-light: #555;
+      --accent: #474747;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Helvetica Neue', Arial, sans-serif; background: var(--bg-light); color: var(--text-dark); }
+    a { text-decoration: none; color: inherit; }
+
+    /* Header */
+    header {
+      position: fixed; top: 0; width: 100%; display: flex; justify-content: space-between; align-items: center;
+      padding: 1rem 2rem; background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); z-index: 10;
+    }
+    .logo { font-size: 1.5rem; font-weight: bold; }
+    nav ul { list-style: none; display: flex; gap: 1.5rem; }
+    nav li a, .contact-toggle { font-weight: 500; text-transform: uppercase; font-size: 0.9rem; cursor: pointer; }
+    nav li a:hover, .contact-toggle:hover { color: var(--primary); }
+
+    /* Sidebar Contact */
+    .contact-sidebar {
+      position: fixed; top: 0; right: 0; height: 100%; width: 280px;
+      background: var(--bg-dark); color: var(--bg-light);
+      transform: translateX(100%); transition: transform 0.3s ease;
+      padding: 2rem; z-index: 20;
+    }
+    .contact-sidebar.open { transform: translateX(0); }
+    .contact-sidebar h2 { margin-bottom: 1rem; font-size: 1.5rem; }
+    .contact-sidebar p { margin-bottom: 0.75rem; font-size: 0.95rem; }
+    #close-sidebar { position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: var(--bg-light); font-size: 1.2rem; cursor: pointer; }
+
+    /* Main Inventory Layout */
+    main { padding: 6rem 2rem 2rem; }
+    .inventory-header { text-align: center; margin-bottom: 2rem; }
+    .inventory-header h1 { font-size: 2.5rem; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px,1fr)); gap: 1.5rem; }
+    .card {
+      background: var(--bg-light); color: var(--text-dark);
+      border-radius: 0.5rem; overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2); transition: transform 0.3s;
+    }
+    .card:hover { transform: translateY(-6px); }
+    .card img { width: 100%; height: auto; }
+    .card-body { padding: 1rem; }
+    .card-body h3 { font-size: 1.25rem; margin-bottom: 0.5rem; }
+    .card-body .price { font-size: 1rem; color: var(--primary); font-weight: bold; }
+
+    /* Footer */
+    footer { background: var(--bg-dark); color: var(--bg-light); text-align: center; padding: 2rem 1rem; font-size: 0.9rem; margin-top: 2rem; }
+    footer a { color: var(--bg-light); }
+
+    @media (max-width: 768px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">VEPA</div>
+    <nav>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="#">Inventory</a></li>
+        <li class="contact-toggle">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <!-- Sidebar Contact Panel -->
+  <aside class="contact-sidebar" id="contact-sidebar">
+    <button id="close-sidebar">×</button>
+    <h2>Contact Us</h2>
+    <p>1904 Western Ave, Albany, NY 12203</p>
+    <p>(518) 456-5682</p>
+    <p><a href="mailto:vepaautoshop1904@gmail.com">vepaautoshop1904@gmail.com</a></p>
+  </aside>
+
+  <main>
+    <section class="inventory-header">
+      <h1>Our Inventory</h1>
+    </section>
+    <section class="grid" id="inventory-grid">
+      <!-- Cards will be dynamically injected -->
+    </section>
+  </main>
+
+  <footer>
+    <p>1904 Western Ave, Albany, NY 12203</p>
+    <p>(518) 456-5682 | <a href="mailto:vepaautoshop1904@gmail.com">vepaautoshop1904@gmail.com</a></p>
+    <p>&copy; 2025 VEPA AutoCare. All Rights Reserved.</p>
+  </footer>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js';
+    import { getFirestore, collection, getDocs } from 'https://www.gstatic.com/firebasejs/11.5.0/firebase-firestore.js';
+
+    // Firebase config (from user.js)
+    const firebaseConfig = {
+      apiKey: 'AIzaSyBcKnjZm5LYqj5jx5VEqx9ywspgZyxNfsA',
+      authDomain: 'vepa-24b46.firebaseapp.com',
+      projectId: 'vepa-24b46',
+      storageBucket: 'vepa-24b46.firebasestorage.app',
+      messagingSenderId: '170936495301',
+      appId: '1:170936495301:web:6f15b8fa08de9c',
+      measurementId: 'G-F8NFZ6SRKR'
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    async function fetchCarData() {
+      const snapshot = await getDocs(collection(db, 'cars'));
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    }
+
+    function createCarCard(car) {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <img src="${car.image || 'placeholder-car.jpg'}" alt="${car.make} ${car.model}">
+        <div class="card-body">
+          <h3>${car.make} ${car.model}</h3>
+          <div class="price">$${Number(car.price).toLocaleString()}</div>
+        </div>
+      `;
+      return card;
+    }
+
+    async function loadInventory() {
+      const grid = document.getElementById('inventory-grid');
+      grid.innerHTML = '';
+      const cars = await fetchCarData();
+      cars.forEach(car => grid.appendChild(createCarCard(car)));
+    }
+
+    document.addEventListener('DOMContentLoaded', loadInventory);
+
+    // Contact sidebar toggling
+    const toggle = document.querySelector('.contact-toggle');
+    const sidebar = document.getElementById('contact-sidebar');
+    const closeBtn = document.getElementById('close-sidebar');
+    toggle.addEventListener('click', () => sidebar.classList.toggle('open'));
+    closeBtn.addEventListener('click', () => sidebar.classList.remove('open'));
+  </script>
+</body>
+</html>
