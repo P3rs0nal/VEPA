@@ -12,51 +12,66 @@
       --text-dark: #111;
       --text-light: #555;
       --accent: #474747;
+      --radius: 6px;
+      --gap: 1rem;
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { height: 100%; font-family: 'Helvetica Neue', Arial, sans-serif; background: var(--bg-light); color: var(--text-dark); }
-    a { text-decoration: none; color: inherit; }
+    body {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      background: var(--bg-light);
+      color: var(--text-dark);
+    }
     header {
-      position: fixed; top: 0; width: 100%; display: flex; justify-content: space-between; align-items: center;
-      padding: 1rem 2rem; background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); z-index: 10;
+      position: sticky; top: 0; width: 100%; z-index: 10;
+      background: rgba(255,255,255,0.95); backdrop-filter: blur(8px);
+      padding: var(--gap) calc(2*var(--gap));
+      display: flex; justify-content: space-between; align-items: center;
     }
     .logo { font-size: 1.5rem; font-weight: bold; }
-    nav ul { list-style: none; display: flex; gap: 1.5rem; }
-    nav li a { font-weight: 500; text-transform: uppercase; font-size: 0.9rem; }
-    nav li a:hover { color: var(--primary); }
-    main { padding: 6rem 2rem 2rem; }
-    .cars-container-admin { width: 100%; overflow-x: auto; }
-    .cars-table {
-      width: 100%; border-collapse: collapse;
-      margin: 0 auto 2rem;
+    nav ul { list-style: none; display: flex; gap: var(--gap); flex-wrap: wrap; }
+    nav a { font-size: 0.9rem; text-transform: uppercase; color: var(--text-light); }
+    nav a:hover { color: var(--primary); }
+    main { flex: 1; padding: calc(6*var(--gap)) var(--gap); }
+
+    .admin-controls, .admin-filter-sort {
+      display: flex; flex-wrap: wrap; gap: var(--gap); margin-bottom: calc(2*var(--gap)); justify-content: space-between;
     }
-    .cars-table th, .cars-table td {
-      padding: 12px; text-align: center;
-      border-bottom: 1px solid rgba(0,0,0,0.1);
+    .admin-controls input,
+    .admin-controls select,
+    .admin-controls button,
+    .admin-filter-sort input,
+    .admin-filter-sort select {
+      padding: 0.75rem; font-size: 1rem; border: 1px solid #ccc; border-radius: var(--radius); flex: 1 1 200px;
     }
-    .cars-table th { background: var(--primary); color: var(--bg-light); }
-    .edit-btn, .delete-btn, .mark-sold-btn { padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
-    .edit-btn { background: #00d203; color: #fff; }
-    .delete-btn { background: #e74c3c; color: #fff; }
-    .mark-sold-btn { background: #9d4edd; color: #fff; }
-    .admin-controls { max-width: 600px; margin: 0 auto 2rem; display: flex; flex-wrap: wrap; gap: 1rem; }
-    .admin-controls input, .admin-controls button, .admin-filter-sort input, .admin-filter-sort select {
-      flex: 1 1 45%; padding: 12px; font-size: 1rem; border: 1px solid #ccc; border-radius: 6px;
-    }
-    .admin-controls button { background: var(--primary); color: var(--bg-light); border: none; font-weight: 500; }
-    .admin-filter-sort { display: flex; justify-content: space-between; margin-bottom: 2rem; }
-    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); justify-content: center; align-items: center; }
+    .admin-controls button { background: var(--primary); color: var(--bg-light); border: none; cursor: pointer; }
+
+    .table-wrapper { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 800px; }
+    th, td { padding: var(--gap); text-align: center; border-bottom: 1px solid rgba(0,0,0,0.1); }
+    th { background: var(--primary); color: var(--bg-light); }
+    td img.thumbnail { width: 80px; height: 60px; object-fit: cover; border-radius: var(--radius); cursor: pointer; }
+    .action-btn { padding: 0.5rem 1rem; border: none; border-radius: var(--radius); cursor: pointer; color: #fff; }
+    .edit-btn { background: #00d203; }
+    .delete-btn { background: #e74c3c; }
+
+    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; padding: var(--gap); }
     .modal.show { display: flex; }
-    .modal-content { background: var(--bg-light); padding: 2rem; border-radius: 10px; width: 90%; max-width: 400px; position: relative; }
-    .modal-content h2 { margin-bottom: 1rem; }
-    .modal-content .close-btn { position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; cursor: pointer; }
-    .modal-content .image-scroll-container { display: flex; overflow-x: auto; gap: 1rem; margin-bottom: 1rem; }
-    .modal-content .image-scroll-container img { width: 100px; border-radius: 6px; cursor: pointer; }
-    footer { background: var(--bg-dark); color: var(--bg-light); text-align: center; padding: 1rem; position: fixed; bottom: 0; width: 100%; }
+    .modal-content {
+      background: var(--bg-light); padding: calc(2*var(--gap)); border-radius: var(--radius);
+      max-width: 500px; width: 100%; max-height: 90%; overflow-y: auto; position: relative;
+    }
+    .modal-content h2 { margin-bottom: var(--gap); }
+    .modal-content .close-btn { position: absolute; top: var(--gap); right: var(--gap); background: none; border: none; font-size: 1.5rem; cursor: pointer; }
+    .modal-content label { display: block; margin-top: var(--gap); font-weight: 500; }
+    .modal-content input,
+    .modal-content select,
+    .modal-content .image-upload { width: 100%; padding: 0.5rem; margin-top: 0.25rem; border: 1px solid #ccc; border-radius: var(--radius); }
+    .image-list { display: flex; gap: 0.5rem; margin-top: var(--gap); overflow-x: auto; }
+    @media (max-width:768px) { header { flex-direction: column; align-items: flex-start; } .admin-controls input, .admin-controls select { flex: 1 1 100%; } table { min-width: unset; } }
   </style>
-  <!-- <script>
-    if (!sessionStorage.getItem('admin-auth')) window.location.href = 'admin-login.html';
-  </script> -->
 </head>
 <body>
   <header>
@@ -64,64 +79,353 @@
     <nav>
       <ul>
         <li><a href="index.html">Home</a></li>
-        <li><a href="#cars-table-body">Inventory</a></li>
-        <li><a href="admin-login.html">Logout</a></li>
+        <li><a href="#">Inventory</a></li>
+        <li><a href="javascript:doSignOut()">Logout</a></li>
       </ul>
     </nav>
   </header>
+
   <main>
-    <div class="cars-container-admin">
-      <table class="cars-table">
+    <div class="admin-controls">
+      <input id="car-make" type="text" placeholder="Make" required>
+      <input id="car-model" type="text" placeholder="Model" required>
+      <input id="car-price" type="number" placeholder="Price" step="1" required>
+      <input id="car-condition" type="text" placeholder="Condition" required>
+      <input id="car-year" type="number" placeholder="Year" required>
+      <input id="car-body-type" type="text" placeholder="Body Type" required>
+      <select id="car-color">
+        <option value="">Color</option><option>Black</option><option>White</option><option>Red</option><option>Blue</option><option>Silver</option><option>Gray</option>
+      </select>
+      <select id="car-body-condition">
+        <option value="">Body Condition</option><option>Bad</option><option>Fair</option><option>Good</option>
+      </select>
+      <select id="car-interior-condition">
+        <option value="">Interior Condition</option><option>Bad</option><option>Fair</option><option>Good</option>
+      </select>
+      <input id="car-transmission" type="text" placeholder="Transmission" required>
+      <input id="car-wheels" type="text" placeholder="Wheels" required>
+      <input id="car-capacity" type="number" placeholder="Capacity (#)" required>
+      <input id="car-features" type="text" placeholder="Features (comma-separated)">
+      <input id="car-images" class="image-upload" type="file" multiple accept="image/*">
+      <button onclick="addCar()">Add Car</button>
+    </div>
+
+    <div class="admin-filter-sort">
+      <input id="filter-make" type="text" placeholder="Filter Make">
+      <input id="filter-model" type="text" placeholder="Filter Model">
+      <select id="filter-color">
+        <option value="">All Colors</option><option>Black</option><option>White</option><option>Red</option><option>Blue</option><option>Silver</option><option>Gray</option>
+      </select>
+      <select id="filter-body-condition">
+        <option value="">All Body Conditions</option><option>Bad</option><option>Fair</option><option>Good</option>
+      </select>
+      <button onclick="applyFilters()">Apply Filters</button>
+      <button onclick="resetFilters()">Reset</button>
+    </div>
+
+    <div class="table-wrapper">
+      <table>
         <thead>
-          <tr><th>Images</th><th>Make</th><th>Model</th><th>Price</th><th>Sold</th><th>Actions</th></tr>
+          <tr>
+            <th>Images</th><th>Make</th><th>Model</th><th>Price</th><th>Condition</th><th>Year</th><th>Body Type</th><th>Color</th><th>Body Cond.</th><th>Interior Cond.</th><th>Transmission</th><th>Wheels</th><th>Capacity</th><th>Features</th><th>Actions</th>
+          </tr>
         </thead>
         <tbody id="cars-table-body"></tbody>
       </table>
     </div>
-    <div class="admin-controls">
-      <input id="car-make" type="text" placeholder="Make">
-      <input id="car-model" type="text" placeholder="Model">
-      <input id="car-price" type="text" placeholder="Price">
-      <input id="car-images" type="file" multiple>
-      <button onclick="addCar()">Add Car</button>
-    </div>
-    <div class="admin-filter-sort">
-      <input id="admin-filter" type="text" placeholder="Filter make or model">
-      <select id="admin-sort">
-        <option value="">Sort by</option>
-        <option value="make">Make (A-Z)</option>
-        <option value="model">Model (A-Z)</option>
-        <option value="price-asc">Price ↑</option>
-        <option value="price-desc">Price ↓</option>
-      </select>
-    </div>
 
-    <!-- Edit & Image Modals -->
     <div id="edit-modal" class="modal">
       <div class="modal-content">
-        <button class="close-btn" onclick="closeModal()">×</button>
+        <button class="close-btn" onclick="closeEditModal()">×</button>
         <h2>Edit Car</h2>
-        <input id="edit-make" type="text" placeholder="Make">
-        <input id="edit-model" type="text" placeholder="Model">
-        <input id="edit-price" type="text" placeholder="Price">
-        <input id="edit-image" type="text" placeholder="Image URL">
-        <button onclick="saveEditCar()">Save</button>
+        <label>Make<input id="edit-make" type="text"></label>
+        <label>Model<input id="edit-model" type="text"></label>
+        <label>Price<input id="edit-price" type="number" step="1"></label>
+        <label>Condition<input id="edit-condition" type="text"></label>
+        <label>Year<input id="edit-year" type="number"></label>
+        <label>Body Type<input id="edit-body-type" type="text"></label>
+        <label>Color<select id="edit-color">
+          <option>Black</option><option>White</option><option>Red</option><option>Blue</option><option>Silver</option><option>Gray</option>
+        </select></label>
+        <label>Body Cond.<select id="edit-body-condition">
+          <option>Bad</option><option>Fair</option><option>Good</option>
+        </select></label>
+        <label>Interior Cond.<select id="edit-interior-condition">
+          <option>Bad</option><option>Fair</option><option>Good</option>
+        </select></label>
+        <label>Transmission<input id="edit-transmission" type="text"></label>
+        <label>Wheels<input id="edit-wheels" type="text"></label>
+        <label>Capacity<input id="edit-capacity" type="number"></label>
+        <label>Features<input id="edit-features" type="text"></label>
+        <label> New Images<input id="edit-images" class="image-upload" type="file" multiple accept="image/*"></label>
+        <div class="image-list" id="edit-image-list"></div>
+        <button onclick="saveEditCar()">Save Changes</button>
       </div>
     </div>
+
     <div id="view-images-modal" class="modal">
       <div class="modal-content">
         <button class="close-btn" onclick="closeImageModal()">×</button>
         <h2>Car Images</h2>
-        <div class="image-scroll-container"></div>
+        <div class="image-list" id="image-list"></div>
+        <label>Add Images<input id="new-image-files" class="image-upload" type="file" multiple></label>
+        <button onclick="uploadNewImages()">Upload</button>
       </div>
     </div>
+
   </main>
-  <footer>
-    &copy; 2025 VEPA AutoCare
-  </footer>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js" type="module"></script>
-  <script src="https://www.gstatic.com/firebasejs/11.5.0/firebase-firestore.js" type="module"></script>
-  <script src="admin.js" type="module"></script>
+  <footer>&copy; 2025 VEPA AutoCare</footer>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js';
+    import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/11.5.0/firebase-auth.js';
+    import { getFirestore, collection, getDocs, getDoc, addDoc, deleteDoc, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/11.5.0/firebase-firestore.js';
+
+    const firebaseConfig = {
+      apiKey: 'AIzaSyBcKnjZm5LYqj5jx5VEqx9ywspgZyxNfsA',
+      authDomain: 'vepa-24b46.firebaseapp.com',
+      projectId: 'vepa-24b46',
+      storageBucket: 'vepa-24b46.appspot.com',
+      messagingSenderId: '170936495301',
+      appId: '1:170936495301:web:6f15b8fa08de9c',
+      measurementId: 'G-F8NFZ6SRKR'
+    };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // Redirect if unauthenticated
+    onAuthStateChanged(auth, user => {
+      if (!user) window.location.href = 'login.html';
+      else displayCarsAdmin();
+    });
+
+    window.doSignOut = async () => {
+      await signOut(auth);
+      window.location.href = 'login.html';
+    };
+
+    // Cloudinary upload
+    async function uploadImage(file) {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', 'vepa_unsigned');
+      const res = await fetch('https://api.cloudinary.com/v1_1/dyjfyxrve/image/upload', { method: 'POST', body: formData });
+      if (!res.ok) throw new Error('Cloudinary upload failed');
+      const data = await res.json();
+      return { url: data.secure_url, public_id: data.public_id };
+    }
+
+    async function handleUploads(files) {
+      const arr = [];
+      for (const file of Array.from(files)) {
+        const img = await uploadImage(file);
+        arr.push(img);
+      }
+      return arr;
+    }
+
+    async function fetchCarData() {
+      const snap = await getDocs(collection(db, 'cars'));
+      return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    }
+
+    async function displayCarsAdmin(cars) {
+      const data = cars || await fetchCarData();
+      const body = document.getElementById('cars-table-body');
+      body.innerHTML = '';
+      data.forEach(car => {
+        const tr = document.createElement('tr');
+        const thumb = car.images?.[0]?.url || 'GenCar.png';
+        tr.innerHTML =
+          `<td><img class="thumbnail" src="${thumb}" onclick="openImageModal('${car.id}')"></td>` +
+          `<td>${car.make}</td><td>${car.model}</td><td>$${car.price}</td><td>${car.condition}</td>` +
+          `<td>${car.year}</td><td>${car.bodyType}</td><td>${car.color}</td>` +
+          `<td>${car.bodyCondition}</td><td>${car.interiorCondition}</td>` +
+          `<td>${car.transmission}</td><td>${car.wheels}</td><td>${car.capacity}</td>` +
+          `<td>${(car.features||[]).join(', ')}</td>` +
+          `<td><button class="action-btn edit-btn" onclick="openEdit('${car.id}')">Edit</button>` +
+          `<button class="action-btn delete-btn" onclick="deleteCar('${car.id}')">Delete</button></td>`;
+        body.appendChild(tr);
+      });
+    }
+
+    async function addCar() {
+      // Required fields check
+      const make = document.getElementById('car-make').value.trim();
+      const model = document.getElementById('car-model').value.trim();
+      // ... repeat for other required fields
+      if (!make || !model) { alert('Please fill in required fields.'); return; }
+      const images = await handleUploads(document.getElementById('car-images').files);
+      const carObj = {
+        make,
+        model,
+        price: Number(document.getElementById('car-price').value),
+        condition: document.getElementById('car-condition').value.trim(),
+        year: Number(document.getElementById('car-year').value),
+        bodyType: document.getElementById('car-body-type').value.trim(),
+        color: document.getElementById('car-color').value,
+        bodyCondition: document.getElementById('car-body-condition').value,
+        interiorCondition: document.getElementById('car-interior-condition').value,
+        transmission: document.getElementById('car-transmission').value.trim(),
+        wheels: document.getElementById('car-wheels').value.trim(),
+        capacity: Number(document.getElementById('car-capacity').value),
+        features: document.getElementById('car-features').value.split(',').map(f=>f.trim()),
+        images
+      };
+      await addDoc(collection(db,'cars'), carObj);
+      alert('Car added successfully!');
+      displayCarsAdmin();
+    }
+
+    async function deleteCar(carId) {
+      if (!confirm('Delete this car and its images?')) return;
+      const docRef = doc(db,'cars',carId);
+      const snap = await getDoc(docRef);
+      const data = snap.data();
+      const public_ids = (data.images||[]).map(i=>i.public_id).filter(Boolean);
+      if (public_ids.length) {
+        await fetch('https://vepa.onrender.com/delete-images', {
+          method: 'POST', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ public_ids })
+        });
+      }
+      await deleteDoc(docRef);
+      alert('Car deleted!');
+      displayCarsAdmin();
+    }
+
+    let editId;
+    async function openEdit(id) {
+      editId = id;
+      const car = (await fetchCarData()).find(c=>c.id===id);
+      if (!car) return;
+      document.getElementById('edit-make').value = car.make;
+      document.getElementById('edit-model').value = car.model;
+      document.getElementById('edit-price').value = car.price;
+      document.getElementById('edit-condition').value = car.condition;
+      document.getElementById('edit-year').value = car.year;
+      document.getElementById('edit-body-type').value = car.bodyType;
+      document.getElementById('edit-color').value = car.color;
+      document.getElementById('edit-body-condition').value = car.bodyCondition;
+      document.getElementById('edit-interior-condition').value = car.interiorCondition;
+      document.getElementById('edit-transmission').value = car.transmission;
+      document.getElementById('edit-wheels').value = car.wheels;
+      document.getElementById('edit-capacity').value = car.capacity;
+      document.getElementById('edit-features').value = (car.features||[]).join(', ');
+      const list = document.getElementById('edit-image-list'); list.innerHTML = '';
+      (car.images||[]).forEach(i=> list.innerHTML += `<img src="${i.url}" style="width:80px;height:60px;border-radius:var(--radius);margin-right:4px;">`);
+      document.getElementById('edit-modal').classList.add('show');
+    }
+
+    async function saveEditCar() {
+      const updated = {
+        make: document.getElementById('edit-make').value.trim(),
+        model: document.getElementById('edit-model').value.trim(),
+        price: Number(document.getElementById('edit-price').value),
+        condition: document.getElementById('edit-condition').value.trim(),
+        year: Number(document.getElementById('edit-year').value),
+        bodyType: document.getElementById('edit-body-type').value.trim(),
+        color: document.getElementById('edit-color').value,
+        bodyCondition: document.getElementById('edit-body-condition').value,
+        interiorCondition: document.getElementById('edit-interior-condition').value,
+        transmission: document.getElementById('edit-transmission').value.trim(),
+        wheels: document.getElementById('edit-wheels').value.trim(),
+        capacity: Number(document.getElementById('edit-capacity').value),
+        features: document.getElementById('edit-features').value.split(',').map(f=>f.trim())
+      };
+      const files = document.getElementById('edit-images').files;
+      if (files.length) {
+        const imgs = await handleUploads(files);
+        const docRef = doc(db,'cars',editId);
+        const snap = await getDoc(docRef);
+        const current = snap.data().images || [];
+        updated.images = [...current, ...imgs];
+      }
+      await updateDoc(doc(db,'cars',editId), updated);
+      alert('Car updated!');
+      closeEditModal();
+      displayCarsAdmin();
+    }
+
+    function closeEditModal() { document.getElementById('edit-modal').classList.remove('show'); }
+
+    async function openImageModal(id) {
+      const car = (await fetchCarData()).find(c=>c.id===id);
+      const list = document.getElementById('image-list'); list.innerHTML = '';
+      car.images.forEach((img,idx) => {
+        const wrapper = document.createElement('div'); wrapper.style.display='inline-block'; wrapper.style.marginRight='0.5rem';
+        const el = document.createElement('img'); el.src=img.url; el.width=80; el.height=60; el.style.borderRadius='var(--radius)'; wrapper.appendChild(el);
+        const btn = document.createElement('button'); btn.textContent='Delete'; btn.classList.add('action-btn','delete-btn'); btn.onclick = () => deleteImage(id,idx,img.public_id);
+        wrapper.appendChild(btn);
+        list.appendChild(wrapper);
+      });
+      const modal = document.getElementById('view-images-modal'); modal.dataset.id=id; modal.classList.add('show');
+    }
+
+    function closeImageModal() { document.getElementById('view-images-modal').classList.remove('show'); }
+
+    async function uploadNewImages() {
+      const modal = document.getElementById('view-images-modal'); const carId = modal.dataset.id;
+      const files = Array.from(document.getElementById('new-image-files').files);
+      if (!files.length) return alert('Please select images to upload.');
+      try {
+        const uploaded = [];
+        for (const f of files) { const img = await uploadImage(f); uploaded.push(img); }
+        const docRef = doc(db,'cars',carId);
+        const snap = await getDoc(docRef);
+        const current = snap.data().images || [];
+        await updateDoc(docRef,{ images: [...current, ...uploaded] });
+        alert('Images uploaded!'); document.getElementById('new-image-files').value = '';
+        openImageModal(carId); displayCarsAdmin();
+      } catch(err) { console.error(err); alert('Upload failed.'); }
+    }
+
+    async function deleteImage(carId, idx, public_id) {
+      try {
+        const docRef = doc(db,'cars',carId);
+        const snap = await getDoc(docRef);
+        const data = snap.data();
+        const updated = (data.images||[]).filter((_,i)=>i!==idx);
+        await updateDoc(docRef,{ images: updated });
+        if (public_id) await fetch('https://vepa.onrender.com/delete-images',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ public_ids: [public_id] }) });
+        alert('Image deleted!'); openImageModal(carId);
+      } catch(e) { console.error(e); alert('Failed to delete image.'); }
+    }
+
+    function applyFilters() {
+      fetchCarData().then(cars => {
+        const fMake = document.getElementById('filter-make').value.toLowerCase();
+        const fModel = document.getElementById('filter-model').value.toLowerCase();
+        const fColor = document.getElementById('filter-color').value;
+        const fBody = document.getElementById('filter-body-condition').value;
+        const filtered = cars.filter(c =>
+          (!fMake||c.make.toLowerCase().includes(fMake)) &&
+          (!fModel||c.model.toLowerCase().includes(fModel)) &&
+          (!fColor||c.color===fColor) &&
+          (!fBody||c.bodyCondition===fBody)
+        );
+        displayCarsAdmin(filtered);
+      });
+    }
+
+    function resetFilters() {
+      document.querySelectorAll('.admin-filter-sort input, .admin-filter-sort select').forEach(i=>i.value='');
+      displayCarsAdmin();
+    }
+
+    // Expose globals
+    window.addCar = addCar;
+    window.deleteCar = deleteCar;
+    window.openEdit = openEdit;
+    window.saveEditCar = saveEditCar;
+    window.closeEditModal = closeEditModal;
+    window.openImageModal = openImageModal;
+    window.closeImageModal = closeImageModal;
+    window.uploadNewImages = uploadNewImages;
+    window.deleteImage = deleteImage;
+    window.applyFilters = applyFilters;
+    window.resetFilters = resetFilters;
+  </script>
 </body>
 </html>

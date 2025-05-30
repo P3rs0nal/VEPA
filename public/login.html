@@ -3,108 +3,110 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>VEPA AutoCare - Login</title>
+  <title>VEPA AutoCare – Login</title>
   <style>
     :root {
-      --bg-light: #F5F5F5;
-      --bg-dark: #1A1A1A;
-      --primary: #9d4edd;
-      --text-dark: #222;
-      --text-light: #777;
-      --accent: #EAEAEA;
+      --color-bg-light: #fff;
+      --color-bg-dark: #000;
+      --color-primary: #9d4edd;
+      --color-text: #111;
+      --color-text-light: #555;
+      --color-accent: #474747;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      background: var(--color-bg-light);
+      color: var(--color-text);
       display: flex;
       flex-direction: column;
       min-height: 100vh;
-      font-family: 'Helvetica Neue', Arial, sans-serif;
-      background: var(--bg-light);
-      color: var(--text-dark);
     }
+    a { color: inherit; text-decoration: none; }
     header {
-      background: var(--bg-dark);
-      color: white;
-      padding: 1rem 2rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      padding: 1rem 2rem;
+      background: var(--color-bg-light);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
-    .logo {
-      font-size: 1.5rem;
-      font-weight: bold;
-    }
+    .logo { font-size: 1.5rem; font-weight: bold; }
     nav a {
-      color: white;
-      margin-left: 1rem;
+      margin-left: 1.5rem;
       font-weight: 500;
       text-transform: uppercase;
       font-size: 0.9rem;
+      color: var(--color-text-light);
     }
+    nav a:hover { color: var(--color-primary); }
     main {
       flex: 1;
       display: flex;
       justify-content: center;
       align-items: center;
-      padding: 2rem;
+      padding: 2rem 1rem;
     }
     .auth-container {
-      background: white;
-      padding: 2.5rem;
+      background: rgba(0,0,0,0.05);
+      padding: 2rem;
       border-radius: 8px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      width: 100%;
-      max-width: 400px;
+      width: 320px;
     }
     .auth-container h2 {
-      text-align: center;
-      margin-bottom: 1.5rem;
+      margin-bottom: 1rem;
       font-weight: 300;
-      font-size: 1.8rem;
-      color: var(--text-dark);
+      text-align: center;
+      color: var(--color-text);
     }
     .auth-container form {
       display: flex;
       flex-direction: column;
-      gap: 1rem;
     }
     .auth-container input {
-      padding: 0.75rem 1rem;
-      border: 1px solid var(--accent);
+      padding: 0.75rem;
+      margin-bottom: 1rem;
+      border: 1px solid var(--color-accent);
       border-radius: 4px;
       font-size: 1rem;
+      background: var(--color-bg-light);
+      color: var(--color-text);
     }
     .auth-container button {
-      padding: 0.75rem 1rem;
-      background: var(--primary);
-      color: white;
+      padding: 0.75rem;
+      background: var(--color-primary);
+      color: var(--color-bg-light);
       border: none;
       border-radius: 4px;
-      font-size: 1rem;
       font-weight: 600;
       cursor: pointer;
-      transition: background 0.3s;
+      transition: background 0.2s ease;
     }
-    .auth-container button:hover {
-      background: #7b33b1;
-    }
-    .auth-container .redirect {
+    .auth-container button:hover { background: var(--color-primary); filter: brightness(0.9); }
+    .redirect {
       text-align: center;
       margin-top: 1rem;
       font-size: 0.9rem;
-      color: var(--text-light);
+      color: var(--color-text-light);
     }
-    .auth-container .redirect a {
-      color: var(--primary);
-      text-decoration: none;
-      font-weight: 500;
+    .redirect a { color: var(--color-primary); }
+    #error-message {
+      margin-top: 0.5rem;
+      font-size: 0.9rem;
+      color: #e74c3c;
+      min-height: 1.2em;
+      text-align: center;
     }
     footer {
-      background: var(--bg-dark);
-      color: white;
       text-align: center;
       padding: 1rem;
-      font-size: 0.9rem;
+      font-size: 0.8rem;
+      color: var(--color-text-light);
+    }
+    @media (max-width: 400px) {
+      .auth-container { width: 100%; }
+      header { flex-direction: column; gap: 1rem; }
     }
   </style>
 </head>
@@ -116,41 +118,67 @@
       <a href="signup.html">Sign Up</a>
     </nav>
   </header>
+
   <main>
     <div class="auth-container">
       <h2>Login to Your Account</h2>
       <form id="login-form">
         <input type="email" id="login-email" placeholder="Email" required />
         <input type="password" id="login-password" placeholder="Password" required />
-        <button type="submit">Login</button>
+        <button type="submit" id="login-btn">Login</button>
       </form>
       <p class="redirect">Don't have an account? <a href="signup.html">Sign up</a></p>
+      <p id="error-message"></p>
     </div>
   </main>
+
   <footer>&copy; 2025 VEPA AutoCare</footer>
+
   <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js';
-    import { getAuth, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/11.5.0/firebase-auth.js';
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-firestore.js";
+
     const firebaseConfig = {
-      apiKey: 'AIzaSyBcKnjZm5LYqj5jx5VEqx9ywspgZyxNfsA',
-      authDomain: 'vepa-24b46.firebaseapp.com',
-      projectId: 'vepa-24b46',
-      storageBucket: 'vepa-24b46.firebasestorage.app',
-      messagingSenderId: '170936495301',
-      appId: '1:170936495301:web:6f15b8fa08de9c',
-      measurementId: 'G-F8NFZ6SRKR'
+      apiKey: "AIzaSyBcKnjZm5LYqj5jx5VEqx9ywspgZyxNfsA",
+      authDomain: "vepa-24b46.firebaseapp.com",
+      projectId: "vepa-24b46",
+      storageBucket: "vepa-24b46.appspot.app",
+      messagingSenderId: "170936495301",
+      appId: "1:170936495301:web:6f15b8fa08deeb01d5d4ac",
+      measurementId: "G-F8NFZ6SRKR"
     };
-    initializeApp(firebaseConfig);
-    const auth = getAuth();
-    document.getElementById('login-form').addEventListener('submit', async e => {
+    const app  = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
+
+    document.getElementById("login-form").addEventListener("submit", async e => {
       e.preventDefault();
-      const email = document.getElementById('login-email').value;
-      const password = document.getElementById('login-password').value;
+      const email = document.getElementById("login-email").value.trim();
+      const pw    = document.getElementById("login-password").value.trim();
+      const errEl = document.getElementById("error-message");
+      errEl.textContent = "";
+
+      if (!email || !pw) {
+        errEl.textContent = "Both fields are required.";
+        return;
+      }
+
       try {
-        await signInWithEmailAndPassword(auth, email, password);
-        window.location.href = 'index.html';
+        const { user } = await signInWithEmailAndPassword(auth, email, pw);
+        const snap = await getDoc(doc(db, "users", user.email));
+        if (snap.exists() && snap.data().isAdmin) {
+          sessionStorage.setItem("admin-auth", "true");
+        } else {
+          sessionStorage.removeItem("admin-auth");
+        }
+        window.location.href = "index.html";
       } catch (err) {
-        alert('Login failed: ' + err.message);
+        console.error("login-up failed:", err.code, err.message);
+        console.error(err);
+        errEl.textContent = err.code === "auth/user-not-found"
+          ? "No account found."
+          : "Login failed. Check your credentials.";
       }
     });
   </script>

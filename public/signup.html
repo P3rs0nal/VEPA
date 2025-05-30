@@ -1,85 +1,85 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>VEPA AutoCare - Sign Up</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>VEPA AutoCare – Sign Up</title>
   <style>
     :root {
-      --bg-light: #F5F5F5;
-      --bg-dark: #1A1A1A;
-      --primary: #9d4edd;
-      --text-dark: #222;
-      --text-light: #777;
-      --accent: #EAEAEA;
+      --color-bg-light: #fff;
+      --color-bg-dark: #000;
+      --color-primary: #9d4edd;
+      --color-text: #111;
+      --color-text-light: #555;
+      --color-accent: #474747;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      background: var(--color-bg-light);
+      color: var(--color-text);
       display: flex;
       flex-direction: column;
       min-height: 100vh;
-      font-family: 'Helvetica Neue', Arial, sans-serif;
-      background: var(--bg-light);
-      color: var(--text-dark);
     }
+    a { color: inherit; text-decoration: none; }
     header {
-      background: var(--bg-dark);
-      color: white;
-      padding: 1rem 2rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 1rem 2rem; background: var(--color-bg-light);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     .logo { font-size: 1.5rem; font-weight: bold; }
-    nav a { color: white; margin-left: 1rem; font-weight: 500; text-transform: uppercase; font-size: 0.9rem; }
+    nav a {
+      margin-left: 1.5rem; font-weight: 500; text-transform: uppercase;
+      font-size: 0.9rem; color: var(--color-text-light);
+    }
+    nav a:hover { color: var(--color-primary); }
     main {
-      flex: 1;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 2rem;
+      flex: 1; display: flex; justify-content: center; align-items: center;
+      padding: 2rem 1rem;
     }
     .auth-container {
-      background: white;
-      padding: 2.5rem;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      width: 100%;
-      max-width: 400px;
+      background: rgba(0,0,0,0.05); padding: 2rem;
+      border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      width: 320px;
     }
     .auth-container h2 {
-      text-align: center;
-      margin-bottom: 1.5rem;
-      font-weight: 300;
-      font-size: 1.8rem;
-      color: var(--text-dark);
+      margin-bottom: 1rem; font-weight: 300;
+      text-align: center; color: var(--color-text);
     }
     .auth-container form {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
+      display: flex; flex-direction: column;
     }
     .auth-container input {
-      padding: 0.75rem 1rem;
-      border: 1px solid var(--accent);
-      border-radius: 4px;
-      font-size: 1rem;
+      padding: 0.75rem; margin-bottom: 1rem;
+      border: 1px solid var(--color-accent);
+      border-radius: 4px; font-size: 1rem;
+      background: var(--color-bg-light); color: var(--color-text);
     }
     .auth-container button {
-      padding: 0.75rem 1rem;
-      background: var(--primary);
-      color: white;
-      border: none;
-      border-radius: 4px;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.3s;
+      padding: 0.75rem; background: var(--color-primary);
+      color: var(--color-bg-light); border: none;
+      border-radius: 4px; font-weight: 600;
+      cursor: pointer; transition: filter 0.2s ease;
     }
-    .auth-container button:hover { background: #7b33b1; }
-    .auth-container .redirect { text-align: center; margin-top: 1rem; font-size: 0.9rem; color: var(--text-light); }
-    .auth-container .redirect a { color: var(--primary); }
-    footer { text-align: center; padding: 1rem; background: var(--bg-dark); color: white; font-size: 0.9rem; }
+    .auth-container button:hover { filter: brightness(0.9); }
+    .redirect {
+      text-align: center; margin-top: 1rem;
+      font-size: 0.9rem; color: var(--color-text-light);
+    }
+    .redirect a { color: var(--color-primary); }
+    #error-message {
+      margin-top: 0.5rem; font-size: 0.9rem;
+      color: #e74c3c; min-height: 1.2em; text-align: center;
+    }
+    footer {
+      text-align: center; padding: 1rem;
+      font-size: 0.8rem; color: var(--color-text-light);
+    }
+    @media (max-width: 400px) {
+      .auth-container { width: 100%; }
+      header { flex-direction: column; gap: 1rem; }
+    }
   </style>
 </head>
 <body>
@@ -90,41 +90,66 @@
       <a href="login.html">Login</a>
     </nav>
   </header>
+
   <main>
     <div class="auth-container">
       <h2>Create an Account</h2>
       <form id="signup-form">
         <input type="email" id="signup-email" placeholder="Email" required />
-        <input type="password" id="signup-password" placeholder="Password" required minlength="6" />
-        <button type="submit">Sign Up</button>
+        <input type="password" id="signup-password" placeholder="Password (6+ chars)" required minlength="6" />
+        <button type="submit" id="signup-btn">Sign Up</button>
       </form>
       <p class="redirect">Already have an account? <a href="login.html">Login</a></p>
+      <p id="error-message"></p>
     </div>
   </main>
+
   <footer>&copy; 2025 VEPA AutoCare</footer>
+
   <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js';
-    import { getAuth, createUserWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/11.5.0/firebase-auth.js';
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-auth.js";
+    import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-firestore.js";
+
+    // Firebase config
     const firebaseConfig = {
-      apiKey: 'AIzaSyBcKnjZm5LYqj5jx5VEqx9ywspgZyxNfsA',
-      authDomain: 'vepa-24b46.firebaseapp.com',
-      projectId: 'vepa-24b46',
-      storageBucket: 'vepa-24b46.firebasestorage.app',
-      messagingSenderId: '170936495301',
-      appId: '1:170936495301:web:6f15b8fa08de9c',
-      measurementId: 'G-F8NFZ6SRKR'
+      apiKey: "AIzaSyBcKnjZm5LYqj5jx5VEqx9ywspgZyxNfsA",
+      authDomain: "vepa-24b46.firebaseapp.com",
+      projectId: "vepa-24b46",
+      storageBucket: "vepa-24b46.appspot.app",
+      messagingSenderId: "170936495301",
+      appId: "1:170936495301:web:6f15b8fa08de9c",
+      measurementId: "G-F8NFZ6SRKR"
     };
-    initializeApp(firebaseConfig);
-    const auth = getAuth();
-    document.getElementById('signup-form').addEventListener('submit', async e => {
+
+    const app  = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
+
+    document.getElementById("signup-form").addEventListener("submit", async e => {
       e.preventDefault();
-      const email = document.getElementById('signup-email').value;
-      const password = document.getElementById('signup-password').value;
+      const email = document.getElementById("signup-email").value.trim();
+      const pw    = document.getElementById("signup-password").value.trim();
+      const errEl = document.getElementById("error-message");
+      errEl.textContent = "";
+
+      if (!email || pw.length < 6) {
+        errEl.textContent = "Enter a valid email and password (6+ chars).";
+        return;
+      }
+
       try {
-        await createUserWithEmailAndPassword(auth, email, password);
-        window.location.href = 'index.html';
+        const { user } = await createUserWithEmailAndPassword(auth, email, pw);
+        // Store user in Firestore under "users" collection using UID as document ID
+        await setDoc(doc(db, "users", user.email), {
+          email: user.email,
+          isAdmin: false
+        });
+        sessionStorage.removeItem("admin-auth");
+        window.location.href = "index.html";
       } catch (err) {
-        alert('Signup failed: ' + err.message);
+        console.error("Sign-up failed:", err.code, err.message);
+        errEl.textContent = err.message;
       }
     });
   </script>

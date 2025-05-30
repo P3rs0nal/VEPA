@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>VEPA AutoCare</title>
   <style>
     :root {
@@ -15,66 +15,162 @@
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; }
-    body { font-family: 'Helvetica Neue', Arial, sans-serif; background: var(--color-bg-light); color: var(--color-text); }
+    body {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      background: var(--color-bg-light);
+      color: var(--color-text);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
     a { text-decoration: none; color: inherit; }
-    img { max-width: 100%; display: block; }
     header {
-      position: fixed; top: 0; width: 100%; display: flex; justify-content: space-between; align-items: center;
-      padding: 1rem 2rem; background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); z-index: 10;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap;
+      padding: 1rem 2rem; background: var(--color-bg-light);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1); position: sticky; top:0; z-index:10;
     }
     .logo { font-size: 1.5rem; font-weight: bold; }
-    nav ul { list-style: none; display: flex; gap: 1.5rem; }
-    nav li a, .contact-toggle, .login-toggle { font-weight: 500; text-transform: uppercase; font-size: 0.9rem; cursor: pointer; }
-    nav li a:hover, .contact-toggle:hover, .login-toggle:hover { color: var(--color-primary); }
-    /* Sidebar Contact */
-    .contact-sidebar, .login-sidebar {
-      position: fixed; top: 0; right: 0; height: 100%; width: 280px;
-      background: var(--color-bg-dark); color: var(--color-bg-light);
-      transform: translateX(100%); transition: transform 0.3s ease;
+    .welcome {
+      margin-left: 1rem; font-size: 0.9rem;
+      color: var(--color-text-light); display: none;
+    }
+    nav ul {
+      list-style: none; display: flex; align-items: center; gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+    nav ul li a,
+    .contact-toggle,
+    .login-toggle {
+      font-weight: 500; text-transform: uppercase; font-size: 0.9rem;
+      color: var(--color-text-light); cursor: pointer; white-space: nowrap;
+    }
+    nav ul li a:hover,
+    .contact-toggle:hover,
+    .login-toggle:hover { color: var(--color-primary); }
+    #signout-nav button {
+      background: none; border: none; font: inherit; font-weight: 500;
+      text-transform: uppercase; font-size: 0.9rem;
+      color: var(--color-text-light); cursor: pointer;
+      white-space: nowrap;
+    }
+    #signout-nav button:hover { color: var(--color-primary); }
+
+    .contact-sidebar,
+    .login-sidebar {
+      position: fixed; top: 0; right: 0;
+      width: 280px; height: 100%;
+      background: var(--color-bg-dark);
+      color: var(--color-bg-light);
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
       padding: 2rem; z-index: 20;
     }
-    .contact-sidebar.open, .login-sidebar.open { transform: translateX(0); }
-    .contact-sidebar h2, .login-sidebar h2 { margin-bottom: 1rem; font-size: 1.5rem; }
-    .contact-sidebar p, .login-sidebar p { margin-bottom: 0.75rem; font-size: 0.95rem; }
-    #close-contact, #close-login {
+    .contact-sidebar.open,
+    .login-sidebar.open { transform: translateX(0); }
+    .contact-sidebar h2,
+    .login-sidebar h2 {
+      margin-bottom: 1rem; font-size: 1.5rem;
+    }
+    .contact-sidebar p,
+    .login-sidebar p {
+      margin-bottom: 0.75rem; font-size: 0.95rem;
+    }
+    #close-contact,
+    #close-login {
       position: absolute; top: 1rem; right: 1rem;
-      background: none; border: none; color: var(--bg-light); font-size: 1.2rem; cursor: pointer;
+      background: none; border: none;
+      color: var(--color-bg-light); font-size: 1.2rem;
+      cursor: pointer;
     }
-    .hero { margin-top: 4rem; height: 100vh; background: url('placeholder-hero.jpg') center/cover no-repeat;
-      display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;
-      padding: 0 1rem;
+
+    .hero {
+      position: relative; overflow: hidden;
+      display: flex; justify-content: center; align-items: center;
+      height: 100vh; text-align: center;
     }
-    .hero h1 { font-size: 3.5rem; font-weight: 300; margin-bottom: 1rem; }
-    .hero p { font-size: 1.1rem; color: var(--color-text-light); margin-bottom: 2rem; max-width: 600px; }
-    .hero .btn { padding: 0.75rem 2rem; background: var(--color-primary); color: var(--bg-light);
-      font-size: 1rem; font-weight: 600; border-radius: 2rem; transition: opacity 0.3s;
+    .video-bg-container {
+      position: absolute; top: 0; left: 0;
+      width: 100%; height: 100%; overflow: hidden;
+      z-index: -1;
     }
-    .hero .btn:hover { opacity: 0.8; }
-    #testimonials { padding: 4rem 2rem; text-align: center; }
-    #testimonials h2 { font-size: 2.5rem; margin-bottom: 2rem; }
-    .testimonials-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px,1fr)); gap: 1.5rem; }
-    .testimonial { background: var(--color-accent); color: var(--bg-light); padding: 1.5rem; border-radius: 0.5rem; }
-    .testimonial p { font-style: italic; margin-bottom: 1rem; }
-    .testimonial .author { font-weight: bold; }
-    footer { background: var(--color-bg-dark); color: var(--bg-light); text-align: center; padding: 2rem 1rem; font-size: 0.9rem; margin-top: 2rem; }
-    footer a { color: var(--bg-light); }
-    @media (max-width: 768px) { .hero h1 { font-size: 2.5rem; } nav ul { gap: 1rem; } .testimonials-grid { grid-template-columns: 1fr; } }
+    .video-bg {
+      position: absolute; top: 0; left: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      opacity: 0;
+      transition: opacity 1s ease-in-out;
+    }
+    .video-bg.visible { opacity: 1; }
+    .hero-content {
+      position: relative; z-index: 1;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(4px);
+      padding: 1.5rem 2rem;
+      border-radius: 0.5rem;
+      color: var(--color-bg-light);
+      max-width: 90%;
+    }
+    .hero-content h1 {
+      font-size: 3rem; font-weight: 300; margin-bottom: 1rem;
+    }
+    .hero-content p {
+      color:white; margin-bottom: 1.5rem;
+    }
+    .hero-content .btn {
+      display: inline-block; padding: 0.75rem 2rem;
+      background: var(--color-primary);
+      color: var(--color-bg-light);
+      border-radius: 2rem; font-weight: 600;
+      transition: opacity 0.3s;
+    }
+    .hero-content .btn:hover { opacity: 0.8; }
+
+    #testimonials {
+      padding: 4rem 2rem; text-align: center;
+    }
+    #testimonials h2 {
+      font-size: 2.5rem; margin-bottom: 2rem;
+    }
+    .testimonials-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px,1fr));
+      gap: 1.5rem;
+    }
+
+    footer {
+      background: var(--color-bg-dark);
+      color: var(--color-bg-light);
+      text-align: center;
+      padding: 2rem 1rem;
+      margin-top: auto;
+      font-size: 0.9rem;
+    }
+    footer a { color: var(--color-bg-light); }
+
+    @media (max-width:768px) {
+      .hero-content h1 { font-size: 2.5rem; }
+      nav ul { gap: 1rem; }
+      .testimonials-grid { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
   <header>
     <div class="logo">VEPA</div>
+    <div id="welcome-message" class="welcome"></div>
     <nav>
       <ul>
         <li><a href="#hero">Home</a></li>
         <li><a href="inventory.html">Inventory</a></li>
+        <li id="admin-link" style="display:none"><a href="admin.html">Admin</a></li>
         <li class="contact-toggle">Contact</li>
         <li class="login-toggle">Login/Signup</li>
+        <li id="signout-nav" style="display:none;"><button id="signout-btn">Sign Out</button></li>
       </ul>
     </nav>
   </header>
 
-  <!-- Contact Sidebar -->
   <aside class="contact-sidebar" id="contact-sidebar">
     <button id="close-contact">×</button>
     <h2>Contact Us</h2>
@@ -83,25 +179,28 @@
     <p><a href="mailto:vepaautoshop1904@gmail.com">vepaautoshop1904@gmail.com</a></p>
   </aside>
 
-  <!-- Login Sidebar -->
   <aside class="login-sidebar" id="login-sidebar">
     <button id="close-login">×</button>
     <h2>Login / Signup</h2>
-    <p><a href="login.html">Go to Login Page</a></p>
-    <p><a href="signup.html">Create Account</a></p>
+    <p><a href="login.html">Log In</a></p>
+    <p><a href="signup.html">Sign Up</a></p>
   </aside>
 
   <section id="hero" class="hero">
-    <h1>Find Your Dream Car</h1>
-    <p>Browse our premium selection with effortless, transparent service.</p>
-    <a href="inventory.html" class="btn">Browse Inventory</a>
+    <div class="video-bg-container">
+      <video id="vid1" class="video-bg visible" muted playsinline></video>
+      <video id="vid2" class="video-bg hidden" muted playsinline></video>
+    </div>
+    <div class="hero-content">
+      <h1>Find Your Dream Car</h1>
+      <p>Browse our premium selection with effortless, transparent service.</p>
+      <a href="inventory.html" class="btn">Browse Inventory</a>
+    </div>
   </section>
 
-  <section id="testimonials" class="section">
+  <section id="testimonials">
     <h2>What Our Customers Say</h2>
-    <div class="testimonials-grid">
-      <!-- testimonials -->
-    </div>
+    <div class="testimonials-grid"><!-- review will be injected here --></div>
   </section>
 
   <footer>
@@ -110,10 +209,139 @@
     <p>&copy; 2025 VEPA AutoCare. All Rights Reserved.</p>
   </footer>
 
-  <script>
-    // Sidebar toggles
-    document.querySelector('.contact-toggle').onclick = () => document.getElementById('contact-sidebar').classList.toggle('open');
-    document.getElementById('close-contact').onclick = () => document.getElementById('contact-sidebar').classList.remove('open');
-    document.querySelector('.login-toggle').onclick = () => document.getElementById('login-sidebar').classList.toggle('open');
-    document.getElementById('close-login').onclick = () => document.getElementById('login-sidebar').classList.remove('open');
+  <script type="module">
+    document.querySelector('.contact-toggle').onclick = () =>
+      document.getElementById('contact-sidebar').classList.toggle('open');
+    document.getElementById('close-contact').onclick = () =>
+      document.getElementById('contact-sidebar').classList.remove('open');
+    document.querySelector('.login-toggle').onclick = () =>
+      document.getElementById('login-sidebar').classList.toggle('open');
+    document.getElementById('close-login').onclick = () =>
+      document.getElementById('login-sidebar').classList.remove('open');
+
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js";
+    import {
+      getAuth,
+      onAuthStateChanged,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBcKnjZm5LYqj5jx5VEqx9ywspgZyxNfsA",
+      authDomain: "vepa-24b46.firebaseapp.com",
+      projectId: "vepa-24b46",
+      storageBucket: "vepa-24b46.appspot.app",
+      messagingSenderId: "170936495301",
+      appId: "1:170936495301:web:6f15b8fa08deeb01d5d4ac",
+      measurementId: "G-F8NFZ6SRKR"
+    };
+    const app  = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    onAuthStateChanged(auth, user => {
+      const loginToggle  = document.querySelector('.login-toggle');
+      const signoutNav   = document.getElementById('signout-nav');
+      const welcomeEl    = document.getElementById('welcome-message');
+      const adminLink    = document.getElementById('admin-link');
+      if (user) {
+        loginToggle.style.display   = 'none';
+        signoutNav.style.display    = 'inline-flex';
+        welcomeEl.textContent       = `Welcome, ${user.email}`;
+        welcomeEl.style.display     = 'block';
+        if (sessionStorage.getItem('admin-auth') === 'true') {
+          adminLink.style.display   = 'inline-flex';
+        }
+      } else {
+        loginToggle.style.display   = 'inline-flex';
+        signoutNav.style.display    = 'none';
+        welcomeEl.style.display     = 'none';
+        adminLink.style.display     = 'none';
+      }
+    });
+
+    document.getElementById('signout-btn').onclick = async () => {
+      await signOut(auth);
+      sessionStorage.removeItem('admin-auth');
+      window.location.reload();
+    };
+
+    // Video rotation
+    const videoFiles = [
+      'backgroundVids/mountain.mp4',
+      'backgroundVids/tirecloseup.mp4',
+      'backgroundVids/wideshot.mp4'
+    ];
+    const vid1 = document.getElementById('vid1');
+    const vid2 = document.getElementById('vid2');
+    let current = vid1, next = vid2, idx = 0;
+    function loadAndPlay(v, src) {
+      v.src = src;
+      v.play().catch(()=>{});
+    }
+    function startBgRotation() {
+      loadAndPlay(current, videoFiles[idx]);
+      setInterval(()=>{
+        idx = (idx+1)%videoFiles.length;
+        loadAndPlay(next, videoFiles[idx]);
+        next.onloadeddata = ()=>{
+          current.classList.replace('visible','hidden');
+          next.classList.replace('hidden','visible');
+          [current,next] = [next,current];
+        };
+      },6000);
+    }
+    document.addEventListener('DOMContentLoaded', startBgRotation);
   </script>
+
+  <!-- Beta Places API with fetchFields() -->
+  <script>
+    const MY_PLACE_ID = 'ChIJ8bpG1-903okRJUKZhpuehh0';
+
+    async function initReviews() {
+      // dynamically load the new Places library
+      const { Place, InfoWindow } = await google.maps.importLibrary("places");
+
+      // create Place instance
+      const place = new Place({ id: MY_PLACE_ID });
+
+      // fetch the fields you need
+      await place.fetchFields({
+        fields: ["displayName", "formattedAddress", "location", "reviews"]
+      });
+
+      // build content
+      let contentString;
+      if (place.reviews && place.reviews.length > 0) {
+        const r = place.reviews[0];
+        const reviewRating    = r.rating;
+        const reviewText      = r.text;
+        const authorName      = r.authorAttribution.displayName;
+        const authorUri       = r.authorAttribution.uri;
+
+        contentString = `
+          <div class="testimonial">
+            <div id="title"><b>${place.displayName}</b></div>
+            <div id="address">${place.formattedAddress}</div>
+            <a href="${authorUri}" target="_blank">Author: ${authorName}</a>
+            <div class="rating">Rating: ${reviewRating} stars</div>
+            <div class="text"><p>${reviewText}</p></div>
+          </div>`;
+      } else {
+        contentString = `
+          <div class="testimonial">
+            No reviews were found for ${place.displayName}.
+          </div>`;
+      }
+
+      // inject into the testimonials grid
+      document.querySelector('.testimonials-grid').innerHTML = contentString;
+    }
+
+    // Maps callback
+    window.initReviews = initReviews;
+  </script>
+  <script async
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBcKnjZm5LYqj5jx5VEqx9ywspgZyxNfsA&libraries=places&v=beta&callback=initReviews">
+  </script>
+</body>
+</html>
