@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>VEPA AutoCare Inventory</title>
   <style>
     /* Tesla-inspired palette and card layout */
@@ -18,39 +18,110 @@
       --gap: 1rem;
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { height: 100%; width: 100%; font-family: 'Helvetica Neue', Arial, sans-serif; background: var(--bg-light); color: var(--text-dark); }
+    html, body {
+      height: 100%;
+      width: 100%;
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      background: var(--bg-light);
+      color: var(--text-dark);
+    }
     a { text-decoration: none; color: inherit; }
 
     /* Header */
     header {
-      position: fixed; top: 0; width: 100%; display: flex; justify-content: space-between; align-items: center;
-      padding: var(--gap) 2rem; background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); z-index: 10;
+      position: fixed;
+      top: 0;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: var(--gap) 2rem;
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(10px);
+      z-index: 10;
     }
-    .logo { font-size: 1.5rem; font-weight: bold; }
-    nav ul { list-style: none; display: flex; gap: 2rem; }
-    nav li a, .contact-toggle { font-weight: 500; text-transform: uppercase; font-size: 0.9rem; cursor: pointer; }
-    nav li a:hover, .contact-toggle:hover { color: var(--primary); }
+    .logo {
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+    nav ul {
+      list-style: none;
+      display: flex;
+      gap: 2rem;
+    }
+    nav li a, .contact-toggle {
+      font-weight: 500;
+      text-transform: uppercase;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+    nav li a:hover, .contact-toggle:hover {
+      color: var(--primary);
+    }
 
     .contact-sidebar {
-      position: fixed; top: 0; right: 0; height: 100%; width: 300px; background: var(--bg-dark); color: var(--bg-light);
-      transform: translateX(100%); transition: transform 0.3s ease; padding: 2rem; z-index: 20;
+      position: fixed;
+      top: 0;
+      right: 0;
+      height: 100%;
+      width: 300px;
+      background: var(--bg-dark);
+      color: var(--bg-light);
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
+      padding: 2rem;
+      z-index: 20;
     }
-    .contact-sidebar.open { transform: translateX(0); }
-    #close-sidebar { position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: var(--bg-light); font-size: 1.2rem; cursor: pointer; }
+    .contact-sidebar.open {
+      transform: translateX(0);
+    }
+    #close-sidebar {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: none;
+      border: none;
+      color: var(--bg-light);
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
+
+    /* Filter toggle button */
+    .filter-toggle-container {
+      margin-top: 5rem; /* aligns below header */
+      padding: 0 2rem;
+    }
+    .filter-toggle-btn {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      padding: 0.75rem 1rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .filter-toggle-btn:hover {
+      background: #7a33be;
+    }
 
     /* Filter controls */
     .filters {
-      margin-top: 5rem;
       display: flex;
       flex-wrap: wrap;
       gap: var(--gap);
-      padding: 0 2rem;
-      padding-bottom: 10px;
+      padding: 0 2rem 10px;
       background: var(--bg-light);
       position: sticky;
-      top: 4rem;
+      top: calc(5rem + 2.5rem); /* header (≈3rem) + toggle btn (≈2.5rem) */
       z-index: 5;
-      border-bottom: 1px solid rgba(0,0,0,0.1);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+      transition: max-height 0.3s ease, padding 0.3s ease;
+    }
+    /* Hidden state for filters */
+    .filters.hidden {
+      display: none;
     }
     .filters select, .filters input {
       padding: 0.5rem 0.75rem;
@@ -68,12 +139,25 @@
       border-radius: var(--radius);
       cursor: pointer;
       flex: 0 0 auto;
+      transition: background 0.3s;
+    }
+    .filters button:hover {
+      background: #7a33be;
     }
 
     /* Main Inventory */
-    main { flex: 1; padding: 2rem; }
-    .inventory-header { text-align: center; margin-bottom: 2rem; }
-    .inventory-header h1 { font-size: 2.5rem; }
+    main {
+      flex: 1;
+      padding: 2rem;
+      margin-top: 1rem; /* to separate from filters section */
+    }
+    .inventory-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .inventory-header h1 {
+      font-size: 2.5rem;
+    }
 
     .grid {
       display: grid;
@@ -85,7 +169,7 @@
       background: var(--bg-light);
       border-radius: var(--radius);
       overflow: hidden;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
       transition: transform 0.3s, box-shadow 0.3s;
       display: flex;
       flex-direction: column;
@@ -96,7 +180,7 @@
     .card .overlay {
       position: absolute;
       inset: 0;
-      background: rgba(0,0,0,0.6);
+      background: rgba(0, 0, 0, 0.6);
       color: #fff;
       opacity: 0;
       transition: opacity 0.3s;
@@ -105,13 +189,22 @@
       flex-direction: column;
       justify-content: center;
     }
-    .card:hover .overlay { opacity: 1; }
-    .overlay .overlay-title { font-size: 1.2rem; font-weight: bold; margin-bottom: 0.5rem; }
-    .overlay .overlay-text { font-size: 0.9rem; line-height: 1.4; }
+    .card:hover .overlay {
+      opacity: 1;
+    }
+    .overlay .overlay-title {
+      font-size: 1.2rem;
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+    }
+    .overlay .overlay-text {
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
 
     .card:hover {
       transform: translateY(-5px);
-      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
     }
 
     .card-img {
@@ -120,7 +213,9 @@
       overflow: hidden;
     }
     .card-img img {
-      width: 100%; height: 100%; object-fit: cover;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
       transition: transform 0.3s;
     }
     .card:hover .card-img img {
@@ -165,23 +260,35 @@
       cursor: pointer;
       transition: background 0.3s;
     }
-    .btn-view { background: var(--primary); color: #fff; }
-    .btn-view:hover { background: #0d6fb8; }
-    .btn-inquire { background: var(--text-dark); color: #fff; }
-    .btn-inquire:hover { background: #333333; }
+    .btn-view {
+      background: var(--primary);
+      color: #fff;
+    }
+    .btn-view:hover {
+      background: #0d6fb8;
+    }
+    .btn-inquire {
+      background: var(--text-dark);
+      color: #fff;
+    }
+    .btn-inquire:hover {
+      background: #333333;
+    }
 
     /* Modals */
     .modal {
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.7);
+      background: rgba(0, 0, 0, 0.7);
       justify-content: center;
       align-items: center;
       padding: var(--gap);
       z-index: 30;
     }
-    .modal.show { display: flex; }
+    .modal.show {
+      display: flex;
+    }
     .modal-content {
       background: var(--bg-light);
       border-radius: var(--radius);
@@ -231,13 +338,24 @@
       padding: 2rem 1rem;
       font-size: 0.9rem;
     }
-    footer a { color: var(--bg-light); }
+    footer a {
+      color: var(--bg-light);
+    }
 
     @media (max-width: 768px) {
-      .grid { grid-template-columns: 1fr; }
-      header { padding: 1rem; }
-      nav ul { gap: 1rem; }
-      .filters { top: 3.5rem; }
+      .grid {
+        grid-template-columns: 1fr;
+      }
+      header {
+        padding: 1rem;
+      }
+      nav ul {
+        gap: 1rem;
+      }
+      /* Adjust sticky top for filters when mobile */
+      .filters {
+        top: calc(5rem + 2.5rem);
+      }
     }
   </style>
 </head>
@@ -261,11 +379,17 @@
     <p><a href="mailto:vepaautoshop1904@gmail.com">vepaautoshop1904@gmail.com</a></p>
   </aside>
 
-  <div class="filters">
+  <!-- Filter Toggle Button -->
+  <div class="filter-toggle-container">
+    <button id="filter-toggle" class="filter-toggle-btn">Show Filters</button>
+  </div>
+
+  <!-- Filter Controls (initially hidden) -->
+  <div class="filters hidden">
     <select id="filter-make"><option value="">All Makes</option></select>
-    <input id="filter-model" type="text" placeholder="Model">
-    <input id="filter-min-price" type="number" placeholder="Min Price">
-    <input id="filter-max-price" type="number" placeholder="Max Price">
+    <input id="filter-model" type="text" placeholder="Model" />
+    <input id="filter-min-price" type="number" placeholder="Min Price" />
+    <input id="filter-max-price" type="number" placeholder="Max Price" />
     <select id="filter-year"><option value="">All Years</option></select>
     <button id="apply-filters">Filter</button>
     <button id="reset-filters">Reset</button>
@@ -280,7 +404,9 @@
 
   <footer>
     <p>1904 Western Ave, Albany, NY 12203</p>
-    <p>(518) 456-5682 | <a href="mailto:vepaautoshop1904@gmail.com">vepaautoshop1904@gmail.com</a></p>
+    <p>
+      (518) 456-5682 | <a href="mailto:vepaautoshop1904@gmail.com">vepaautoshop1904@gmail.com</a>
+    </p>
     <p>&copy; 2025 VEPA AutoCare. All Rights Reserved.</p>
   </footer>
 
@@ -289,7 +415,7 @@
     <div class="modal-content">
       <button class="close-btn" onclick="closeDetails()">×</button>
       <h2>Car Details</h2>
-      <img id="detail-img" src="" alt="Car Image">
+      <img id="detail-img" src="" alt="Car Image" />
       <ul class="detail-list" id="detail-list"></ul>
     </div>
   </div>
@@ -313,10 +439,10 @@
       apiKey: 'AIzaSyBcKnjZm5LYqj5jx5VEqx9ywspgZyxNfsA',
       authDomain: 'vepa-24b46.firebaseapp.com',
       projectId: 'vepa-24b46',
-      storageBucket: 'vepa-24b46.appspot.app',
+      storageBucket: 'vepa-24b46.appspot.com',
       messagingSenderId: '170936495301',
       appId: '1:170936495301:web:6f15b8fa08de9c',
-      measurementId: 'G-F8NFZ6SRKR'
+      measurementId: 'G-F8NFZ6SRKR',
     };
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
@@ -334,11 +460,16 @@
     function populateFilters() {
       const makeSet = new Set();
       const yearSet = new Set();
-      allCars.forEach(c => { makeSet.add(c.make); yearSet.add(c.year); });
+      allCars.forEach(c => {
+        makeSet.add(c.make);
+        yearSet.add(c.year);
+      });
       const makeSelect = document.getElementById('filter-make');
-      makeSet.forEach(m => makeSelect.innerHTML += `<option>${m}</option>`);
+      makeSet.forEach(m => (makeSelect.innerHTML += `<option>${m}</option>`));
       const yearSelect = document.getElementById('filter-year');
-      Array.from(yearSet).sort((a,b)=>b-a).forEach(y => yearSelect.innerHTML += `<option>${y}</option>`);
+      Array.from(yearSet)
+        .sort((a, b) => b - a)
+        .forEach(y => (yearSelect.innerHTML += `<option>${y}</option>`));
     }
 
     function displayCars(cars) {
@@ -357,7 +488,7 @@
       const specs = `${car.bodyType} • ${car.color}`;
       const price = `$${Number(car.price).toLocaleString()}`;
       card.innerHTML = `
-        <div class="card-img"><img src="${imgUrl}" alt="${title}"></div>
+        <div class="card-img"><img src="${imgUrl}" alt="${title}" /></div>
         <div class="card-details">
           <div>
             <div class="title">${title}</div>
@@ -373,8 +504,14 @@
         </div>
       `;
       card.addEventListener('click', () => openDetails(car.id));
-      card.querySelector('.btn-view').addEventListener('click', e => { e.stopPropagation(); openDetails(car.id); });
-      card.querySelector('.btn-inquire').addEventListener('click', e => { e.stopPropagation(); openInquire(); });
+      card.querySelector('.btn-view').addEventListener('click', e => {
+        e.stopPropagation();
+        openDetails(car.id);
+      });
+      card.querySelector('.btn-inquire').addEventListener('click', e => {
+        e.stopPropagation();
+        openInquire();
+      });
       return card;
     }
 
@@ -384,17 +521,19 @@
       const minP = Number(document.getElementById('filter-min-price').value) || 0;
       const maxP = Number(document.getElementById('filter-max-price').value) || Infinity;
       const year = document.getElementById('filter-year').value;
-      const filtered = allCars.filter(c =>
-        (!make || c.make === make) &&
-        (!model || c.model.toLowerCase().includes(model)) &&
-        (c.price >= minP && c.price <= maxP) &&
-        (!year || String(c.year) === year)
+      const filtered = allCars.filter(
+        c =>
+          (!make || c.make === make) &&
+          (!model || c.model.toLowerCase().includes(model)) &&
+          c.price >= minP &&
+          c.price <= maxP &&
+          (!year || String(c.year) === year)
       );
       displayCars(filtered);
     }
 
     function resetFilters() {
-      document.querySelectorAll('.filters input, .filters select').forEach(i => i.value = '');
+      document.querySelectorAll('.filters input, .filters select').forEach(i => (i.value = ''));
       displayCars(allCars);
     }
 
@@ -402,22 +541,35 @@
     async function openDetails(id) {
       const car = allCars.find(c => c.id === id);
       document.getElementById('detail-img').src = car.images?.[0]?.url || 'GenCar.png';
-      const list = document.getElementById('detail-list'); list.innerHTML = '';
+      const list = document.getElementById('detail-list');
+      list.innerHTML = '';
       const fields = [
-        ['Make', car.make], ['Model', car.model], ['Price', `$${car.price.toLocaleString()}`],
-        ['Condition', car.condition], ['Year', car.year], ['Body Type', car.bodyType],
-        ['Color', car.color], ['Capacity', car.capacity], ['Features', car.features?.join(', ') || 'N/A']
+        ['Make', car.make],
+        ['Model', car.model],
+        ['Price', `$${car.price.toLocaleString()}`],
+        ['Condition', car.condition],
+        ['Year', car.year],
+        ['Body Type', car.bodyType],
+        ['Color', car.color],
+        ['Capacity', car.capacity],
+        ['Features', car.features?.join(', ') || 'N/A'],
       ];
-      fields.forEach(([label,val]) => {
+      fields.forEach(([label, val]) => {
         list.innerHTML += `<li><strong>${label}:</strong> ${val}</li>`;
       });
       document.getElementById('details-modal').classList.add('show');
     }
-    function closeDetails() { document.getElementById('details-modal').classList.remove('show'); }
+    function closeDetails() {
+      document.getElementById('details-modal').classList.remove('show');
+    }
 
     // Inquire modal
-    function openInquire() { document.getElementById('inquire-modal').classList.add('show'); }
-    function closeInquire() { document.getElementById('inquire-modal').classList.remove('show'); }
+    function openInquire() {
+      document.getElementById('inquire-modal').classList.add('show');
+    }
+    function closeInquire() {
+      document.getElementById('inquire-modal').classList.remove('show');
+    }
 
     document.getElementById('apply-filters').addEventListener('click', applyFilters);
     document.getElementById('reset-filters').addEventListener('click', resetFilters);
@@ -431,6 +583,17 @@
       closeBtn.addEventListener('click', () => sidebar.classList.remove('open'));
     }
 
+    // Filter toggle logic
+    const filterToggleBtn = document.getElementById('filter-toggle');
+    const filtersDiv = document.querySelector('.filters');
+    filterToggleBtn.addEventListener('click', () => {
+      filtersDiv.classList.toggle('hidden');
+      if (filtersDiv.classList.contains('hidden')) {
+        filterToggleBtn.innerText = 'Show Filters';
+      } else {
+        filterToggleBtn.innerText = 'Hide Filters';
+      }
+    });
 
     window.openDetails = openDetails;
     window.openInquire = openInquire;

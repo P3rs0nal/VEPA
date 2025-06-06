@@ -126,17 +126,128 @@
     }
     .hero-content .btn:hover { opacity: 0.8; }
 
-    #testimonials {
-      padding: 4rem 2rem; text-align: center;
+   #testimonials {
+      position: relative;
+      background: #f9f9f9;
+      padding: 4rem 2rem;
+      overflow: hidden;
+      text-align: center;
     }
     #testimonials h2 {
-      font-size: 2.5rem; margin-bottom: 2rem;
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      font-size: 2.5rem;
+      font-weight: 300;
+      color: #111;
+      margin-bottom: 2.5rem;
     }
-    .testimonials-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px,1fr));
-      gap: 1.5rem;
+    .testimonial-slider {
+      display: flex;
+      width:100%;
+      transition: transform 0.5s ease;
+      will-change: transform;
     }
+    .testimonial-slide {
+      width: 100%;
+      flex: 0 0 100%;
+      box-sizing: border-box;
+      max-width: 100%;
+      padding: 0 1rem;
+    }
+    .testimonial-text {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      font-size: 1.2rem;
+      font-style: italic;
+      line-height: 1.6;
+      color: #222;
+      margin-bottom: 1.5rem;
+      max-width: 700px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .testimonial-author {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #555;
+    }
+    .slider-btn {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      font-size: 2.5rem;
+      color: rgba(0, 0, 0, 0.5);
+      cursor: pointer;
+      padding: 0 0.5rem;
+      transition: color 0.2s;
+      user-select: none;
+    }
+    .slider-btn:hover {
+      color: rgba(0, 0, 0, 0.8);
+    }
+    .prev-btn {
+      left: 1rem;
+    }
+    .next-btn {
+      right: 1rem;
+    }
+    @media (max-width: 768px) {
+      #testimonials h2 {
+        font-size: 2rem;
+      }
+      .testimonial-text {
+        font-size: 1.1rem;
+      }
+      .slider-btn {
+        font-size: 2rem;
+      }
+    }
+    @media (max-width: 480px) {
+      .testimonial-text {
+        font-size: 1rem;
+      }
+      .slider-btn {
+        font-size: 1.5rem;
+      }
+    }
+.slider-buttons {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  transform: translateY(-50%);
+}
+.slider-buttons button {
+  background: rgba(0,0,0,0.5);
+  border: none;
+  color: #fff;
+  font-size: 1.5rem;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: background 0.3s;
+}
+.slider-buttons button:hover { background: rgba(0,0,0,0.7); }
+@media (max-width: 900px) {
+  .testimonial { flex: 0 0 80%; }
+}
+@media (max-width: 600px) {
+  .testimonial { flex: 0 0 100%; }
+  #testimonials h2 { font-size: 2rem; }
+}
+
+footer {
+  background: var(--color-bg-dark);
+  color: var(--color-bg-light);
+  text-align: center;
+  padding: 2rem 1rem;
+  margin-top: auto;
+  font-size: 0.9rem;
+}
+footer a { color: var(--color-bg-light); }
 
     footer {
       background: var(--color-bg-dark);
@@ -193,15 +304,20 @@
     </div>
     <div class="hero-content">
       <h1>Find Your Dream Car</h1>
-      <p>Browse our premium selection with effortless, transparent service.</p>
+      <p>Browse our current selection with effortless, transparent service.</p>
       <a href="inventory.html" class="btn">Browse Inventory</a>
     </div>
   </section>
 
   <section id="testimonials">
     <h2>What Our Customers Say</h2>
-    <div class="testimonials-grid"><!-- review will be injected here --></div>
+    <div class="testimonial-slider">
+      <!-- Dynamic testimonial slides will be injected here -->
+    </div>
+    <button class="slider-btn prev-btn" aria-label="Previous testimonial">‹</button>
+    <button class="slider-btn next-btn" aria-label="Next testimonial">›</button>
   </section>
+
 
   <footer>
     <p>1904 Western Ave, Albany, NY 12203</p>
@@ -295,53 +411,92 @@
 
   <!-- Beta Places API with fetchFields() -->
   <script>
-    const MY_PLACE_ID = 'ChIJ8bpG1-903okRJUKZhpuehh0';
+   async function initMap() {
+      // Load Places library
+      const { Place } = await google.maps.importLibrary("places");
+      // Replace with your actual Place ID
+      const place = new Place({ id: "ChIJg6bh1-903okR7ZRKTmB7Zew" });
+      // Fetch fields including reviews
+      await place.fetchFields({ fields: ["displayName", "formattedAddress", "reviews"] });
 
-    async function initReviews() {
-      // dynamically load the new Places library
-      const { Place, InfoWindow } = await google.maps.importLibrary("places");
-
-      // create Place instance
-      const place = new Place({ id: MY_PLACE_ID });
-
-      // fetch the fields you need
-      await place.fetchFields({
-        fields: ["displayName", "formattedAddress", "location", "reviews"]
-      });
-
-      // build content
-      let contentString;
+      // Build slides for fetched reviews
+      let slideHtml = "";
       if (place.reviews && place.reviews.length > 0) {
-        const r = place.reviews[0];
-        const reviewRating    = r.rating;
-        const reviewText      = r.text;
-        const authorName      = r.authorAttribution.displayName;
-        const authorUri       = r.authorAttribution.uri;
-
-        contentString = `
-          <div class="testimonial">
-            <div id="title"><b>${place.displayName}</b></div>
-            <div id="address">${place.formattedAddress}</div>
-            <a href="${authorUri}" target="_blank">Author: ${authorName}</a>
-            <div class="rating">Rating: ${reviewRating} stars</div>
-            <div class="text"><p>${reviewText}</p></div>
-          </div>`;
+        // Take up to the first 3 reviews, or adjust as needed
+        place.reviews.slice(0, 3).forEach((r) => {
+          const reviewText = r.text;
+          const authorName = r.authorAttribution.displayName;
+          slideHtml += `
+            <div class="testimonial-slide">
+              <p class="testimonial-text">“${reviewText}”</p>
+              <p class="testimonial-author">— ${authorName}</p>
+            </div>
+          `;
+        });
       } else {
-        contentString = `
-          <div class="testimonial">
-            No reviews were found for ${place.displayName}.
-          </div>`;
+        // Fallback, if no reviews are present
+        slideHtml = `
+          <div class="testimonial-slide">
+            <p class="testimonial-text">
+              “We’re still gathering reviews. Check back soon to see what our customers are saying!”
+            </p>
+            <p class="testimonial-author">— VEPA AutoCare Team</p>
+          </div>
+        `;
       }
 
-      // inject into the testimonials grid
-      document.querySelector('.testimonials-grid').innerHTML = contentString;
+      const sliderContainer = document.querySelector("#testimonials .testimonial-slider");
+      if (sliderContainer) {
+        sliderContainer.innerHTML = slideHtml;
+      }
     }
+    window.initMap = initMap;
+  </script>
+  <script>
+    (function () {
+      const slider = document.querySelector('#testimonials .testimonial-slider');
+      const prevBtn = document.querySelector('.prev-btn');
+      const nextBtn = document.querySelector('.next-btn');
+      let currentIndex = 0;
 
-    // Maps callback
-    window.initReviews = initReviews;
+      function updateSlider() {
+        if (!slider) return;
+        const offset = -currentIndex * 100;
+       slider.style.transform = `translateX(${-currentIndex * 100}%)`;
+      }
+
+      prevBtn.addEventListener('click', () => {
+        const slides = document.querySelectorAll('#testimonials .testimonial-slide');
+        if (!slides.length) return;
+        currentIndex = currentIndex === 0 ? slides.length - 1 : currentIndex - 1;
+        updateSlider();
+      });
+
+      nextBtn.addEventListener('click', () => {
+        const slides = document.querySelectorAll('#testimonials .testimonial-slide');
+        if (!slides.length) return;
+        currentIndex = currentIndex === slides.length - 1 ? 0 : currentIndex + 1;
+        updateSlider();
+      });
+
+      // Auto-advance every 8 seconds
+      let autoAdvance = setInterval(() => {
+        nextBtn.click();
+      }, 8000);
+
+      // Pause auto-advance on mouse enter, resume on leave
+      const testimonialsSection = document.getElementById('testimonials');
+      testimonialsSection.addEventListener('mouseenter', () => clearInterval(autoAdvance));
+      testimonialsSection.addEventListener('mouseleave', () => {
+        autoAdvance = setInterval(() => nextBtn.click(), 8000);
+      });
+
+      // Initialize once DOM is loaded
+      document.addEventListener('DOMContentLoaded', updateSlider);
+    })();
   </script>
   <script async
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBcKnjZm5LYqj5jx5VEqx9ywspgZyxNfsA&libraries=places&v=beta&callback=initReviews">
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBcKnjZm5LYqj5jx5VEqx9ywspgZyxNfsA&libraries=places&v=beta&callback=initMap">
   </script>
 </body>
 </html>

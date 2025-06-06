@@ -14,6 +14,8 @@
       --accent: #474747;
       --radius: 6px;
       --gap: 1rem;
+      --btn-height: 40px;
+      --input-height: 40px;
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -29,48 +31,135 @@
       background: rgba(255,255,255,0.95); backdrop-filter: blur(8px);
       padding: var(--gap) calc(2*var(--gap));
       display: flex; justify-content: space-between; align-items: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
-    .logo { font-size: 1.5rem; font-weight: bold; }
+    .logo { font-size: 1.5rem; font-weight: bold; color: var(--text-dark); }
     nav ul { list-style: none; display: flex; gap: var(--gap); flex-wrap: wrap; }
-    nav a { font-size: 0.9rem; text-transform: uppercase; color: var(--text-light); }
+    nav a {
+      font-size: 0.9rem; text-transform: uppercase; color: var(--text-light);
+      transition: color 0.2s;
+    }
     nav a:hover { color: var(--primary); }
+
     main { flex: 1; padding: calc(6*var(--gap)) var(--gap); }
 
-    .admin-controls, .admin-filter-sort {
-      display: flex; flex-wrap: wrap; gap: var(--gap); margin-bottom: calc(2*var(--gap)); justify-content: space-between;
+    /* Admin Controls Section (Add New Car + Import) */
+    .admin-controls {
+      display: flex; flex-wrap: wrap; gap: var(--gap);
+      margin-bottom: calc(2*var(--gap));
+      justify-content: space-between;
+      align-items: flex-end;
     }
     .admin-controls input,
-    .admin-controls select,
-    .admin-controls button,
+    .admin-controls select {
+      padding: 0 0.75rem; font-size: 0.95rem; height: var(--input-height);
+      border: 1px solid #ccc; border-radius: var(--radius); flex: 1 1 200px;
+    }
+    .admin-controls button {
+      background: var(--primary); color: var(--bg-light);
+      border: none; cursor: pointer; height: var(--btn-height);
+      padding: 0 1rem; font-size: 0.95rem; border-radius: var(--radius);
+      transition: background 0.2s;
+    }
+    .admin-controls button:hover { background: #7b3ea6; }
+    .admin-controls .import-btn {
+      background: var(--accent); margin-left: auto;
+    }
+    .admin-controls .import-btn:hover {
+      background: #333333;
+    }
+    .admin-controls .hidden-file-input {
+      display: none;
+    }
+
+    /* Filter / Search Section */
+    .admin-filter-sort {
+      display: flex; flex-wrap: wrap; gap: var(--gap);
+      margin-bottom: calc(2*var(--gap)); justify-content: space-between;
+      background: rgba(0,0,0,0.05); padding: var(--gap); border-radius: var(--radius);
+    }
     .admin-filter-sort input,
     .admin-filter-sort select {
-      padding: 0.75rem; font-size: 1rem; border: 1px solid #ccc; border-radius: var(--radius); flex: 1 1 200px;
+      flex: 1 1 200px; padding: 0 0.75rem;
+      font-size: 0.95rem; height: var(--input-height);
+      border: 1px solid #ccc; border-radius: var(--radius);
     }
-    .admin-controls button { background: var(--primary); color: var(--bg-light); border: none; cursor: pointer; }
+    .admin-filter-sort button {
+      background: var(--primary); color: var(--bg-light);
+      border: none; cursor: pointer; padding: 0 1rem;
+      font-size: 0.95rem; height: var(--btn-height); border-radius: var(--radius);
+      transition: background 0.2s;
+    }
+    .admin-filter-sort button:hover { background: #7b3ea6; }
 
+    /* Table Wrapper */
     .table-wrapper { overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; min-width: 800px; }
-    th, td { padding: var(--gap); text-align: center; border-bottom: 1px solid rgba(0,0,0,0.1); }
-    th { background: var(--primary); color: var(--bg-light); }
-    td img.thumbnail { width: 80px; height: 60px; object-fit: cover; border-radius: var(--radius); cursor: pointer; }
-    .action-btn { padding: 0.5rem 1rem; border: none; border-radius: var(--radius); cursor: pointer; color: #fff; }
-    .edit-btn { background: #00d203; }
+    table {
+      width: 100%; border-collapse: collapse; min-width: 800px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    th, td {
+      padding: var(--gap); text-align: center;
+      border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+    th {
+      background: var(--primary); color: var(--bg-light); text-transform: uppercase;
+      font-size: 0.9rem;
+    }
+    td img.thumbnail {
+      width: 80px; height: 60px; object-fit: cover; border-radius: var(--radius);
+      cursor: pointer; transition: transform 0.2s;
+    }
+    td img.thumbnail:hover {
+      transform: scale(1.1);
+    }
+    .action-btn {
+      padding: 0.35rem 0.75rem; border: none; border-radius: var(--radius);
+      cursor: pointer; color: #fff; font-size: 0.85rem; transition: opacity 0.2s;
+    }
+    .action-btn:hover { opacity: 0.8; }
+    .edit-btn { background: #00d203; margin-right: 4px; }
     .delete-btn { background: #e74c3c; }
 
-    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; padding: var(--gap); }
+    /* Modal Base */
+    .modal {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+      justify-content: center; align-items: center; padding: var(--gap); z-index: 50;
+    }
     .modal.show { display: flex; }
     .modal-content {
-      background: var(--bg-light); padding: calc(2*var(--gap)); border-radius: var(--radius);
-      max-width: 500px; width: 100%; max-height: 90%; overflow-y: auto; position: relative;
+      background: var(--bg-light); padding: calc(2*var(--gap));
+      border-radius: var(--radius); max-width: 600px; width: 100%;
+      max-height: 90%; overflow-y: auto; position: relative;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
     }
-    .modal-content h2 { margin-bottom: var(--gap); }
-    .modal-content .close-btn { position: absolute; top: var(--gap); right: var(--gap); background: none; border: none; font-size: 1.5rem; cursor: pointer; }
-    .modal-content label { display: block; margin-top: var(--gap); font-weight: 500; }
+    .modal-content h2 {
+      margin-bottom: var(--gap); font-size: 1.25rem;
+    }
+    .modal-content .close-btn {
+      position: absolute; top: var(--gap); right: var(--gap);
+      background: none; border: none; font-size: 1.5rem; cursor: pointer;
+    }
+    .modal-content label {
+      display: block; margin-top: var(--gap); font-weight: 500;
+    }
     .modal-content input,
-    .modal-content select,
-    .modal-content .image-upload { width: 100%; padding: 0.5rem; margin-top: 0.25rem; border: 1px solid #ccc; border-radius: var(--radius); }
-    .image-list { display: flex; gap: 0.5rem; margin-top: var(--gap); overflow-x: auto; }
-    @media (max-width:768px) { header { flex-direction: column; align-items: flex-start; } .admin-controls input, .admin-controls select { flex: 1 1 100%; } table { min-width: unset; } }
+    .modal-content select {
+      width: 100%; padding: 0.5rem; margin-top: 0.25rem;
+      border: 1px solid #ccc; border-radius: var(--radius);
+      font-size: 0.95rem;
+    }
+    .image-list {
+      display: flex; gap: 0.5rem; margin-top: var(--gap); overflow-x: auto;
+    }
+    @media (max-width:768px) {
+      header { flex-direction: column; gap: var(--gap); }
+      .admin-controls input, .admin-controls select {
+        flex: 1 1 100%; margin-bottom: var(--gap);
+      }
+      table { min-width: unset; }
+      .table-wrapper { margin-bottom: var(--gap); }
+    }
   </style>
 </head>
 <body>
@@ -79,13 +168,14 @@
     <nav>
       <ul>
         <li><a href="index.html">Home</a></li>
-        <li><a href="#">Inventory</a></li>
+        <li><a href="inventory.html">Inventory</a></li>
         <li><a href="javascript:doSignOut()">Logout</a></li>
       </ul>
     </nav>
   </header>
 
   <main>
+    <!-- ADD NEW CAR + IMPORT CSV -->
     <div class="admin-controls">
       <input id="car-make" type="text" placeholder="Make" required>
       <input id="car-model" type="text" placeholder="Model" required>
@@ -94,81 +184,108 @@
       <input id="car-year" type="number" placeholder="Year" required>
       <input id="car-body-type" type="text" placeholder="Body Type" required>
       <select id="car-color">
-        <option value="">Color</option><option>Black</option><option>White</option><option>Red</option><option>Blue</option><option>Silver</option><option>Gray</option>
+        <option value="">Color</option>
+        <option>Black</option> <option>White</option> <option>Red</option>
+        <option>Blue</option> <option>Silver</option> <option>Gray</option>
       </select>
       <select id="car-body-condition">
-        <option value="">Body Condition</option><option>Bad</option><option>Fair</option><option>Good</option>
+        <option value="">Body Condition</option>
+        <option>Bad</option> <option>Fair</option> <option>Good</option>
       </select>
       <select id="car-interior-condition">
-        <option value="">Interior Condition</option><option>Bad</option><option>Fair</option><option>Good</option>
+        <option value="">Interior Condition</option>
+        <option>Bad</option> <option>Fair</option> <option>Good</option>
       </select>
       <input id="car-transmission" type="text" placeholder="Transmission" required>
       <input id="car-wheels" type="text" placeholder="Wheels" required>
       <input id="car-capacity" type="number" placeholder="Capacity (#)" required>
       <input id="car-features" type="text" placeholder="Features (comma-separated)">
-      <input id="car-images" class="image-upload" type="file" multiple accept="image/*">
+      <input id="car-images" class="hidden-file-input" type="file" multiple accept="image/*">
+      <button onclick="document.getElementById('car-images').click()">Upload Images</button>
       <button onclick="addCar()">Add Car</button>
+
+      <!-- CSV/Excel Import Button -->
+      <button class="import-btn" onclick="document.getElementById('import-input').click()">
+        Import Spreadsheet
+      </button>
+      <input type="file" id="import-input" accept=".csv,.xlsx" class="hidden-file-input">
     </div>
 
+    <!-- FILTER / SEARCH -->
     <div class="admin-filter-sort">
       <input id="filter-make" type="text" placeholder="Filter Make">
       <input id="filter-model" type="text" placeholder="Filter Model">
       <select id="filter-color">
-        <option value="">All Colors</option><option>Black</option><option>White</option><option>Red</option><option>Blue</option><option>Silver</option><option>Gray</option>
+        <option value="">All Colors</option>
+        <option>Black</option><option>White</option><option>Red</option><option>Blue</option>
+        <option>Silver</option><option>Gray</option>
       </select>
       <select id="filter-body-condition">
-        <option value="">All Body Conditions</option><option>Bad</option><option>Fair</option><option>Good</option>
+        <option value="">All Body Conditions</option>
+        <option>Bad</option><option>Fair</option><option>Good</option>
       </select>
       <button onclick="applyFilters()">Apply Filters</button>
       <button onclick="resetFilters()">Reset</button>
     </div>
 
+    <!-- CARS TABLE -->
     <div class="table-wrapper">
       <table>
         <thead>
           <tr>
-            <th>Images</th><th>Make</th><th>Model</th><th>Price</th><th>Condition</th><th>Year</th><th>Body Type</th><th>Color</th><th>Body Cond.</th><th>Interior Cond.</th><th>Transmission</th><th>Wheels</th><th>Capacity</th><th>Features</th><th>Actions</th>
+            <th>Images</th><th>Make</th><th>Model</th><th>Price</th><th>Condition</th><th>Year</th>
+            <th>Body Type</th><th>Color</th><th>Body Cond.</th><th>Interior Cond.</th><th>Transmission</th>
+            <th>Wheels</th><th>Capacity</th><th>Features</th><th>Actions</th>
           </tr>
         </thead>
         <tbody id="cars-table-body"></tbody>
       </table>
     </div>
 
+    <!-- EDIT CAR MODAL -->
     <div id="edit-modal" class="modal">
       <div class="modal-content">
         <button class="close-btn" onclick="closeEditModal()">×</button>
         <h2>Edit Car</h2>
-        <label>Make<input id="edit-make" type="text"></label>
-        <label>Model<input id="edit-model" type="text"></label>
-        <label>Price<input id="edit-price" type="number" step="1"></label>
-        <label>Condition<input id="edit-condition" type="text"></label>
-        <label>Year<input id="edit-year" type="number"></label>
-        <label>Body Type<input id="edit-body-type" type="text"></label>
-        <label>Color<select id="edit-color">
-          <option>Black</option><option>White</option><option>Red</option><option>Blue</option><option>Silver</option><option>Gray</option>
-        </select></label>
-        <label>Body Cond.<select id="edit-body-condition">
-          <option>Bad</option><option>Fair</option><option>Good</option>
-        </select></label>
-        <label>Interior Cond.<select id="edit-interior-condition">
-          <option>Bad</option><option>Fair</option><option>Good</option>
-        </select></label>
-        <label>Transmission<input id="edit-transmission" type="text"></label>
-        <label>Wheels<input id="edit-wheels" type="text"></label>
-        <label>Capacity<input id="edit-capacity" type="number"></label>
-        <label>Features<input id="edit-features" type="text"></label>
-        <label> New Images<input id="edit-images" class="image-upload" type="file" multiple accept="image/*"></label>
+        <label>Make <input id="edit-make" type="text"></label>
+        <label>Model <input id="edit-model" type="text"></label>
+        <label>Price <input id="edit-price" type="number" step="1"></label>
+        <label>Condition <input id="edit-condition" type="text"></label>
+        <label>Year <input id="edit-year" type="number"></label>
+        <label>Body Type <input id="edit-body-type" type="text"></label>
+        <label>Color
+          <select id="edit-color">
+            <option>Black</option><option>White</option><option>Red</option><option>Blue</option>
+            <option>Silver</option><option>Gray</option>
+          </select>
+        </label>
+        <label>Body Cond.
+          <select id="edit-body-condition">
+            <option>Bad</option><option>Fair</option><option>Good</option>
+          </select>
+        </label>
+        <label>Interior Cond.
+          <select id="edit-interior-condition">
+            <option>Bad</option><option>Fair</option><option>Good</option>
+          </select>
+        </label>
+        <label>Transmission <input id="edit-transmission" type="text"></label>
+        <label>Wheels <input id="edit-wheels" type="text"></label>
+        <label>Capacity <input id="edit-capacity" type="number"></label>
+        <label>Features <input id="edit-features" type="text"></label>
+        <label>New Images <input id="edit-images" class="hidden-file-input" type="file" multiple></label>
         <div class="image-list" id="edit-image-list"></div>
         <button onclick="saveEditCar()">Save Changes</button>
       </div>
     </div>
 
+    <!-- VIEW IMAGES MODAL -->
     <div id="view-images-modal" class="modal">
       <div class="modal-content">
         <button class="close-btn" onclick="closeImageModal()">×</button>
         <h2>Car Images</h2>
         <div class="image-list" id="image-list"></div>
-        <label>Add Images<input id="new-image-files" class="image-upload" type="file" multiple></label>
+        <label>Add Images <input id="new-image-files" class="hidden-file-input" type="file" multiple></label>
         <button onclick="uploadNewImages()">Upload</button>
       </div>
     </div>
@@ -177,24 +294,40 @@
   <footer>&copy; 2025 VEPA AutoCare</footer>
 
   <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js';
-    import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/11.5.0/firebase-auth.js';
-    import { getFirestore, collection, getDocs, getDoc, addDoc, deleteDoc, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/11.5.0/firebase-firestore.js';
+    import {
+      initializeApp
+    } from 'https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js';
+    import {
+      getAuth,
+      onAuthStateChanged,
+      signOut
+    } from 'https://www.gstatic.com/firebasejs/11.5.0/firebase-auth.js';
+    import {
+      getFirestore,
+      collection,
+      getDocs,
+      getDoc,
+      addDoc,
+      deleteDoc,
+      doc,
+      updateDoc
+    } from 'https://www.gstatic.com/firebasejs/11.5.0/firebase-firestore.js';
 
+    // Initialize Firebase
     const firebaseConfig = {
       apiKey: 'AIzaSyBcKnjZm5LYqj5jx5VEqx9ywspgZyxNfsA',
       authDomain: 'vepa-24b46.firebaseapp.com',
       projectId: 'vepa-24b46',
       storageBucket: 'vepa-24b46.appspot.com',
       messagingSenderId: '170936495301',
-      appId: '1:170936495301:web:6f15b8fa08de9c',
+      appId: '1:170936495301:web:6f15b8fa08deeb01d5d4ac',
       measurementId: 'G-F8NFZ6SRKR'
     };
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // Redirect if unauthenticated
+    // Redirect if not authenticated
     onAuthStateChanged(auth, user => {
       if (!user) window.location.href = 'login.html';
       else displayCarsAdmin();
@@ -205,22 +338,24 @@
       window.location.href = 'login.html';
     };
 
-    // Cloudinary upload
+    // Cloudinary image upload helper
     async function uploadImage(file) {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('upload_preset', 'vepa_unsigned');
-      const res = await fetch('https://api.cloudinary.com/v1_1/dyjfyxrve/image/upload', { method: 'POST', body: formData });
+      const res = await fetch('https://api.cloudinary.com/v1_1/dyjfyxrve/image/upload', {
+        method: 'POST',
+        body: formData
+      });
       if (!res.ok) throw new Error('Cloudinary upload failed');
-      const data = await res.json();
-      return { url: data.secure_url, public_id: data.public_id };
+      return (await res.json());
     }
 
     async function handleUploads(files) {
       const arr = [];
       for (const file of Array.from(files)) {
-        const img = await uploadImage(file);
-        arr.push(img);
+        const data = await uploadImage(file);
+        arr.push({ url: data.secure_url, public_id: data.public_id });
       }
       return arr;
     }
@@ -239,54 +374,92 @@
         const thumb = car.images?.[0]?.url || 'GenCar.png';
         tr.innerHTML =
           `<td><img class="thumbnail" src="${thumb}" onclick="openImageModal('${car.id}')"></td>` +
-          `<td>${car.make}</td><td>${car.model}</td><td>$${car.price}</td><td>${car.condition}</td>` +
-          `<td>${car.year}</td><td>${car.bodyType}</td><td>${car.color}</td>` +
+          `<td>${car.make}</td><td>${car.model}</td><td>$${Number(car.price).toLocaleString()}</td>` +
+          `<td>${car.condition}</td><td>${car.year}</td><td>${car.bodyType}</td><td>${car.color}</td>` +
           `<td>${car.bodyCondition}</td><td>${car.interiorCondition}</td>` +
           `<td>${car.transmission}</td><td>${car.wheels}</td><td>${car.capacity}</td>` +
           `<td>${(car.features||[]).join(', ')}</td>` +
-          `<td><button class="action-btn edit-btn" onclick="openEdit('${car.id}')">Edit</button>` +
-          `<button class="action-btn delete-btn" onclick="deleteCar('${car.id}')">Delete</button></td>`;
+          `<td>` +
+            `<button class="action-btn edit-btn" onclick="openEdit('${car.id}')">Edit</button>` +
+            `<button class="action-btn delete-btn" onclick="deleteCar('${car.id}')">Delete</button>` +
+          `</td>`;
         body.appendChild(tr);
       });
     }
 
     async function addCar() {
-      // Required fields check
+      // Validate
       const make = document.getElementById('car-make').value.trim();
       const model = document.getElementById('car-model').value.trim();
-      // ... repeat for other required fields
       if (!make || !model) { alert('Please fill in required fields.'); return; }
-      const images = await handleUploads(document.getElementById('car-images').files);
+
+      const price = Number(document.getElementById('car-price').value) || 0;
+      const condition = document.getElementById('car-condition').value.trim();
+      const year = Number(document.getElementById('car-year').value) || 0;
+      const bodyType = document.getElementById('car-body-type').value.trim();
+      const color = document.getElementById('car-color').value;
+      const bodyCondition = document.getElementById('car-body-condition').value;
+      const interiorCondition = document.getElementById('car-interior-condition').value;
+      const transmission = document.getElementById('car-transmission').value.trim();
+      const wheels = document.getElementById('car-wheels').value.trim();
+      const capacity = Number(document.getElementById('car-capacity').value) || 0;
+      const features = document.getElementById('car-features').value
+        .split(',').map(f => f.trim()).filter(f => f);
+
+      // Upload images if any
+      let images = [];
+      const files = document.getElementById('car-images').files;
+      if (files.length) {
+        try {
+          images = await handleUploads(files);
+        } catch (err) {
+          console.error(err);
+          alert('Image upload failed.');
+          return;
+        }
+      }
+
       const carObj = {
         make,
         model,
-        price: Number(document.getElementById('car-price').value),
-        condition: document.getElementById('car-condition').value.trim(),
-        year: Number(document.getElementById('car-year').value),
-        bodyType: document.getElementById('car-body-type').value.trim(),
-        color: document.getElementById('car-color').value,
-        bodyCondition: document.getElementById('car-body-condition').value,
-        interiorCondition: document.getElementById('car-interior-condition').value,
-        transmission: document.getElementById('car-transmission').value.trim(),
-        wheels: document.getElementById('car-wheels').value.trim(),
-        capacity: Number(document.getElementById('car-capacity').value),
-        features: document.getElementById('car-features').value.split(',').map(f=>f.trim()),
+        price,
+        condition,
+        year,
+        bodyType,
+        color,
+        bodyCondition,
+        interiorCondition,
+        transmission,
+        wheels,
+        capacity,
+        features,
         images
       };
-      await addDoc(collection(db,'cars'), carObj);
+      await addDoc(collection(db, 'cars'), carObj);
       alert('Car added successfully!');
       displayCarsAdmin();
+      // Clear fields
+      [
+        'car-make','car-model','car-price','car-condition','car-year','car-body-type',
+        'car-color','car-body-condition','car-interior-condition','car-transmission',
+        'car-wheels','car-capacity','car-features','car-images'
+      ].forEach(id => {
+        const el = document.getElementById(id);
+        if (el.type === 'file') el.value = '';
+        else el.value = '';
+      });
     }
 
     async function deleteCar(carId) {
-      if (!confirm('Delete this car and its images?')) return;
-      const docRef = doc(db,'cars',carId);
+      if (!confirm('Delete this car and all its images?')) return;
+      const docRef = doc(db, 'cars', carId);
       const snap = await getDoc(docRef);
       const data = snap.data();
-      const public_ids = (data.images||[]).map(i=>i.public_id).filter(Boolean);
+      const public_ids = (data.images||[]).map(i => i.public_id).filter(Boolean);
       if (public_ids.length) {
         await fetch('https://vepa.onrender.com/delete-images', {
-          method: 'POST', headers: {'Content-Type':'application/json'},
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ public_ids })
         });
       }
@@ -298,7 +471,7 @@
     let editId;
     async function openEdit(id) {
       editId = id;
-      const car = (await fetchCarData()).find(c=>c.id===id);
+      const car = (await fetchCarData()).find(c => c.id === id);
       if (!car) return;
       document.getElementById('edit-make').value = car.make;
       document.getElementById('edit-model').value = car.model;
@@ -313,8 +486,19 @@
       document.getElementById('edit-wheels').value = car.wheels;
       document.getElementById('edit-capacity').value = car.capacity;
       document.getElementById('edit-features').value = (car.features||[]).join(', ');
-      const list = document.getElementById('edit-image-list'); list.innerHTML = '';
-      (car.images||[]).forEach(i=> list.innerHTML += `<img src="${i.url}" style="width:80px;height:60px;border-radius:var(--radius);margin-right:4px;">`);
+
+      // Show existing images
+      const list = document.getElementById('edit-image-list');
+      list.innerHTML = '';
+      (car.images||[]).forEach(img => {
+        const elm = document.createElement('img');
+        elm.src = img.url;
+        elm.style.width = '80px';
+        elm.style.height = '60px';
+        elm.style.borderRadius = 'var(--radius)';
+        elm.style.marginRight = '4px';
+        list.appendChild(elm);
+      });
       document.getElementById('edit-modal').classList.add('show');
     }
 
@@ -322,75 +506,126 @@
       const updated = {
         make: document.getElementById('edit-make').value.trim(),
         model: document.getElementById('edit-model').value.trim(),
-        price: Number(document.getElementById('edit-price').value),
+        price: Number(document.getElementById('edit-price').value) || 0,
         condition: document.getElementById('edit-condition').value.trim(),
-        year: Number(document.getElementById('edit-year').value),
+        year: Number(document.getElementById('edit-year').value) || 0,
         bodyType: document.getElementById('edit-body-type').value.trim(),
         color: document.getElementById('edit-color').value,
         bodyCondition: document.getElementById('edit-body-condition').value,
         interiorCondition: document.getElementById('edit-interior-condition').value,
         transmission: document.getElementById('edit-transmission').value.trim(),
         wheels: document.getElementById('edit-wheels').value.trim(),
-        capacity: Number(document.getElementById('edit-capacity').value),
-        features: document.getElementById('edit-features').value.split(',').map(f=>f.trim())
+        capacity: Number(document.getElementById('edit-capacity').value) || 0,
+        features: document.getElementById('edit-features').value
+          .split(',').map(f=>f.trim()).filter(f=>f)
       };
       const files = document.getElementById('edit-images').files;
       if (files.length) {
-        const imgs = await handleUploads(files);
-        const docRef = doc(db,'cars',editId);
-        const snap = await getDoc(docRef);
-        const current = snap.data().images || [];
-        updated.images = [...current, ...imgs];
+        try {
+          const imgs = await handleUploads(files);
+          const docRef = doc(db, 'cars', editId);
+          const snap = await getDoc(docRef);
+          const current = snap.data().images || [];
+          updated.images = [...current, ...imgs];
+        } catch (err) {
+          console.error(err);
+          alert('Image upload failed during edit.');
+          return;
+        }
       }
-      await updateDoc(doc(db,'cars',editId), updated);
+      await updateDoc(doc(db, 'cars', editId), updated);
       alert('Car updated!');
       closeEditModal();
       displayCarsAdmin();
     }
 
-    function closeEditModal() { document.getElementById('edit-modal').classList.remove('show'); }
-
-    async function openImageModal(id) {
-      const car = (await fetchCarData()).find(c=>c.id===id);
-      const list = document.getElementById('image-list'); list.innerHTML = '';
-      car.images.forEach((img,idx) => {
-        const wrapper = document.createElement('div'); wrapper.style.display='inline-block'; wrapper.style.marginRight='0.5rem';
-        const el = document.createElement('img'); el.src=img.url; el.width=80; el.height=60; el.style.borderRadius='var(--radius)'; wrapper.appendChild(el);
-        const btn = document.createElement('button'); btn.textContent='Delete'; btn.classList.add('action-btn','delete-btn'); btn.onclick = () => deleteImage(id,idx,img.public_id);
-        wrapper.appendChild(btn);
-        list.appendChild(wrapper);
-      });
-      const modal = document.getElementById('view-images-modal'); modal.dataset.id=id; modal.classList.add('show');
+    function closeEditModal() {
+      document.getElementById('edit-modal').classList.remove('show');
+      // Clear file input
+      document.getElementById('edit-images').value = '';
     }
 
-    function closeImageModal() { document.getElementById('view-images-modal').classList.remove('show'); }
+    async function openImageModal(id) {
+      const car = (await fetchCarData()).find(c => c.id === id);
+      const list = document.getElementById('image-list');
+      list.innerHTML = '';
+      (car.images||[]).forEach((img, idx) => {
+        const wrapper = document.createElement('div');
+        wrapper.style.display = 'inline-block';
+        wrapper.style.marginRight = '0.5rem';
+        const el = document.createElement('img');
+        el.src = img.url;
+        el.width = 80; el.height = 60;
+        el.style.borderRadius = 'var(--radius)';
+        wrapper.appendChild(el);
+
+        const btn = document.createElement('button');
+        btn.textContent = 'Delete';
+        btn.classList.add('action-btn','delete-btn');
+        btn.onclick = () => deleteImage(id, idx, img.public_id);
+        wrapper.appendChild(btn);
+
+        list.appendChild(wrapper);
+      });
+      const modal = document.getElementById('view-images-modal');
+      modal.dataset.id = id;
+      modal.classList.add('show');
+    }
+
+    function closeImageModal() {
+      document.getElementById('view-images-modal').classList.remove('show');
+      document.getElementById('new-image-files').value = '';
+    }
 
     async function uploadNewImages() {
-      const modal = document.getElementById('view-images-modal'); const carId = modal.dataset.id;
+      const modal = document.getElementById('view-images-modal');
+      const carId = modal.dataset.id;
       const files = Array.from(document.getElementById('new-image-files').files);
-      if (!files.length) return alert('Please select images to upload.');
+      if (!files.length) {
+        alert('Please select images to upload.');
+        return;
+      }
       try {
         const uploaded = [];
-        for (const f of files) { const img = await uploadImage(f); uploaded.push(img); }
-        const docRef = doc(db,'cars',carId);
+        for (const f of files) {
+          const img = await uploadImage(f);
+          uploaded.push({ url: img.secure_url, public_id: img.public_id });
+        }
+        const docRef = doc(db, 'cars', carId);
         const snap = await getDoc(docRef);
         const current = snap.data().images || [];
-        await updateDoc(docRef,{ images: [...current, ...uploaded] });
-        alert('Images uploaded!'); document.getElementById('new-image-files').value = '';
-        openImageModal(carId); displayCarsAdmin();
-      } catch(err) { console.error(err); alert('Upload failed.'); }
+        await updateDoc(docRef, { images: [...current, ...uploaded] });
+        alert('Images uploaded!');
+        document.getElementById('new-image-files').value = '';
+        openImageModal(carId);
+        displayCarsAdmin();
+      } catch (err) {
+        console.error(err);
+        alert('Upload failed.');
+      }
     }
 
     async function deleteImage(carId, idx, public_id) {
       try {
-        const docRef = doc(db,'cars',carId);
+        const docRef = doc(db, 'cars', carId);
         const snap = await getDoc(docRef);
         const data = snap.data();
-        const updated = (data.images||[]).filter((_,i)=>i!==idx);
-        await updateDoc(docRef,{ images: updated });
-        if (public_id) await fetch('https://vepa.onrender.com/delete-images',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ public_ids: [public_id] }) });
-        alert('Image deleted!'); openImageModal(carId);
-      } catch(e) { console.error(e); alert('Failed to delete image.'); }
+        const updated = (data.images || []).filter((_, i) => i !== idx);
+        await updateDoc(docRef, { images: updated });
+        if (public_id) {
+          await fetch('https://vepa.onrender.com/delete-images', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ public_ids: [public_id] })
+          });
+        }
+        alert('Image deleted!');
+        openImageModal(carId);
+        displayCarsAdmin();
+      } catch (e) {
+        console.error(e);
+        alert('Failed to delete image.');
+      }
     }
 
     function applyFilters() {
@@ -400,21 +635,114 @@
         const fColor = document.getElementById('filter-color').value;
         const fBody = document.getElementById('filter-body-condition').value;
         const filtered = cars.filter(c =>
-          (!fMake||c.make.toLowerCase().includes(fMake)) &&
-          (!fModel||c.model.toLowerCase().includes(fModel)) &&
-          (!fColor||c.color===fColor) &&
-          (!fBody||c.bodyCondition===fBody)
+          (!fMake || c.make.toLowerCase().includes(fMake)) &&
+          (!fModel || c.model.toLowerCase().includes(fModel)) &&
+          (!fColor || c.color === fColor) &&
+          (!fBody || c.bodyCondition === fBody)
         );
         displayCarsAdmin(filtered);
       });
     }
 
     function resetFilters() {
-      document.querySelectorAll('.admin-filter-sort input, .admin-filter-sort select').forEach(i=>i.value='');
+      document.querySelectorAll('.admin-filter-sort input, .admin-filter-sort select').forEach(i => i.value = '');
       displayCarsAdmin();
     }
+    
+    // Handle CSV / XLSX import
+    document.getElementById('import-input').addEventListener('change', async e => {
+      console.log("IMported: " + e.target.files);
+      const file = e.target.files[0];
+      if (!file) return;
 
-    // Expose globals
+      // Identify extension
+      const ext = file.name.split('.').pop().toLowerCase();
+      if (ext === 'csv' || ext === 'txt') {
+        Papa.parse(file, {
+          header: true,
+          skipEmptyLines: true,
+          complete: async results => {
+            const rows = results.data; // Array of objects
+            await processSpreadsheetRows(rows);
+            alert('Spreadsheet imported successfully!');
+            displayCarsAdmin();
+            e.target.value = '';
+          },
+          error: err => {
+            console.error(err);
+            alert('Error parsing CSV.');
+          }
+        });
+      } else if (ext === 'xlsx' || ext === 'xls') {
+        const data = await file.arrayBuffer();
+        const workbook = XLSX.read(data, { type: 'array' });
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(firstSheet, { raw: false });
+        await processSpreadsheetRows(rows);
+        alert('Spreadsheet imported successfully!');
+        displayCarsAdmin();
+        e.target.value = '';
+      } else {
+        alert('Unsupported file format. Please upload CSV or XLSX.');
+        e.target.value = '';
+      }
+    });
+
+    // Attempt to match common field names to Firestore schema
+    async function processSpreadsheetRows(rows) {
+      for (const row of rows) {
+        // Lowercase keys
+        const normalized = {};
+        Object.keys(row).forEach(key => {
+          const val = row[key];
+          const lower = key.trim().toLowerCase();
+          normalized[lower] = val;
+        });
+
+        // Field matching heuristics
+        const carObj = {};
+
+        // Map string fields
+        carObj.make = normalized.make || normalized['car make'] || normalized['make'] || '';
+        carObj.model = normalized.model || normalized['car model'] || normalized['model'] || '';
+        // Price: handle values like "$12,000" or "12000"
+        const priceRaw = normalized.price || normalized['sales price'] || normalized['sale price'] || normalized['car price'] || '';
+        carObj.price = parseNumber(priceRaw);
+
+        carObj.condition = normalized.condition || normalized['car condition'] || '';
+        carObj.year = parseNumber(normalized.year || normalized['model year'] || '');
+
+        carObj.bodyType = normalized['body type'] || normalized.bodytype || normalized['type'] || '';
+        carObj.color = normalized.color || normalized['car color'] || '';
+        carObj.bodyCondition = normalized['body condition'] || '';
+        carObj.interiorCondition = normalized['interior condition'] || '';
+        carObj.transmission = normalized.transmission || '';
+        carObj.wheels = normalized.wheels || '';
+        carObj.capacity = parseNumber(normalized.capacity || normalized['# of passengers'] || normalized.passengers || '');
+        carObj.features = (normalized.features || '').split(',').map(f => f.trim()).filter(f => f);
+
+        carObj.images = []; // We'll leave images empty on bulk upload
+
+        // If at least make & model exist, add to Firestore
+        if (carObj.make && carObj.model) {
+          try {
+            await addDoc(collection(db, 'cars'), carObj);
+            console.log("Added: ", carObj.make, carObj.model);
+          } catch (err) {
+            console.error('Error adding row:', err, carObj);
+          }
+        }
+      }
+    }
+
+    function parseNumber(val) {
+      if (!val) return 0;
+      // Strip anything non-numeric, except decimals
+      const num = parseFloat(String(val).replace(/[^0-9.-]+/g, ''));
+      return isNaN(num) ? 0 : num;
+    }
+
+    // EXPOSE GLOBALS
     window.addCar = addCar;
     window.deleteCar = deleteCar;
     window.openEdit = openEdit;
@@ -427,5 +755,10 @@
     window.applyFilters = applyFilters;
     window.resetFilters = resetFilters;
   </script>
+
+  <!-- PapaParse (CSV) & SheetJS (XLSX) libraries (integrity attributes removed) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
 </body>
 </html>
