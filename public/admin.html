@@ -181,6 +181,7 @@
       <input id="car-model" type="text" placeholder="Model" required>
       <input id="car-price" type="number" placeholder="Price" step="1" required>
       <input id="car-condition" type="text" placeholder="Condition" required>
+      <input id="car-mileage" type="number" placeholder="Mileage" required>
       <input id="car-year" type="number" placeholder="Year" required>
       <input id="car-body-type" type="text" placeholder="Body Type" required>
       <select id="car-color">
@@ -233,7 +234,7 @@
       <table>
         <thead>
           <tr>
-            <th>Images</th><th>Make</th><th>Model</th><th>Price</th><th>Condition</th><th>Year</th>
+            <th>Images</th><th>Make</th><th>Model</th><th>Price</th><th>Condition</th><th>Mileage</th><th>Year</th>
             <th>Body Type</th><th>Color</th><th>Body Cond.</th><th>Interior Cond.</th><th>Transmission</th>
             <th>Wheels</th><th>Capacity</th><th>Features</th><th>Actions</th>
           </tr>
@@ -252,6 +253,7 @@
         <label>Price <input id="edit-price" type="number" step="1"></label>
         <label>Condition <input id="edit-condition" type="text"></label>
         <label>Year <input id="edit-year" type="number"></label>
+        <label>Mileage <input id="edit-mileage" type="number"></label>
         <label>Body Type <input id="edit-body-type" type="text"></label>
         <label>Color
           <select id="edit-color">
@@ -375,7 +377,7 @@
         tr.innerHTML =
           `<td><img class="thumbnail" src="${thumb}" onclick="openImageModal('${car.id}')"></td>` +
           `<td>${car.make}</td><td>${car.model}</td><td>$${Number(car.price).toLocaleString()}</td>` +
-          `<td>${car.condition}</td><td>${car.year}</td><td>${car.bodyType}</td><td>${car.color}</td>` +
+          `<td>${car.condition}</td><td>${car.mileage}</td><td>${car.year}</td><td>${car.bodyType}</td><td>${car.color}</td>` +
           `<td>${car.bodyCondition}</td><td>${car.interiorCondition}</td>` +
           `<td>${car.transmission}</td><td>${car.wheels}</td><td>${car.capacity}</td>` +
           `<td>${(car.features||[]).join(', ')}</td>` +
@@ -396,6 +398,7 @@
       const price = Number(document.getElementById('car-price').value) || 0;
       const condition = document.getElementById('car-condition').value.trim();
       const year = Number(document.getElementById('car-year').value) || 0;
+      const mileage = Number(document.getElementById('car-mileage').value) || 0;
       const bodyType = document.getElementById('car-body-type').value.trim();
       const color = document.getElementById('car-color').value;
       const bodyCondition = document.getElementById('car-body-condition').value;
@@ -425,6 +428,7 @@
         price,
         condition,
         year,
+        mileage,
         bodyType,
         color,
         bodyCondition,
@@ -440,7 +444,7 @@
       displayCarsAdmin();
       // Clear fields
       [
-        'car-make','car-model','car-price','car-condition','car-year','car-body-type',
+        'car-make','car-model','car-price','car-condition','car-year','car-mileage','car-body-type',
         'car-color','car-body-condition','car-interior-condition','car-transmission',
         'car-wheels','car-capacity','car-features','car-images'
       ].forEach(id => {
@@ -478,6 +482,7 @@
       document.getElementById('edit-price').value = car.price;
       document.getElementById('edit-condition').value = car.condition;
       document.getElementById('edit-year').value = car.year;
+      document.getElementById('edit-mileage').value = car.mileage;
       document.getElementById('edit-body-type').value = car.bodyType;
       document.getElementById('edit-color').value = car.color;
       document.getElementById('edit-body-condition').value = car.bodyCondition;
@@ -509,6 +514,7 @@
         price: Number(document.getElementById('edit-price').value) || 0,
         condition: document.getElementById('edit-condition').value.trim(),
         year: Number(document.getElementById('edit-year').value) || 0,
+        mileage: Number(document.getElementById('edit-mileage').value) || 0,
         bodyType: document.getElementById('edit-body-type').value.trim(),
         color: document.getElementById('edit-color').value,
         bodyCondition: document.getElementById('edit-body-condition').value,
@@ -711,7 +717,7 @@
 
         carObj.condition = normalized.condition || normalized['car condition'] || '';
         carObj.year = parseNumber(normalized.year || normalized['model year'] || '');
-
+        carObj.mileage = normalized.mileage || '';
         carObj.bodyType = normalized['body type'] || normalized.bodytype || normalized['type'] || '';
         carObj.color = normalized.color || normalized['car color'] || '';
         carObj.bodyCondition = normalized['body condition'] || '';
