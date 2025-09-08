@@ -340,7 +340,7 @@ footer a { color: var(--color-bg-light); }
     document.getElementById('close-login').onclick = () =>
       document.getElementById('login-sidebar').classList.remove('open');
     import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-firestore.js";
-    const db = getFirestore(app);
+    
 
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js";
     import {
@@ -360,7 +360,8 @@ footer a { color: var(--color-bg-light); }
     };
     const app  = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-
+    const db = getFirestore(app);
+    
     onAuthStateChanged(auth, async (user) => {
   const loginToggle = document.querySelector('.login-toggle');
   const signoutNav = document.getElementById('signout-nav');
