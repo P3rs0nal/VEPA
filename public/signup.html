@@ -146,7 +146,7 @@
       try {
         const { user } = await createUserWithEmailAndPassword(auth, email, pw);
         // Store user in Firestore under "users" collection using UID as document ID
-        await setDoc(doc(db, "users", user.email), {
+        await setDoc(doc(db, "users", user.uid), {
           email: user.email,
           isAdmin: false
         });

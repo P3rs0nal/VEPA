@@ -171,7 +171,7 @@
 
       try {
         const { user } = await signInWithEmailAndPassword(auth, email, pw);
-        const snap = await getDoc(doc(db, "users", user.email));
+        const snap = await getDoc(doc(db, "users", user.uid));
         if (snap.exists() && snap.data().isAdmin) {
           sessionStorage.setItem("admin-auth", "true");
         } else {
