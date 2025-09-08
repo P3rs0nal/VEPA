@@ -317,10 +317,13 @@ footer a { color: var(--color-bg-light); }
   <section id="testimonials">
     <h2>What Our Customers Say</h2>
     <div class="testimonial-slider">
+    <!-- Elfsight Google Reviews | Untitled Google Reviews -->
+    <script src="https://elfsightcdn.com/platform.js" async></script>
+    <div class="elfsight-app-cfb1a75f-1dd2-4f92-bae4-2cd8b8de93c8" data-elfsight-app-lazy></div>
       <!-- Dynamic testimonial slides will be injected here -->
     </div>
-    <button class="slider-btn prev-btn" aria-label="Previous testimonial">‹</button>
-    <button class="slider-btn next-btn" aria-label="Next testimonial">›</button>
+    <!-- <button class="slider-btn prev-btn" aria-label="Previous testimonial">‹</button> -->
+    <!-- <button class="slider-btn next-btn" aria-label="Next testimonial">›</button> -->
   </section>
 
 
@@ -361,7 +364,7 @@ footer a { color: var(--color-bg-light); }
     const app  = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
-    
+
     onAuthStateChanged(auth, async (user) => {
   const loginToggle = document.querySelector('.login-toggle');
   const signoutNav = document.getElementById('signout-nav');
