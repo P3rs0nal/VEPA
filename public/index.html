@@ -2,13 +2,18 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <!-- <link rel="manifest" href="manifest.json"> -->
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png">
+  <link rel="shortcut icon" href="icons/favicon.ico">
+  <!-- <link rel="stylesheet" href="theme.css"> -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>VEPA AutoCare</title>
   <style>
     :root {
       --color-bg-light: #fff;
       --color-bg-dark: #000;
-      --color-primary: #9d4edd;
+      --color-primary: #5a31f4;
       --color-text: #111;
       --color-text-light: #555;
       --color-accent: #474747;
@@ -275,7 +280,7 @@ footer a { color: var(--color-bg-light); }
         <li><a href="#hero">Home</a></li>
         <li><a href="inventory.html">Inventory</a></li>
         <li id="admin-link" style="display:none"><a href="admin.html">Admin</a></li>
-        <li class="contact-toggle">Contact</li>
+        <!-- <li><a href="contact.html">Contact</a></li> -->
         <li class="login-toggle">Login/Signup</li>
         <li id="signout-nav" style="display:none;"><button id="signout-btn">Sign Out</button></li>
       </ul>
@@ -326,10 +331,10 @@ footer a { color: var(--color-bg-light); }
   </footer>
 
   <script type="module">
-    document.querySelector('.contact-toggle').onclick = () =>
-      document.getElementById('contact-sidebar').classList.toggle('open');
-    document.getElementById('close-contact').onclick = () =>
-      document.getElementById('contact-sidebar').classList.remove('open');
+    // document.querySelector('.contact-toggle').onclick = () =>
+    //   document.getElementById('contact-sidebar').classList.toggle('open');
+    // document.getElementById('close-contact').onclick = () =>
+    //   document.getElementById('contact-sidebar').classList.remove('open');
     document.querySelector('.login-toggle').onclick = () =>
       document.getElementById('login-sidebar').classList.toggle('open');
     document.getElementById('close-login').onclick = () =>
@@ -383,9 +388,13 @@ footer a { color: var(--color-bg-light); }
 
     // Video rotation
     const videoFiles = [
+      'backgroundVids/OilPour1.MP4',
       'backgroundVids/mountain.mp4',
-      'backgroundVids/tirecloseup.mp4',
-      'backgroundVids/wideshot.mp4'
+      'backgroundVids/LiftGoingDown.MP4',
+      'backgroundVids/wideshot.mp4',
+      'backgroundVids/OilPour2.MP4',
+      'backgroundVids/ReplacingCap.MP4'
+      
     ];
     const vid1 = document.getElementById('vid1');
     const vid2 = document.getElementById('vid2');
@@ -404,7 +413,7 @@ footer a { color: var(--color-bg-light); }
           next.classList.replace('hidden','visible');
           [current,next] = [next,current];
         };
-      },6000);
+      },4500);
     }
     document.addEventListener('DOMContentLoaded', startBgRotation);
   </script>

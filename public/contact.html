@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <!-- <link rel="manifest" href="manifest.json"> -->
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png">
+  <link rel="shortcut icon" href="icons/favicon.ico">
+  <meta name="theme-color" content="#000000">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VEPA AutoCare – Contact</title>
+  <style>
+    :root {
+      --color-bg-light: #fff;
+      --color-bg-dark: #000;
+      --color-primary: #9d4edd;
+      --color-text: #111;
+      --color-text-light: #555;
+      --color-accent: #474747;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      background: var(--color-bg-light);
+      color: var(--color-text);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    a { text-decoration: none; color: inherit; }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      background: var(--color-bg-light);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .logo { font-size: 1.5rem; font-weight: bold; }
+    nav a {
+      margin-left: 1.5rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      font-size: 0.9rem;
+      color: var(--color-text-light);
+    }
+    nav a:hover { color: var(--color-primary); }
+    main {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem 1rem;
+    }
+    .form-container {
+      background: rgba(0, 0, 0, 0.05);
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 400px;
+    }
+    .form-container h2 {
+      text-align: center;
+      font-weight: 300;
+      margin-bottom: 1.5rem;
+    }
+    .form-container input,
+    .form-container textarea {
+      width: 100%;
+      padding: 0.75rem;
+      margin-bottom: 1rem;
+      border: 1px solid var(--color-accent);
+      border-radius: 4px;
+      font-size: 1rem;
+      background: var(--color-bg-light);
+      color: var(--color-text);
+    }
+    .form-container button {
+      width: 100%;
+      padding: 0.75rem;
+      background: var(--color-primary);
+      color: var(--color-bg-light);
+      border: none;
+      border-radius: 4px;
+      font-weight: bold;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+    .form-container button:hover {
+      background: #7b3ea6;
+    }
+    #status-message {
+      text-align: center;
+      font-size: 0.9rem;
+      min-height: 1.2rem;
+      margin-top: 0.5rem;
+    }
+    footer {
+      text-align: center;
+      padding: 1rem;
+      font-size: 0.8rem;
+      color: var(--color-text-light);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">VEPA</div>
+    <nav>
+      <a href="index.html">Home</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="form-container">
+      <h2>Contact VEPA AutoCare</h2>
+      <form id="inquiryForm">
+        <input type="text" id="inquiryName" placeholder="Full Name" required />
+        <input type="text" id="inquiryPhone" placeholder="Phone Number" required />
+        <input type="email" id="inquiryEmail" placeholder="Email Address" required />
+        <textarea id="inquiryReason" rows="4" placeholder="What can we help you with?" required></textarea>
+        <button type="submit">Send Inquiry</button>
+        <div id="status-message"></div>
+      </form>
+    </div>
+  </main>
+
+  <footer>&copy; 2025 VEPA AutoCare</footer>
+
+<script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+    import { getFirestore, collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+    const app = initializeApp({
+      apiKey: "AIzaSyBcKnjZm5LYqj5jx5VEqx9ywspgZyxNfsA",
+      authDomain: "vepa-24b46.firebaseapp.com",
+      projectId: "vepa-24b46",
+      storageBucket: "vepa-24b46.appspot.com",
+      messagingSenderId: "170936495301",
+      appId: "1:170936495301:web:6f15b8fa08deeb01d5d4ac",
+      measurementId: "G-F8NFZ6SRKR"
+    });
+
+    const db = getFirestore(app);
+
+    const form = document.getElementById('inquiryForm');
+    const statusMsg = document.getElementById('status-message');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      statusMsg.textContent = '';
+      const btn = form.querySelector('button[type="submit"]');
+      btn.disabled = true;
+
+      const user = {
+        name:  document.getElementById('inquiryName').value.trim(),
+        phone: document.getElementById('inquiryPhone').value.trim(),
+        email: document.getElementById('inquiryEmail').value.trim(),
+      };
+      const message = document.getElementById('inquiryReason').value.trim();
+
+      if (!user.name || !user.phone || !user.email || !message) {
+        statusMsg.textContent = 'Please fill out all fields.';
+        btn.disabled = false;
+        return;
+      }
+
+      try {
+        await addDoc(collection(db, 'web_inquiries'), {
+          source: 'web',
+          type: 'general',
+          user,
+          message,
+          createdAt: serverTimestamp()
+        });
+
+        await addDoc(collection(db, 'mail'), {
+          to: ['vepaautoshop1904@gmail.com'],
+          replyTo: user.email,
+          message: {
+            subject: `[VEPA Website] General Inquiry – ${user.name}`,
+            text: `
+New General Inquiry from Website:
+
+Name: ${user.name}
+Phone: ${user.phone}
+Email: ${user.email}
+
+Message:
+${message}
+            `.trim(),
+            html: `
+              <h2>New General Inquiry (Website)</h2>
+              <p><b>Name:</b> ${user.name}<br/>
+              <b>Phone:</b> ${user.phone}<br/>
+              <b>Email:</b> ${user.email}</p>
+              <h3>Message:</h3>
+              <p>${message.replace(/\n/g, '<br/>')}</p>
+              <hr/>
+              <small>VEPA Website</small>
+            `
+          }
+        });
+
+        form.reset();
+        statusMsg.style.color = 'green';
+        statusMsg.textContent = 'Thanks! Your message was sent.';
+      } catch (err) {
+        console.error('Inquiry failed:', err);
+        statusMsg.style.color = 'red';
+        statusMsg.textContent = 'Something went wrong. Please try again later.';
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  </script>
+
+
+</body>
+</html>
