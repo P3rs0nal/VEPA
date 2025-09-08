@@ -639,36 +639,65 @@
     let detailIndex  = 0;
     // Detail modal
     async function openDetails(id) {
-      const car = allCars.find(c => c.id === id);
-      
-      detailImages = car.images?.map(img => img.url) || ['GenCar.png'];
-      detailIndex = 0;
-      document.getElementById('detail-img').src = detailImages[detailIndex];
+  const car = allCars.find(c => c.id === id);
 
-      const list = document.getElementById('detail-list');
-      list.innerHTML = '';
-      const fields = [
-        ['Make', car.make],
-        ['Model', car.model],
-        ['Price', `$${car.price.toLocaleString()}`],
-        ['Condition', car.condition],
-        ['Year', car.year],
-        ['Mileage', car.mileage],
-        ['Body Type', car.bodyType],
-        ['Color', car.color],
-        ['Capacity', car.capacity],
-        ['Features', car.features?.join(', ') || 'N/A'],
-      ];
-      fields.forEach(([label, val]) => {
-        list.innerHTML += `<li><strong>${label}:</strong> ${val}</li>`;
-      });
-      document.getElementById('details-modal').classList.add('show');
-    }
+  detailImages = [];
 
-    function updateDetailImage(){
-      const imgEl = document.getElementById('detail-img');
-      imgEl.src = detailImages[detailIndex];
-    }
+  // Safely map images and fallback to filler image
+  if (car.images && car.images.length > 0) {
+    detailImages = car.images
+      .map(img => img.url)
+      .filter(url => !!url); // remove any undefined URLs
+  }
+
+  // If no valid images found, use filler
+  if (!detailImages || detailImages.length === 0) {
+    detailImages = ['android-chrome-512x512.png'];
+  }
+
+  detailIndex = 0;
+  const imgEl = document.getElementById('detail-img');
+  imgEl.src = detailImages[detailIndex];
+
+  // Show/hide carousel buttons
+  const prevBtn = document.getElementById('prev-btn');
+  const nextBtn = document.getElementById('next-btn');
+  if (detailImages.length <= 1) {
+    prevBtn.style.display = 'none';
+    nextBtn.style.display = 'none';
+  } else {
+    prevBtn.style.display = 'block';
+    nextBtn.style.display = 'block';
+  }
+
+  // Populate the detail list
+  const list = document.getElementById('detail-list');
+  list.innerHTML = '';
+  const fields = [
+    ['Make', car.make],
+    ['Model', car.model],
+    ['Price', `$${car.price?.toLocaleString() || 'N/A'}`],
+    ['Condition', car.condition || 'N/A'],
+    ['Year', car.year || 'N/A'],
+    ['Mileage', car.mileage || 'N/A'],
+    ['Body Type', car.bodyType || 'N/A'],
+    ['Color', car.color || 'N/A'],
+    ['Capacity', car.capacity || 'N/A'],
+    ['Features', car.features?.join(', ') || 'N/A'],
+  ];
+  fields.forEach(([label, val]) => {
+    list.innerHTML += `<li><strong>${label}:</strong> ${val}</li>`;
+  });
+
+  document.getElementById('details-modal').classList.add('show');
+}
+
+function updateDetailImage() {
+  if (detailImages.length > 1) {
+    const imgEl = document.getElementById('detail-img');
+    imgEl.src = detailImages[detailIndex];
+  }
+}
     
     document.getElementById('prev-btn').addEventListener('click', () => {
       detailIndex = (detailIndex - 1 + detailImages.length) % detailImages.length;
