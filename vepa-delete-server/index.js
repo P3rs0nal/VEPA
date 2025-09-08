@@ -6,8 +6,11 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors({
-  origin: ["http://127.0.0.1:5501", "http://localhost:5500", "https://vepa-24b46.web.app/", "https://vepaautocare.com"], // add others as needed
-  methods: ["POST"],
+  origin: ["http://127.0.0.1:5501", 
+  "http://localhost:5500", 
+  "https://vepa-24b46.web.app", 
+  "https://vepaautocare.com"], // add others as needed
+  methods: ["POST", "OPTIONS"],
   allowedHeaders: ["Content-Type"]
 }));
 app.use(express.json());
