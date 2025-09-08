@@ -339,6 +339,8 @@ footer a { color: var(--color-bg-light); }
       document.getElementById('login-sidebar').classList.toggle('open');
     document.getElementById('close-login').onclick = () =>
       document.getElementById('login-sidebar').classList.remove('open');
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-firestore.js";
+    const db = getFirestore(app);
 
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js";
     import {
@@ -359,26 +361,42 @@ footer a { color: var(--color-bg-light); }
     const app  = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    onAuthStateChanged(auth, user => {
-      const loginToggle  = document.querySelector('.login-toggle');
-      const signoutNav   = document.getElementById('signout-nav');
-      const welcomeEl    = document.getElementById('welcome-message');
-      const adminLink    = document.getElementById('admin-link');
-      if (user) {
-        loginToggle.style.display   = 'none';
-        signoutNav.style.display    = 'inline-flex';
-        welcomeEl.textContent       = `Welcome, ${user.email}`;
-        welcomeEl.style.display     = 'block';
-        if (sessionStorage.getItem('admin-auth') === 'true') {
-          adminLink.style.display   = 'inline-flex';
-        }
+    onAuthStateChanged(auth, async (user) => {
+  const loginToggle = document.querySelector('.login-toggle');
+  const signoutNav = document.getElementById('signout-nav');
+  const welcomeEl = document.getElementById('welcome-message');
+  const adminLink = document.getElementById('admin-link');
+
+  if (user) {
+    loginToggle.style.display = 'none';
+    signoutNav.style.display = 'inline-flex';
+    welcomeEl.textContent = `Welcome, ${user.email}`;
+    welcomeEl.style.display = 'block';
+
+    try {
+      // Use UID, not email
+      const snap = await getDoc(doc(db, "users", user.uid));
+      if (snap.exists() && snap.data().isAdmin) {
+        sessionStorage.setItem('admin-auth', 'true');
+        adminLink.style.display = 'inline-flex';
       } else {
-        loginToggle.style.display   = 'inline-flex';
-        signoutNav.style.display    = 'none';
-        welcomeEl.style.display     = 'none';
-        adminLink.style.display     = 'none';
+        sessionStorage.removeItem('admin-auth');
+        adminLink.style.display = 'none';
       }
-    });
+    } catch (err) {
+      console.error("Failed to fetch user document:", err);
+      adminLink.style.display = 'none';
+    }
+
+  } else {
+    loginToggle.style.display = 'inline-flex';
+    signoutNav.style.display = 'none';
+    welcomeEl.style.display = 'none';
+    adminLink.style.display = 'none';
+    sessionStorage.removeItem('admin-auth');
+  }
+});
+
 
     document.getElementById('signout-btn').onclick = async () => {
       await signOut(auth);
