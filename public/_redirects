@@ -1,0 +1,5 @@
+/inventory    /inventory.html
+/login        /login.html
+/signup       /signup.html
+/admin        /admin.html
+/*            /index.html   200

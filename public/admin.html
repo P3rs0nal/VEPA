@@ -216,6 +216,7 @@
         Import Spreadsheet
       </button>
       <input type="file" id="import-input" accept=".csv,.xlsx" class="hidden-file-input">
+      <button onclick="deleteAllCars()" style="background:#e74c3c;color:white;">Delete All Cars</button>
     </div>
 
     <!-- FILTER / SEARCH -->
@@ -478,6 +479,38 @@
       displayCarsAdmin();
     }
 
+    async function deleteAllCars() {
+  if (!confirm('Are you sure you want to delete ALL cars and their images? This cannot be undone.')) return;
+
+  try {
+    // Fetch all cars
+    const carsSnap = await getDocs(collection(db, 'cars'));
+    const cars = carsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    // Delete images from Cloudinary
+    const allPublicIds = cars.flatMap(car => (car.images || []).map(img => img.public_id).filter(Boolean));
+    if (allPublicIds.length) {
+      await fetch('https://vepa.onrender.com/delete-images', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ public_ids: allPublicIds })
+      });
+    }
+
+    // Delete Firestore documents
+    for (const car of cars) {
+      await deleteDoc(doc(db, 'cars', car.id));
+    }
+
+    alert('All cars and their images have been deleted.');
+    displayCarsAdmin();
+  } catch (err) {
+    console.error('Failed to delete all cars:', err);
+    alert('Failed to delete all cars. Check console for details.');
+  }
+}
+
+
     let editId;
     async function openEdit(id) {
       editId = id;
@@ -699,7 +732,7 @@
         e.target.value = '';
       }
     });
-
+    
     // Attempt to match common field names to Firestore schema
     async function processSpreadsheetRows(rows) {
       for (const row of rows) {
@@ -723,7 +756,7 @@
 
         carObj.condition = normalized.condition || normalized['car condition'] || '';
         carObj.year = parseNumber(normalized.year || normalized['model year'] || '');
-        carObj.mileage = normalized.mileage || '';
+        carObj.mileage = normalized.mileage || normalized['odometer reading at the time of purchase'] ||'';
         carObj.bodyType = normalized['body type'] || normalized.bodytype || normalized['type'] || '';
         carObj.color = normalized.color || normalized['car color'] || '';
         carObj.bodyCondition = normalized['body condition'] || '';
@@ -757,6 +790,7 @@
     // EXPOSE GLOBALS
     window.addCar = addCar;
     window.deleteCar = deleteCar;
+    window.deleteAllCars = deleteAllCars;
     window.openEdit = openEdit;
     window.saveEditCar = saveEditCar;
     window.closeEditModal = closeEditModal;
