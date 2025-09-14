@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png">
   <link rel="shortcut icon" href="icons/favicon.ico">
@@ -183,6 +182,7 @@
   <main>
     <!-- ADD NEW CAR + IMPORT CSV -->
     <div class="admin-controls">
+      <input id="car-vin" type="text" placeholder="VIN" required>
       <input id="car-make" type="text" placeholder="Make" required>
       <input id="car-model" type="text" placeholder="Model" required>
       <input id="car-price" type="number" placeholder="Price" step="1" required>
@@ -241,7 +241,7 @@
       <table>
         <thead>
           <tr>
-            <th>Images</th><th>Make</th><th>Model</th><th>Price</th><th>Condition</th><th>Mileage</th><th>Year</th>
+            <th>Images</th><th>VIN</th><th>Make</th><th>Model</th><th>Price</th><th>Condition</th><th>Mileage</th><th>Year</th>
             <th>Body Type</th><th>Color</th><th>Body Cond.</th><th>Interior Cond.</th><th>Transmission</th>
             <th>Wheels</th><th>Capacity</th><th>Features</th><th>Actions</th>
           </tr>
@@ -255,6 +255,7 @@
       <div class="modal-content">
         <button class="close-btn" onclick="closeEditModal()">×</button>
         <h2>Edit Car</h2>
+        <label>VIN <input id="edit-vin" type="text"></label>
         <label>Make <input id="edit-make" type="text"></label>
         <label>Model <input id="edit-model" type="text"></label>
         <label>Price <input id="edit-price" type="number" step="1"></label>
@@ -321,7 +322,7 @@
       doc,
       updateDoc
     } from 'https://www.gstatic.com/firebasejs/11.5.0/firebase-firestore.js';
-
+    import { query, where } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-firestore.js";
     // Initialize Firebase
     const firebaseConfig = {
       apiKey: 'AIzaSyBcKnjZm5LYqj5jx5VEqx9ywspgZyxNfsA',
@@ -383,6 +384,7 @@
         const thumb = car.images?.[0]?.url || 'GenCar.png';
         tr.innerHTML =
           `<td><img class="thumbnail" src="${thumb}" onclick="openImageModal('${car.id}')"></td>` +
+          `<td>${car.vin}</td>` +
           `<td>${car.make}</td><td>${car.model}</td><td>$${Number(car.price).toLocaleString()}</td>` +
           `<td>${car.condition}</td><td>${car.mileage}</td><td>${car.year}</td><td>${car.bodyType}</td><td>${car.color}</td>` +
           `<td>${car.bodyCondition}</td><td>${car.interiorCondition}</td>` +
@@ -403,6 +405,7 @@
       if (!make || !model) { alert('Please fill in required fields.'); return; }
 
       const price = Number(document.getElementById('car-price').value) || 0;
+      const vin = document.getElementById('car-vin').value;
       const condition = document.getElementById('car-condition').value.trim();
       const year = Number(document.getElementById('car-year').value) || 0;
       const mileage = Number(document.getElementById('car-mileage').value) || 0;
@@ -416,6 +419,8 @@
       const features = document.getElementById('car-features').value
         .split(',').map(f => f.trim()).filter(f => f);
 
+      if(!vin){alert("VIN is required."); return;}
+        
       // Upload images if any
       let images = [];
       const files = document.getElementById('car-images').files;
@@ -430,6 +435,7 @@
       }
 
       const carObj = {
+        vin,
         make,
         model,
         price,
@@ -446,12 +452,31 @@
         features,
         images
       };
-      await addDoc(collection(db, 'cars'), carObj);
-      alert('Car added successfully!');
+
+      const carsRef = collection(db, 'cars');
+      const q = query(carsRef, where("vin", "==", vin));
+      const snap = await getDocs(q);
+
+      if (!snap.empty) {
+        if (confirm("A car with this VIN already exists. Do you want to override it?")) {
+          const existing = snap.docs[0];
+          await updateDoc(doc(db, "cars", existing.id), carObj);
+          alert("Car updated successfully!");
+          displayCarsAdmin();
+        } else {
+          alert("Car not added — duplicate VIN.");
+        }
+        return;
+      }
+
+      // otherwise safe to add new
+      await addDoc(carsRef, carObj);
+      alert("Car added successfully!");
       displayCarsAdmin();
+
       // Clear fields
       [
-        'car-make','car-model','car-price','car-condition','car-year','car-mileage','car-body-type',
+        'car-vin','car-make','car-model','car-price','car-condition','car-year','car-mileage','car-body-type',
         'car-color','car-body-condition','car-interior-condition','car-transmission',
         'car-wheels','car-capacity','car-features','car-images'
       ].forEach(id => {
@@ -516,6 +541,7 @@
       editId = id;
       const car = (await fetchCarData()).find(c => c.id === id);
       if (!car) return;
+      document.getElementById('edit-vin').value = car.vin;
       document.getElementById('edit-make').value = car.make;
       document.getElementById('edit-model').value = car.model;
       document.getElementById('edit-price').value = car.price;
@@ -675,6 +701,7 @@
 
     function applyFilters() {
       fetchCarData().then(cars => {
+        const fVin = document.getElementById('filter-vin').value;
         const fMake = document.getElementById('filter-make').value.toLowerCase();
         const fModel = document.getElementById('filter-model').value.toLowerCase();
         const fColor = document.getElementById('filter-color').value;
@@ -696,7 +723,7 @@
     
     // Handle CSV / XLSX import
     document.getElementById('import-input').addEventListener('change', async e => {
-      console.log("IMported: " + e.target.files);
+      console.log("Imported: " + e.target.files);
       const file = e.target.files[0];
       if (!file) return;
 
@@ -734,58 +761,121 @@
     });
     
     // Attempt to match common field names to Firestore schema
-    async function processSpreadsheetRows(rows) {
-      for (const row of rows) {
-        // Lowercase keys
-        const normalized = {};
-        Object.keys(row).forEach(key => {
-          const val = row[key];
-          const lower = key.trim().toLowerCase();
-          normalized[lower] = val;
-        });
 
-        // Field matching heuristics
-        const carObj = {};
+function parseNumber(val) {
+  if (!val) return 0;
+  const num = parseFloat(String(val).replace(/[^0-9.-]+/g, '').trim());
+  return isNaN(num) ? 0 : num;
+}
 
-        // Map string fields
-        carObj.make = normalized.make || normalized['car make'] || normalized['make'] || '';
-        carObj.model = normalized.model || normalized['car model'] || normalized['model'] || '';
-        // Price: handle values like "$12,000" or "12000"
-        const priceRaw = normalized.price || normalized['sales price'] || normalized['sale price'] || normalized['car price'] || '';
-        carObj.price = parseNumber(priceRaw);
+function normalizeCar(car) {
+  return {
+    make: String(car.make || '').trim().toLowerCase(),
+    model: String(car.model || '').trim().toLowerCase(),
+    price: Number(car.price) || 0,
+    condition: String(car.condition || '').trim().toLowerCase(),
+    year: Number(car.year) || 0,
+    mileage: Number(car.mileage) || 0,
+    bodyType: String(car.bodyType || '').trim().toLowerCase(),
+    color: String(car.color || '').trim().toLowerCase(),
+    bodyCondition: String(car.bodyCondition || '').trim().toLowerCase(),
+    interiorCondition: String(car.interiorCondition || '').trim().toLowerCase(),
+    transmission: String(car.transmission || '').trim().toLowerCase(),
+    wheels: String(car.wheels || '').trim().toLowerCase(),
+    capacity: Number(car.capacity) || 0,
+    features: (car.features || []).map(f => f.trim().toLowerCase()).sort()
+  };
+}
 
-        carObj.condition = normalized.condition || normalized['car condition'] || '';
-        carObj.year = parseNumber(normalized.year || normalized['model year'] || '');
-        carObj.mileage = normalized.mileage || normalized['odometer reading at the time of purchase'] ||'';
-        carObj.bodyType = normalized['body type'] || normalized.bodytype || normalized['type'] || '';
-        carObj.color = normalized.color || normalized['car color'] || '';
-        carObj.bodyCondition = normalized['body condition'] || '';
-        carObj.interiorCondition = normalized['interior condition'] || '';
-        carObj.transmission = normalized.transmission || '';
-        carObj.wheels = normalized.wheels || '';
-        carObj.capacity = parseNumber(normalized.capacity || normalized['# of passengers'] || normalized.passengers || '');
-        carObj.features = (normalized.features || '').split(',').map(f => f.trim()).filter(f => f);
+function isSameCar(carA, carB) {
+  const a = normalizeCar(carA);
+  const b = normalizeCar(carB);
+  return a.make === b.make &&
+         a.model === b.model &&
+         a.price === b.price &&
+         a.condition === b.condition &&
+         a.year === b.year &&
+         a.mileage === b.mileage &&
+         a.bodyType === b.bodyType &&
+         a.color === b.color &&
+         a.bodyCondition === b.bodyCondition &&
+         a.interiorCondition === b.interiorCondition &&
+         a.transmission === b.transmission &&
+         a.wheels === b.wheels &&
+         a.capacity === b.capacity &&
+         a.features.join(',') === b.features.join(',');
+}
 
-        carObj.images = []; // We'll leave images empty on bulk upload
+async function processSpreadsheetRows(rows) {
+  for (const row of rows) {
+    // Normalize row keys
+    const normalized = {};
+    Object.keys(row).forEach(key => {
+      normalized[key.trim().toLowerCase()] = row[key];
+    });
 
-        // If at least make & model exist, add to Firestore
-        if (carObj.make && carObj.model) {
-          try {
-            await addDoc(collection(db, 'cars'), carObj);
-            console.log("Added: ", carObj.make, carObj.model);
-          } catch (err) {
-            console.error('Error adding row:', err, carObj);
-          }
+    console.log(Object.keys(rows[0]) + " rows");
+    // Read values with fallback options
+    const vin = normalized.vin || '';
+    const make = normalized.make || '';
+    const model = normalized.model || '';
+    const condition = normalized.condition || '';
+    const year = parseNumber(normalized['model year']);
+    const price = parseNumber(normalized['sales price']);
+    const bodyType = normalized['body type'] || '';
+    const color = normalized.color || '';
+    const capacity = parseNumber(normalized['# of passengers']);
+    const mileage = parseNumber(normalized['odometer reading at the time of purchase']);
+    const features = (normalized.features || '').split(',').map(f => f.trim()).filter(f => f);
+
+
+    const bodyCondition = normalized['body condition'] || '';
+    const interiorCondition = normalized['interior condition'] || '';
+    const transmission = normalized.transmission || '';
+    const wheels = normalized.wheels || '';
+
+    if (!vin || !make || !model) continue;
+
+    const carObj = {
+      vin, make, model, price, condition, year, mileage, bodyType,
+      color, bodyCondition, interiorCondition, transmission,
+      wheels, capacity, features, images: []
+    };
+
+    try {
+      const carsRef = collection(db, 'cars');
+      const q = query(carsRef, where("vin", "==", vin));
+      const snap = await getDocs(q);
+
+      if (!snap.empty) {
+        const existing = snap.docs[0];
+        const existingData = existing.data();
+
+        if (isSameCar(carObj, existingData)) {
+          console.log(`Skipped VIN ${vin} — identical data`);
+          continue;
         }
-      }
-    }
 
-    function parseNumber(val) {
-      if (!val) return 0;
-      // Strip anything non-numeric, except decimals
-      const num = parseFloat(String(val).replace(/[^0-9.-]+/g, ''));
-      return isNaN(num) ? 0 : num;
+        const override = confirm(`A car with VIN ${vin} exists. Override with new data?`);
+        if (override) {
+          await updateDoc(doc(db, "cars", existing.id), carObj);
+          console.log(`Updated car VIN ${vin}`);
+        } else {
+          console.log(`Skipped VIN ${vin} — user chose not to override`);
+        }
+      } else {
+        await addDoc(carsRef, carObj);
+        console.log(`Added new car VIN ${vin}`);
+      }
+    } catch (err) {
+      console.error('Error processing row:', carObj, err);
     }
+  }
+
+  alert('Spreadsheet import completed!');
+  displayCarsAdmin();
+}
+
 
     // EXPOSE GLOBALS
     window.addCar = addCar;
