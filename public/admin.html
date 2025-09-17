@@ -221,6 +221,7 @@
 
     <!-- FILTER / SEARCH -->
     <div class="admin-filter-sort">
+      <input id="filter-vin" type="text" placeholder="Filter VIN">
       <input id="filter-make" type="text" placeholder="Filter Make">
       <input id="filter-model" type="text" placeholder="Filter Model">
       <select id="filter-color">
@@ -349,26 +350,29 @@
     };
 
     // Cloudinary image upload helper
-    async function uploadImage(file) {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('upload_preset', 'vepa_unsigned');
-      const res = await fetch('https://api.cloudinary.com/v1_1/dyjfyxrve/image/upload', {
-        method: 'POST',
-        body: formData
-      });
-      if (!res.ok) throw new Error('Cloudinary upload failed');
-      return (await res.json());
-    }
+    async function uploadImage(file, folder) {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', 'vepa_unsigned');
+        if (folder) formData.append('folder', `cars/${folder}`);
 
-    async function handleUploads(files) {
-      const arr = [];
-      for (const file of Array.from(files)) {
-        const data = await uploadImage(file);
-        arr.push({ url: data.secure_url, public_id: data.public_id });
+        const res = await fetch('https://api.cloudinary.com/v1_1/dyjfyxrve/image/upload', {
+          method: 'POST',
+          body: formData
+        });
+        if (!res.ok) throw new Error('Cloudinary upload failed');
+        return (await res.json());
       }
-      return arr;
+
+  async function handleUploads(files, vin) {
+    const arr = [];
+    for (const file of Array.from(files)) {
+      const data = await uploadImage(file, vin);
+      arr.push({ url: data.secure_url, public_id: data.public_id });
     }
+    return arr;
+  }
+
 
     async function fetchCarData() {
       const snap = await getDocs(collection(db, 'cars'));
@@ -400,12 +404,13 @@
 
     async function addCar() {
       // Validate
+      const vin = document.getElementById('car-vin').value.trim();
+      if (!vin) { alert("VIN is required."); return; }
       const make = document.getElementById('car-make').value.trim();
       const model = document.getElementById('car-model').value.trim();
       if (!make || !model) { alert('Please fill in required fields.'); return; }
 
       const price = Number(document.getElementById('car-price').value) || 0;
-      const vin = document.getElementById('car-vin').value;
       const condition = document.getElementById('car-condition').value.trim();
       const year = Number(document.getElementById('car-year').value) || 0;
       const mileage = Number(document.getElementById('car-mileage').value) || 0;
@@ -426,7 +431,7 @@
       const files = document.getElementById('car-images').files;
       if (files.length) {
         try {
-          images = await handleUploads(files);
+          images = await handleUploads(files,vin);
         } catch (err) {
           console.error(err);
           alert('Image upload failed.');
@@ -593,7 +598,7 @@
       const files = document.getElementById('edit-images').files;
       if (files.length) {
         try {
-          const imgs = await handleUploads(files);
+          const imgs = await handleUploads(files, vin);
           const docRef = doc(db, 'cars', editId);
           const snap = await getDoc(docRef);
           const current = snap.data().images || [];
@@ -710,7 +715,8 @@
           (!fMake || c.make.toLowerCase().includes(fMake)) &&
           (!fModel || c.model.toLowerCase().includes(fModel)) &&
           (!fColor || c.color === fColor) &&
-          (!fBody || c.bodyCondition === fBody)
+          (!fBody || c.bodyCondition === fBody) &&
+          (!fVin || c.vin.toLowerCase().includes(fVin.toLowerCase()))
         );
         displayCarsAdmin(filtered);
       });
