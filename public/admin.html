@@ -1091,10 +1091,10 @@ async function pickerCallback(data, forEdit, oauthToken) {
       if (f.url) {
         // Drive-selected file with persistent URL
         images.push({ url: f.url });
-      } else {
-        // Local file input: create temporary object URL (optional)
-        images.push({ url: URL.createObjectURL(f) });
-      }
+       } //else {
+      //   // Local file input: create temporary object URL (optional)
+      //   images.push({ url: f.url  });
+      // }
     }
     // Merge with existing images
     const docRef = doc(db, 'cars', editId);
