@@ -900,19 +900,14 @@ function createPicker(oauthToken, forEdit) {
   picker.setVisible(true);
 }
 
-async function pickerCallback(data, forEdit, oauthToken) {
-  if (data.action === google.picker.Action.PICKED) {
-    const docs = data.docs || [];
-    for (const d of docs) {
-      try {
-        // Fetch webContentLink from Drive API
-        const metaRes = await fetch(`https://www.googleapis.com/drive/v3/files/${d.id}?fields=webContentLink,name,mimeType`, {
-          headers: { Authorization: 'Bearer ' + oauthToken }
-        });
-        const meta = await metaRes.json();
-
-        // Store persistent URL
-        const fileObj = { url: meta.webContentLink, name: meta.name };
+  async function pickerCallback(data, forEdit) {
+    if (data.action === google.picker.Action.PICKED) {
+      const docs = data.docs || [];
+      for (const d of docs) {
+        const fileObj = {
+          url: `https://drive.google.com/uc?export=view&id=${d.id}`,
+          name: d.name
+        };
 
         if (forEdit) {
           selectedDriveFilesEdit.push(fileObj);
@@ -921,14 +916,9 @@ async function pickerCallback(data, forEdit, oauthToken) {
           selectedDriveFilesAdd.push(fileObj);
           renderSelectedDrivePreview(fileObj, 'selected-images');
         }
-      } catch (err) {
-        console.error('Failed to fetch Drive file', err);
       }
     }
   }
-}
-
-
 
     function renderSelectedDrivePreview(fileObj, containerId) {
   const container = document.getElementById(containerId);
