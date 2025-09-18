@@ -279,6 +279,8 @@ footer a { color: var(--color-bg-light); }
       <ul>
         <li><a href="/">Home</a></li>
         <li><a href="inventory">Inventory</a></li>
+        <!-- <li><a href="services">Services</a></li> -->
+        <!-- <li><a href="about">About VEPA</a></li> -->
         <li id="admin-link" style="display:none"><a href="admin">Admin</a></li>
         <!-- <li><a href="contact.html">Contact</a></li> -->
         <li class="login-toggle">Login/Signup</li>
@@ -437,96 +439,6 @@ footer a { color: var(--color-bg-light); }
       },4500);
     }
     document.addEventListener('DOMContentLoaded', startBgRotation);
-  </script>
-
-  <!-- Beta Places API with fetchFields() -->
-  <script>
-   async function initMap() {
-      // Load Places library
-      const { Place } = await google.maps.importLibrary("places");
-      // Replace with your actual Place ID
-      const place = new Place({ id: "ChIJg6bh1-903okR7ZRKTmB7Zew" });
-      // Fetch fields including reviews
-      await place.fetchFields({ fields: ["displayName", "formattedAddress", "reviews"] });
-
-      // Build slides for fetched reviews
-      let slideHtml = "";
-      if (place.reviews && place.reviews.length > 0) {
-        // Take up to the first 3 reviews, or adjust as needed
-        place.reviews.slice(0, 3).forEach((r) => {
-          const reviewText = r.text;
-          const authorName = r.authorAttribution.displayName;
-          slideHtml += `
-            <div class="testimonial-slide">
-              <p class="testimonial-text">“${reviewText}”</p>
-              <p class="testimonial-author">— ${authorName}</p>
-            </div>
-          `;
-        });
-      } else {
-        // Fallback, if no reviews are present
-        slideHtml = `
-          <div class="testimonial-slide">
-            <p class="testimonial-text">
-              “We’re still gathering reviews. Check back soon to see what our customers are saying!”
-            </p>
-            <p class="testimonial-author">— VEPA AutoCare Team</p>
-          </div>
-        `;
-      }
-
-      const sliderContainer = document.querySelector("#testimonials .testimonial-slider");
-      if (sliderContainer) {
-        sliderContainer.innerHTML = slideHtml;
-      }
-    }
-    window.initMap = initMap;
-  </script>
-  <script>
-    (function () {
-      const slider = document.querySelector('#testimonials .testimonial-slider');
-      const prevBtn = document.querySelector('.prev-btn');
-      const nextBtn = document.querySelector('.next-btn');
-      let currentIndex = 0;
-
-      function updateSlider() {
-        if (!slider) return;
-        const offset = -currentIndex * 100;
-       slider.style.transform = `translateX(${-currentIndex * 100}%)`;
-      }
-
-      prevBtn.addEventListener('click', () => {
-        const slides = document.querySelectorAll('#testimonials .testimonial-slide');
-        if (!slides.length) return;
-        currentIndex = currentIndex === 0 ? slides.length - 1 : currentIndex - 1;
-        updateSlider();
-      });
-
-      nextBtn.addEventListener('click', () => {
-        const slides = document.querySelectorAll('#testimonials .testimonial-slide');
-        if (!slides.length) return;
-        currentIndex = currentIndex === slides.length - 1 ? 0 : currentIndex + 1;
-        updateSlider();
-      });
-
-      // Auto-advance every 8 seconds
-      let autoAdvance = setInterval(() => {
-        nextBtn.click();
-      }, 8000);
-
-      // Pause auto-advance on mouse enter, resume on leave
-      const testimonialsSection = document.getElementById('testimonials');
-      testimonialsSection.addEventListener('mouseenter', () => clearInterval(autoAdvance));
-      testimonialsSection.addEventListener('mouseleave', () => {
-        autoAdvance = setInterval(() => nextBtn.click(), 8000);
-      });
-
-      // Initialize once DOM is loaded
-      document.addEventListener('DOMContentLoaded', updateSlider);
-    })();
-  </script>
-  <script async
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBcKnjZm5LYqj5jx5VEqx9ywspgZyxNfsA&libraries=places&v=beta&callback=initMap">
   </script>
 </body>
 </html>

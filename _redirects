@@ -1,5 +1,8 @@
-/inventory    /inventory.html
-/login        /login.html
-/signup       /signup.html
-/admin        /admin.html
-/*            /index.html   200
+/about      /about.html      200
+/inventory  /inventory.html  200
+/services   /services.html   200
+/contact    /contact.html    200
+/login      /login.html      200
+/signup     /signup.html     200
+/admin      /admin.html      200
+/*          /index.html      200

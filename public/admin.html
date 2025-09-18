@@ -8,6 +8,7 @@
   <meta name="theme-color" content="#000000">
   <link rel="stylesheet" href="theme.css">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <title>VEPA AutoCare Admin</title>
   <style>
     :root {
@@ -207,6 +208,9 @@
       <input id="car-wheels" type="text" placeholder="Wheels" required>
       <input id="car-capacity" type="number" placeholder="Capacity (#)" required>
       <input id="car-features" type="text" placeholder="Features (comma-separated)">
+      <button type="button" id="select-drive-images">Select Images from Drive</button>
+      <div id="selected-images" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;"></div>
+
       <input id="car-images" class="hidden-file-input" type="file" multiple accept="image/*">
       <button onclick="document.getElementById('car-images').click()">Upload Images</button>
       <button onclick="addCar()">Add Car</button>
@@ -285,6 +289,8 @@
         <label>Capacity <input id="edit-capacity" type="number"></label>
         <label>Features <input id="edit-features" type="text"></label>
         <label>New Images <input id="edit-images" class="hidden-file-input" type="file" multiple></label>
+        <button type="button" id="edit-select-drive-images">Select Images from Drive</button>
+        <div id="edit-selected-images" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;"></div>
         <div class="image-list" id="edit-image-list"></div>
         <button onclick="saveEditCar()">Save Changes</button>
       </div>
@@ -351,18 +357,31 @@
 
     // Cloudinary image upload helper
     async function uploadImage(file, folder) {
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('upload_preset', 'vepa_unsigned');
-        if (folder) formData.append('folder', `cars/${folder}`);
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', 'vepa_unsigned');
+      if (folder) formData.append('folder', `cars/${folder}`);
 
+      try {
         const res = await fetch('https://api.cloudinary.com/v1_1/dyjfyxrve/image/upload', {
           method: 'POST',
           body: formData
         });
-        if (!res.ok) throw new Error('Cloudinary upload failed');
-        return (await res.json());
+
+        const data = await res.json();  // always parse JSON
+
+        if (!res.ok) {
+          console.error("Cloudinary error response:", data);
+          throw new Error(data.error?.message || "Cloudinary upload failed");
+        }
+
+        return data;
+      } catch (err) {
+        console.error("Upload failed:", err);
+        throw err;
       }
+    }
+
 
   async function handleUploads(files, vin) {
     const arr = [];
@@ -402,94 +421,7 @@
       });
     }
 
-    async function addCar() {
-      // Validate
-      const vin = document.getElementById('car-vin').value.trim();
-      if (!vin) { alert("VIN is required."); return; }
-      const make = document.getElementById('car-make').value.trim();
-      const model = document.getElementById('car-model').value.trim();
-      if (!make || !model) { alert('Please fill in required fields.'); return; }
-
-      const price = Number(document.getElementById('car-price').value) || 0;
-      const condition = document.getElementById('car-condition').value.trim();
-      const year = Number(document.getElementById('car-year').value) || 0;
-      const mileage = Number(document.getElementById('car-mileage').value) || 0;
-      const bodyType = document.getElementById('car-body-type').value.trim();
-      const color = document.getElementById('car-color').value;
-      const bodyCondition = document.getElementById('car-body-condition').value;
-      const interiorCondition = document.getElementById('car-interior-condition').value;
-      const transmission = document.getElementById('car-transmission').value.trim();
-      const wheels = document.getElementById('car-wheels').value.trim();
-      const capacity = Number(document.getElementById('car-capacity').value) || 0;
-      const features = document.getElementById('car-features').value
-        .split(',').map(f => f.trim()).filter(f => f);
-
-      if(!vin){alert("VIN is required."); return;}
-        
-      // Upload images if any
-      let images = [];
-      const files = document.getElementById('car-images').files;
-      if (files.length) {
-        try {
-          images = await handleUploads(files,vin);
-        } catch (err) {
-          console.error(err);
-          alert('Image upload failed.');
-          return;
-        }
-      }
-
-      const carObj = {
-        vin,
-        make,
-        model,
-        price,
-        condition,
-        year,
-        mileage,
-        bodyType,
-        color,
-        bodyCondition,
-        interiorCondition,
-        transmission,
-        wheels,
-        capacity,
-        features,
-        images
-      };
-
-      const carsRef = collection(db, 'cars');
-      const q = query(carsRef, where("vin", "==", vin));
-      const snap = await getDocs(q);
-
-      if (!snap.empty) {
-        if (confirm("A car with this VIN already exists. Do you want to override it?")) {
-          const existing = snap.docs[0];
-          await updateDoc(doc(db, "cars", existing.id), carObj);
-          alert("Car updated successfully!");
-          displayCarsAdmin();
-        } else {
-          alert("Car not added — duplicate VIN.");
-        }
-        return;
-      }
-
-      // otherwise safe to add new
-      await addDoc(carsRef, carObj);
-      alert("Car added successfully!");
-      displayCarsAdmin();
-
-      // Clear fields
-      [
-        'car-vin','car-make','car-model','car-price','car-condition','car-year','car-mileage','car-body-type',
-        'car-color','car-body-condition','car-interior-condition','car-transmission',
-        'car-wheels','car-capacity','car-features','car-images'
-      ].forEach(id => {
-        const el = document.getElementById(id);
-        if (el.type === 'file') el.value = '';
-        else el.value = '';
-      });
-    }
+    // removed original addCar (replaced by merged addCar later that supports Drive files)
 
     async function deleteCar(carId) {
       if (!confirm('Delete this car and all its images?')) return;
@@ -577,43 +509,43 @@
       document.getElementById('edit-modal').classList.add('show');
     }
 
-    async function saveEditCar() {
-      const updated = {
-        make: document.getElementById('edit-make').value.trim(),
-        model: document.getElementById('edit-model').value.trim(),
-        price: Number(document.getElementById('edit-price').value) || 0,
-        condition: document.getElementById('edit-condition').value.trim(),
-        year: Number(document.getElementById('edit-year').value) || 0,
-        mileage: Number(document.getElementById('edit-mileage').value) || 0,
-        bodyType: document.getElementById('edit-body-type').value.trim(),
-        color: document.getElementById('edit-color').value,
-        bodyCondition: document.getElementById('edit-body-condition').value,
-        interiorCondition: document.getElementById('edit-interior-condition').value,
-        transmission: document.getElementById('edit-transmission').value.trim(),
-        wheels: document.getElementById('edit-wheels').value.trim(),
-        capacity: Number(document.getElementById('edit-capacity').value) || 0,
-        features: document.getElementById('edit-features').value
-          .split(',').map(f=>f.trim()).filter(f=>f)
-      };
-      const files = document.getElementById('edit-images').files;
-      if (files.length) {
-        try {
-          const imgs = await handleUploads(files, vin);
-          const docRef = doc(db, 'cars', editId);
-          const snap = await getDoc(docRef);
-          const current = snap.data().images || [];
-          updated.images = [...current, ...imgs];
-        } catch (err) {
-          console.error(err);
-          alert('Image upload failed during edit.');
-          return;
-        }
-      }
-      await updateDoc(doc(db, 'cars', editId), updated);
-      alert('Car updated!');
-      closeEditModal();
-      displayCarsAdmin();
-    }
+    // async function saveEditCar() {
+    //   const updated = {
+    //     make: document.getElementById('edit-make').value.trim(),
+    //     model: document.getElementById('edit-model').value.trim(),
+    //     price: Number(document.getElementById('edit-price').value) || 0,
+    //     condition: document.getElementById('edit-condition').value.trim(),
+    //     year: Number(document.getElementById('edit-year').value) || 0,
+    //     mileage: Number(document.getElementById('edit-mileage').value) || 0,
+    //     bodyType: document.getElementById('edit-body-type').value.trim(),
+    //     color: document.getElementById('edit-color').value,
+    //     bodyCondition: document.getElementById('edit-body-condition').value,
+    //     interiorCondition: document.getElementById('edit-interior-condition').value,
+    //     transmission: document.getElementById('edit-transmission').value.trim(),
+    //     wheels: document.getElementById('edit-wheels').value.trim(),
+    //     capacity: Number(document.getElementById('edit-capacity').value) || 0,
+    //     features: document.getElementById('edit-features').value
+    //       .split(',').map(f=>f.trim()).filter(f=>f)
+    //   };
+    //   const files = document.getElementById('edit-images').files;
+    //   if (files.length) {
+    //     try {
+    //       const imgs = await handleUploads(files, vin);
+    //       const docRef = doc(db, 'cars', editId);
+    //       const snap = await getDoc(docRef);
+    //       const current = snap.data().images || [];
+    //       updated.images = [...current, ...imgs];
+    //     } catch (err) {
+    //       console.error(err);
+    //       alert('Image upload failed during edit.');
+    //       return;
+    //     }
+    //   }
+    //   await updateDoc(doc(db, 'cars', editId), updated);
+    //   alert('Car updated!');
+    //   closeEditModal();
+    //   displayCarsAdmin();
+    // }
 
     function closeEditModal() {
       document.getElementById('edit-modal').classList.remove('show');
@@ -879,12 +811,10 @@ async function processSpreadsheetRows(rows) {
   }
 
   alert('Spreadsheet import completed!');
-  displayCarsAdmin();
 }
 
 
     // EXPOSE GLOBALS
-    window.addCar = addCar;
     window.deleteCar = deleteCar;
     window.deleteAllCars = deleteAllCars;
     window.openEdit = openEdit;
@@ -896,11 +826,284 @@ async function processSpreadsheetRows(rows) {
     window.deleteImage = deleteImage;
     window.applyFilters = applyFilters;
     window.resetFilters = resetFilters;
+
+    // =========================
+    // Google Drive Picker Setup
+    // Replace with your Google credentials
+    const GOOGLE_API_KEY = 'AIzaSyD-Fh5YgEBpn13MB6h32JxmkKnRwMqaT2U';
+    const GOOGLE_CLIENT_ID = '57484859036-orsqvos98jjmmgd6uqpiluei7mf9qruk.apps.googleusercontent.com';
+    const GOOGLE_APP_ID = '57484859036';
+    const GOOGLE_SCOPES = ['https://www.googleapis.com/auth/drive.readonly'];
+
+    // Holds File objects created from Drive for add/edit flows
+    let selectedDriveFilesAdd = [];
+    let selectedDriveFilesEdit = [];
+
+    // Helper: wait until gapi & google.picker are available
+    function waitForPickerLib(timeout = 10000) {
+      return new Promise((resolve, reject) => {
+        const start = Date.now();
+        (function check() {
+          if (window.gapi && window.google && window.google.picker) return resolve();
+          if (Date.now() - start > timeout) return reject(new Error('Google Picker libs not loaded'));
+          setTimeout(check, 100);
+        })();
+      });
+    }
+
+    async function openDrivePicker(forEdit = false) {
+      await waitForPickerLib();
+
+      const tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: GOOGLE_CLIENT_ID,
+        scope: GOOGLE_SCOPES.join(' '),
+        callback: (tokenResponse) => {
+          if (tokenResponse && tokenResponse.access_token) {
+            createPicker(tokenResponse.access_token, forEdit);
+          } else {
+            alert('Google authorization failed.');
+          }
+        }
+      });
+
+      tokenClient.requestAccessToken({ prompt: 'consent' });
+    }
+
+
+    function createPicker(oauthToken, forEdit) {
+      const view = new google.picker.View(google.picker.ViewId.DOCS_IMAGES);
+      view.setMimeTypes('image/png,image/jpeg,image/jpg,image/gif');
+      const picker = new google.picker.PickerBuilder()
+        .addView(view)
+        .setAppId(GOOGLE_APP_ID)
+        .setDeveloperKey(GOOGLE_API_KEY)
+        .setOAuthToken(oauthToken)
+        .setCallback(data => pickerCallback(data, forEdit, oauthToken))
+        .build();
+      picker.setVisible(true);
+    }
+
+    async function pickerCallback(data, forEdit, oauthToken) {
+      if (data.action === google.picker.Action.PICKED) {
+        const docs = data.docs || [];
+        for (const d of docs) {
+          try {
+            // fetch file content as blob using Drive v3 ?alt=media endpoint
+            const res = await fetch(`https://www.googleapis.com/drive/v3/files/${d.id}?alt=media`, {
+              headers: { Authorization: 'Bearer ' + oauthToken }
+            });
+            if (!res.ok) {
+              console.error('Drive file fetch failed', await res.text());
+              continue;
+            }
+            const blob = await res.blob();
+            const file = new File([blob], d.name, { type: d.mimeType || blob.type });
+            if (forEdit) {
+              selectedDriveFilesEdit.push(file);
+              renderSelectedDrivePreview(file, 'edit-selected-images');
+            } else {
+              selectedDriveFilesAdd.push(file);
+              renderSelectedDrivePreview(file, 'selected-images');
+            }
+          } catch (err) {
+            console.error('Failed to fetch Drive file', err);
+          }
+        }
+      }
+    }
+
+    function renderSelectedDrivePreview(file, containerId) {
+      const container = document.getElementById(containerId);
+      const url = URL.createObjectURL(file);
+      const wrapper = document.createElement('div');
+      wrapper.style.display = 'inline-block';
+      wrapper.style.position = 'relative';
+      wrapper.style.marginRight = '8px';
+      const img = document.createElement('img');
+      img.src = url;
+      img.style.width = '80px';
+      img.style.height = '60px';
+      img.style.objectFit = 'cover';
+      img.style.borderRadius = '6px';
+      wrapper.appendChild(img);
+      const btn = document.createElement('button');
+      btn.textContent = 'Remove';
+      btn.style.display = 'block';
+      btn.style.marginTop = '4px';
+      btn.onclick = () => {
+        // remove from array
+        if (containerId === 'selected-images') {
+          selectedDriveFilesAdd = selectedDriveFilesAdd.filter(f => f !== file);
+        } else {
+          selectedDriveFilesEdit = selectedDriveFilesEdit.filter(f => f !== file);
+        }
+        wrapper.remove();
+        URL.revokeObjectURL(url);
+      };
+      wrapper.appendChild(btn);
+      container.appendChild(wrapper);
+    }
+
+    // Wire up buttons
+    document.getElementById('select-drive-images').addEventListener('click', () => openDrivePicker(false));
+    document.getElementById('edit-select-drive-images').addEventListener('click', () => openDrivePicker(true));
+
+    // Combine Drive-selected files with normal file inputs when adding/editing
+    const _addCar_original = addCar;
+    async function addCar() {
+      // gather file inputs + drive files
+      const inputFiles = Array.from(document.getElementById('car-images').files || []);
+      const driveFiles = selectedDriveFilesAdd || [];
+      const allFiles = [...inputFiles, ...driveFiles];
+
+      // reuse existing addCar logic but with allFiles
+      // Validate & gather fields (duplicate of original beginning to keep flow)
+      const vin = document.getElementById('car-vin').value.trim();
+      if (!vin) { alert("VIN is required."); return; }
+      const make = document.getElementById('car-make').value.trim();
+      const model = document.getElementById('car-model').value.trim();
+      if (!make || !model) { alert('Please fill in required fields.'); return; }
+      const price = Number(document.getElementById('car-price').value) || 0;
+      const condition = document.getElementById('car-condition').value.trim();
+      const year = Number(document.getElementById('car-year').value) || 0;
+      const mileage = Number(document.getElementById('car-mileage').value) || 0;
+      const bodyType = document.getElementById('car-body-type').value.trim();
+      const color = document.getElementById('car-color').value;
+      const bodyCondition = document.getElementById('car-body-condition').value;
+      const interiorCondition = document.getElementById('car-interior-condition').value;
+      const transmission = document.getElementById('car-transmission').value.trim();
+      const wheels = document.getElementById('car-wheels').value.trim();
+      const capacity = Number(document.getElementById('car-capacity').value) || 0;
+      const features = document.getElementById('car-features').value
+        .split(',').map(f => f.trim()).filter(f => f);
+
+      let images = [];
+      if (allFiles.length) {
+        try {
+          images = await handleUploads(allFiles, vin);
+        } catch (err) {
+          console.error(err);
+          alert('Image upload failed.');
+          return;
+        }
+      }
+
+      // rest of original addCar flow (create carObj, check duplicate VIN, add/update doc)
+      const carObj = {
+        vin,
+        make,
+        model,
+        price,
+        condition,
+        year,
+        mileage,
+        bodyType,
+        color,
+        bodyCondition,
+        interiorCondition,
+        transmission,
+        wheels,
+        capacity,
+        features,
+        images
+      };
+
+      const carsRef = collection(db, 'cars');
+      const q = query(carsRef, where("vin", "==", vin));
+      const snap = await getDocs(q);
+
+      if (!snap.empty) {
+        if (confirm("A car with this VIN already exists. Do you want to override it?")) {
+          const existing = snap.docs[0];
+          await updateDoc(doc(db, "cars", existing.id), carObj);
+          alert("Car updated successfully!");
+          displayCarsAdmin();
+        } else {
+          alert("Car not added — duplicate VIN.");
+        }
+        return;
+      }
+
+      await addDoc(carsRef, carObj);
+      alert("Car added successfully!");
+      displayCarsAdmin();
+
+      // Clear fields and selected Drive files
+      [
+        'car-vin','car-make','car-model','car-price','car-condition','car-year','car-mileage','car-body-type',
+        'car-color','car-body-condition','car-interior-condition','car-transmission',
+        'car-wheels','car-capacity','car-features','car-images'
+      ].forEach(id => {
+        const el = document.getElementById(id);
+        if (el && el.type === 'file') el.value = '';
+        else if (el) el.value = '';
+      });
+      selectedDriveFilesAdd = [];
+      const selAddContainer = document.getElementById('selected-images');
+      if (selAddContainer) selAddContainer.innerHTML = '';
+    }
+
+    // Modified saveEditCar to include Drive selected files
+    const _saveEditCar_original = saveEditCar;
+    async function saveEditCar() {
+      const updated = {
+        make: document.getElementById('edit-make').value.trim(),
+        model: document.getElementById('edit-model').value.trim(),
+        price: Number(document.getElementById('edit-price').value) || 0,
+        condition: document.getElementById('edit-condition').value.trim(),
+        year: Number(document.getElementById('edit-year').value) || 0,
+        mileage: Number(document.getElementById('edit-mileage').value) || 0,
+        bodyType: document.getElementById('edit-body-type').value.trim(),
+        color: document.getElementById('edit-color').value,
+        bodyCondition: document.getElementById('edit-body-condition').value,
+        interiorCondition: document.getElementById('edit-interior-condition').value,
+        transmission: document.getElementById('edit-transmission').value.trim(),
+        wheels: document.getElementById('edit-wheels').value.trim(),
+        capacity: Number(document.getElementById('edit-capacity').value) || 0,
+        features: document.getElementById('edit-features').value
+          .split(',').map(f=>f.trim()).filter(f=>f)
+      };
+
+      const inputFiles = Array.from(document.getElementById('edit-images').files || []);
+      const driveFiles = selectedDriveFilesEdit || [];
+      const allFiles = [...inputFiles, ...driveFiles];
+
+      if (allFiles.length) {
+        try {
+          // use VIN if present, else editId as folder
+          const vin = (document.getElementById('edit-vin').value || editId).trim();
+          const imgs = await handleUploads(allFiles, vin);
+          const docRef = doc(db, 'cars', editId);
+          const snap = await getDoc(docRef);
+          const current = snap.data().images || [];
+          updated.images = [...current, ...imgs];
+        } catch (err) {
+          console.error(err);
+          alert('Image upload failed during edit.');
+          return;
+        }
+      }
+      await updateDoc(doc(db, 'cars', editId), updated);
+      alert('Car updated!');
+      closeEditModal();
+      displayCarsAdmin();
+      // clear edit drive selections
+      selectedDriveFilesEdit = [];
+      const selEditContainer = document.getElementById('edit-selected-images');
+      if (selEditContainer) selEditContainer.innerHTML = '';
+    }
+
+    // expose modified functions
+    window.addCar = addCar;
+    window.saveEditCar = saveEditCar;
+    // =========================
   </script>
 
   <!-- PapaParse (CSV) & SheetJS (XLSX) libraries (integrity attributes removed) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script type="text/javascript" src="https://apis.google.com/js/api.js"></script>
+  <script type="text/javascript" src="https://apis.google.com/js/client:picker.js"></script>
 
 </body>
 </html>
