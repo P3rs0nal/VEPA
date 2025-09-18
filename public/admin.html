@@ -9,6 +9,9 @@
   <link rel="stylesheet" href="theme.css">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://apis.google.com/js/api.js"></script>
+<script src="https://apis.google.com/js/client:picker.js"></script>
+
   <title>VEPA AutoCare Admin</title>
   <style>
     :root {
@@ -355,42 +358,56 @@
       window.location.href = 'login.html';
     };
 
-    // Cloudinary image upload helper
-    async function uploadImage(file, folder) {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('upload_preset', 'vepa_unsigned');
-      if (folder) formData.append('folder', `cars/${folder}`);
+    async function uploadImage(file) {
+      return { url: URL.createObjectURL(file) };
+    }
 
-      try {
-        const res = await fetch('https://api.cloudinary.com/v1_1/dyjfyxrve/image/upload', {
-          method: 'POST',
-          body: formData
-        });
-
-        const data = await res.json();  // always parse JSON
-
-        if (!res.ok) {
-          console.error("Cloudinary error response:", data);
-          throw new Error(data.error?.message || "Cloudinary upload failed");
-        }
-
-        return data;
-      } catch (err) {
-        console.error("Upload failed:", err);
-        throw err;
+    async function handleUploads(files) {
+      const arr = [];
+      for (const file of Array.from(files)) {
+        const img = await uploadImage(file); // wraps as { url }
+        arr.push(img);
       }
+      return arr;
     }
+    
+
+    // Cloudinary image upload helper
+    // async function uploadImage(file, folder) {
+    //   const formData = new FormData();
+    //   formData.append('file', file);
+    //   formData.append('upload_preset', 'vepa_unsigned');
+    //   if (folder) formData.append('folder', `cars/${folder}`);
+
+    //   try {
+    //     const res = await fetch('https://api.cloudinary.com/v1_1/dyjfyxrve/image/upload', {
+    //       method: 'POST',
+    //       body: formData
+    //     });
+
+    //     const data = await res.json();  // always parse JSON
+
+    //     if (!res.ok) {
+    //       console.error("Cloudinary error response:", data);
+    //       throw new Error(data.error?.message || "Cloudinary upload failed");
+    //     }
+
+    //     return data;
+    //   } catch (err) {
+    //     console.error("Upload failed:", err);
+    //     throw err;
+    //   }
+    // }
 
 
-  async function handleUploads(files, vin) {
-    const arr = [];
-    for (const file of Array.from(files)) {
-      const data = await uploadImage(file, vin);
-      arr.push({ url: data.secure_url, public_id: data.public_id });
-    }
-    return arr;
-  }
+  // async function handleUploads(files, vin) {
+  //   const arr = [];
+  //   for (const file of Array.from(files)) {
+  //     const data = await uploadImage(file, vin);
+  //     arr.push({ url: data.secure_url, public_id: data.public_id });
+  //   }
+  //   return arr;
+  // }
 
 
     async function fetchCarData() {
@@ -450,14 +467,14 @@
     const cars = carsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
     // Delete images from Cloudinary
-    const allPublicIds = cars.flatMap(car => (car.images || []).map(img => img.public_id).filter(Boolean));
-    if (allPublicIds.length) {
-      await fetch('https://vepa.onrender.com/delete-images', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ public_ids: allPublicIds })
-      });
-    }
+    // const allPublicIds = cars.flatMap(car => (car.images || []).map(img => img.public_id).filter(Boolean));
+    // if (allPublicIds.length) {
+    //   await fetch('https://vepa.onrender.com/delete-images', {
+    //     method: 'POST',
+    //     headers: { 'Content-Type': 'application/json' },
+    //     body: JSON.stringify({ public_ids: allPublicIds })
+    //   });
+    // }
 
     // Delete Firestore documents
     for (const car of cars) {
@@ -840,109 +857,107 @@ async function processSpreadsheetRows(rows) {
     let selectedDriveFilesEdit = [];
 
     // Helper: wait until gapi & google.picker are available
-    function waitForPickerLib(timeout = 10000) {
-      return new Promise((resolve, reject) => {
-        const start = Date.now();
-        (function check() {
-          if (window.gapi && window.google && window.google.picker) return resolve();
-          if (Date.now() - start > timeout) return reject(new Error('Google Picker libs not loaded'));
-          setTimeout(check, 100);
-        })();
-      });
-    }
+   function waitForPickerLib(timeout = 10000) {
+  return new Promise((resolve, reject) => {
+    const start = Date.now();
+    (function check() {
+      if (window.gapi && window.google && window.google.picker) return resolve();
+      if (Date.now() - start > timeout) return reject(new Error('Google Picker libs not loaded'));
+      setTimeout(check, 100);
+    })();
+  });
+}
 
-    async function openDrivePicker(forEdit = false) {
-      await waitForPickerLib();
-
-      const tokenClient = google.accounts.oauth2.initTokenClient({
-        client_id: GOOGLE_CLIENT_ID,
-        scope: GOOGLE_SCOPES.join(' '),
-        callback: (tokenResponse) => {
-          if (tokenResponse && tokenResponse.access_token) {
-            createPicker(tokenResponse.access_token, forEdit);
-          } else {
-            alert('Google authorization failed.');
-          }
-        }
-      });
-
-      tokenClient.requestAccessToken({ prompt: 'consent' });
-    }
-
-
-    function createPicker(oauthToken, forEdit) {
-      const view = new google.picker.View(google.picker.ViewId.DOCS_IMAGES);
-      view.setMimeTypes('image/png,image/jpeg,image/jpg,image/gif');
-      const picker = new google.picker.PickerBuilder()
-        .addView(view)
-        .setAppId(GOOGLE_APP_ID)
-        .setDeveloperKey(GOOGLE_API_KEY)
-        .setOAuthToken(oauthToken)
-        .setCallback(data => pickerCallback(data, forEdit, oauthToken))
-        .build();
-      picker.setVisible(true);
-    }
-
-    async function pickerCallback(data, forEdit, oauthToken) {
-      if (data.action === google.picker.Action.PICKED) {
-        const docs = data.docs || [];
-        for (const d of docs) {
-          try {
-            // fetch file content as blob using Drive v3 ?alt=media endpoint
-            const res = await fetch(`https://www.googleapis.com/drive/v3/files/${d.id}?alt=media`, {
-              headers: { Authorization: 'Bearer ' + oauthToken }
-            });
-            if (!res.ok) {
-              console.error('Drive file fetch failed', await res.text());
-              continue;
-            }
-            const blob = await res.blob();
-            const file = new File([blob], d.name, { type: d.mimeType || blob.type });
-            if (forEdit) {
-              selectedDriveFilesEdit.push(file);
-              renderSelectedDrivePreview(file, 'edit-selected-images');
-            } else {
-              selectedDriveFilesAdd.push(file);
-              renderSelectedDrivePreview(file, 'selected-images');
-            }
-          } catch (err) {
-            console.error('Failed to fetch Drive file', err);
-          }
-        }
+    // Open Google Drive Picker to see all files and folders
+async function openDrivePicker(forEdit = false) {
+  await waitForPickerLib();
+  const tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: GOOGLE_CLIENT_ID,
+    scope: GOOGLE_SCOPES.join(' '),
+    callback: (tokenResponse) => {
+      if (tokenResponse && tokenResponse.access_token) {
+        createPicker(tokenResponse.access_token, forEdit);
+      } else {
+        alert('Google authorization failed.');
       }
     }
+  });
+  tokenClient.requestAccessToken({ prompt: 'consent' });
+}
 
-    function renderSelectedDrivePreview(file, containerId) {
-      const container = document.getElementById(containerId);
-      const url = URL.createObjectURL(file);
-      const wrapper = document.createElement('div');
-      wrapper.style.display = 'inline-block';
-      wrapper.style.position = 'relative';
-      wrapper.style.marginRight = '8px';
-      const img = document.createElement('img');
-      img.src = url;
-      img.style.width = '80px';
-      img.style.height = '60px';
-      img.style.objectFit = 'cover';
-      img.style.borderRadius = '6px';
-      wrapper.appendChild(img);
-      const btn = document.createElement('button');
-      btn.textContent = 'Remove';
-      btn.style.display = 'block';
-      btn.style.marginTop = '4px';
-      btn.onclick = () => {
-        // remove from array
-        if (containerId === 'selected-images') {
-          selectedDriveFilesAdd = selectedDriveFilesAdd.filter(f => f !== file);
+function createPicker(oauthToken, forEdit) {
+  const view = new google.picker.DocsView()
+    .setIncludeFolders(true)
+    .setSelectFolderEnabled(true);
+
+  const picker = new google.picker.PickerBuilder()
+    .addView(view)
+    .setAppId(GOOGLE_APP_ID)
+    .setDeveloperKey(GOOGLE_API_KEY)
+    .setOAuthToken(oauthToken)
+    .setCallback(data => pickerCallback(data, forEdit, oauthToken))
+    .build();
+  picker.setVisible(true);
+}
+
+async function pickerCallback(data, forEdit, oauthToken) {
+  if (data.action === google.picker.Action.PICKED) {
+    const docs = data.docs || [];
+    for (const d of docs) {
+      try {
+        // Fetch webContentLink from Drive API
+        const metaRes = await fetch(`https://www.googleapis.com/drive/v3/files/${d.id}?fields=webContentLink,name,mimeType`, {
+          headers: { Authorization: 'Bearer ' + oauthToken }
+        });
+        const meta = await metaRes.json();
+
+        // Store persistent URL
+        const fileObj = { url: meta.webContentLink, name: meta.name };
+
+        if (forEdit) {
+          selectedDriveFilesEdit.push(fileObj);
+          renderSelectedDrivePreview(fileObj, 'edit-selected-images');
         } else {
-          selectedDriveFilesEdit = selectedDriveFilesEdit.filter(f => f !== file);
+          selectedDriveFilesAdd.push(fileObj);
+          renderSelectedDrivePreview(fileObj, 'selected-images');
         }
-        wrapper.remove();
-        URL.revokeObjectURL(url);
-      };
-      wrapper.appendChild(btn);
-      container.appendChild(wrapper);
+      } catch (err) {
+        console.error('Failed to fetch Drive file', err);
+      }
     }
+  }
+}
+
+
+
+    function renderSelectedDrivePreview(fileObj, containerId) {
+  const container = document.getElementById(containerId);
+  const wrapper = document.createElement('div');
+  wrapper.style.display = 'inline-block';
+  wrapper.style.position = 'relative';
+  wrapper.style.marginRight = '8px';
+
+  const img = document.createElement('img');
+  img.src = fileObj.url;  // persistent Drive URL
+  img.style.width = '80px';
+  img.style.height = '60px';
+  img.style.objectFit = 'cover';
+  img.style.borderRadius = '6px';
+  wrapper.appendChild(img);
+
+  const btn = document.createElement('button');
+  btn.textContent = 'Remove';
+  btn.style.display = 'block';
+  btn.style.marginTop = '4px';
+  btn.onclick = () => {
+    if (containerId === 'selected-images') selectedDriveFilesAdd = selectedDriveFilesAdd.filter(f => f !== fileObj);
+    else selectedDriveFilesEdit = selectedDriveFilesEdit.filter(f => f !== fileObj);
+    wrapper.remove();
+  };
+  wrapper.appendChild(btn);
+
+  container.appendChild(wrapper);
+}
 
     // Wire up buttons
     document.getElementById('select-drive-images').addEventListener('click', () => openDrivePicker(false));
@@ -950,6 +965,7 @@ async function processSpreadsheetRows(rows) {
 
     // Combine Drive-selected files with normal file inputs when adding/editing
     const _addCar_original = addCar;
+
     async function addCar() {
       // gather file inputs + drive files
       const inputFiles = Array.from(document.getElementById('car-images').files || []);
@@ -977,17 +993,17 @@ async function processSpreadsheetRows(rows) {
       const features = document.getElementById('car-features').value
         .split(',').map(f => f.trim()).filter(f => f);
 
-      let images = [];
-      if (allFiles.length) {
-        try {
-          images = await handleUploads(allFiles, vin);
-        } catch (err) {
-          console.error(err);
-          alert('Image upload failed.');
-          return;
-        }
-      }
-
+      // let images = [];
+      // if (allFiles.length) {
+      //   try {
+      //     images = await handleUploads(allFiles, vin);
+      //   } catch (err) {
+      //     console.error(err);
+      //     alert('Image upload failed.');
+      //     return;
+      //   }
+      // }
+      const images = selectedDriveFilesAdd.map(f => ({ url: f.url }));
       // rest of original addCar flow (create carObj, check duplicate VIN, add/update doc)
       const carObj = {
         vin,
@@ -1046,52 +1062,58 @@ async function processSpreadsheetRows(rows) {
     // Modified saveEditCar to include Drive selected files
     const _saveEditCar_original = saveEditCar;
     async function saveEditCar() {
-      const updated = {
-        make: document.getElementById('edit-make').value.trim(),
-        model: document.getElementById('edit-model').value.trim(),
-        price: Number(document.getElementById('edit-price').value) || 0,
-        condition: document.getElementById('edit-condition').value.trim(),
-        year: Number(document.getElementById('edit-year').value) || 0,
-        mileage: Number(document.getElementById('edit-mileage').value) || 0,
-        bodyType: document.getElementById('edit-body-type').value.trim(),
-        color: document.getElementById('edit-color').value,
-        bodyCondition: document.getElementById('edit-body-condition').value,
-        interiorCondition: document.getElementById('edit-interior-condition').value,
-        transmission: document.getElementById('edit-transmission').value.trim(),
-        wheels: document.getElementById('edit-wheels').value.trim(),
-        capacity: Number(document.getElementById('edit-capacity').value) || 0,
-        features: document.getElementById('edit-features').value
-          .split(',').map(f=>f.trim()).filter(f=>f)
-      };
+  // Gather updated fields
+  const updated = {
+    make: document.getElementById('edit-make').value.trim(),
+    model: document.getElementById('edit-model').value.trim(),
+    price: Number(document.getElementById('edit-price').value),
+    condition: document.getElementById('edit-condition').value.trim(),
+    year: Number(document.getElementById('edit-year').value),
+    bodyType: document.getElementById('edit-body-type').value.trim(),
+    color: document.getElementById('edit-color').value,
+    bodyCondition: document.getElementById('edit-body-condition').value,
+    interiorCondition: document.getElementById('edit-interior-condition').value,
+    transmission: document.getElementById('edit-transmission').value.trim(),
+    wheels: document.getElementById('edit-wheels').value.trim(),
+    capacity: Number(document.getElementById('edit-capacity').value),
+    features: document.getElementById('edit-features').value.split(',').map(f => f.trim())
+  };
 
-      const inputFiles = Array.from(document.getElementById('edit-images').files || []);
-      const driveFiles = selectedDriveFilesEdit || [];
-      const allFiles = [...inputFiles, ...driveFiles];
+  // Combine file inputs + Drive files
+  const inputFiles = Array.from(document.getElementById('edit-images').files || []);
+  const driveFiles = selectedDriveFilesEdit || [];
+  const allFiles = [...inputFiles, ...driveFiles];
 
-      if (allFiles.length) {
-        try {
-          // use VIN if present, else editId as folder
-          const vin = (document.getElementById('edit-vin').value || editId).trim();
-          const imgs = await handleUploads(allFiles, vin);
-          const docRef = doc(db, 'cars', editId);
-          const snap = await getDoc(docRef);
-          const current = snap.data().images || [];
-          updated.images = [...current, ...imgs];
-        } catch (err) {
-          console.error(err);
-          alert('Image upload failed during edit.');
-          return;
-        }
+  // Convert all selected files to persistent URLs
+  if (allFiles.length) {
+    const images = [];
+    for (const f of allFiles) {
+      if (f.url) {
+        // Drive-selected file with persistent URL
+        images.push({ url: f.url });
+      } else {
+        // Local file input: create temporary object URL (optional)
+        images.push({ url: URL.createObjectURL(f) });
       }
-      await updateDoc(doc(db, 'cars', editId), updated);
-      alert('Car updated!');
-      closeEditModal();
-      displayCarsAdmin();
-      // clear edit drive selections
-      selectedDriveFilesEdit = [];
-      const selEditContainer = document.getElementById('edit-selected-images');
-      if (selEditContainer) selEditContainer.innerHTML = '';
     }
+    // Merge with existing images
+    const docRef = doc(db, 'cars', editId);
+    const snap = await getDoc(docRef);
+    const current = snap.data().images || [];
+    updated.images = [...current, ...images];
+  }
+
+  // Update Firestore
+  await updateDoc(doc(db, 'cars', editId), updated);
+  alert('Car updated successfully!');
+  closeEditModal();
+  displayCarsAdmin();
+
+  // Clear edit Drive selections
+  selectedDriveFilesEdit = [];
+  document.getElementById('edit-selected-images').innerHTML = '';
+}
+
 
     // expose modified functions
     window.addCar = addCar;
@@ -1102,8 +1124,6 @@ async function processSpreadsheetRows(rows) {
   <!-- PapaParse (CSV) & SheetJS (XLSX) libraries (integrity attributes removed) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <script type="text/javascript" src="https://apis.google.com/js/api.js"></script>
-  <script type="text/javascript" src="https://apis.google.com/js/client:picker.js"></script>
 
 </body>
 </html>
