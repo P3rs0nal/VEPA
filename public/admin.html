@@ -391,20 +391,15 @@
 
 // Upload a single file to Firebase Storage
 
-async function uploadImage(file, folder = "cars") {
-  console.log(auth.currentUser.uid);
-  try {
-    const compressed = await compressImage(file);
-    const safeName = compressed.name.replace(/[^a-z0-9.-]/gi, '_');
-    const storageRef = ref(storage, `${folder}/${Date.now()}_${safeName}`);
-    await uploadBytes(storageRef, compressed);
-    const url = await getDownloadURL(storageRef);
-    return { url };
-  } catch(err) {
-    console.error('Upload failed for file:', file.name, err);
-    throw err;
-  }
+async function uploadImage(file, vin) {
+  const compressed = await compressImage(file);
+  const safeName = compressed.name.replace(/[^a-z0-9.-]/gi, '_');
+  const storageRef = ref(storage, `cars/${vin}/${Date.now()}_${safeName}`);
+  await uploadBytes(storageRef, compressed);
+  const url = await getDownloadURL(storageRef);
+  return { url, path: storageRef.fullPath };
 }
+
 
     // Upload multiple files
     async function handleUploads(files, folder = "cars") {
