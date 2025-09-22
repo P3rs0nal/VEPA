@@ -566,6 +566,7 @@ async function uploadImage(file, folder = "cars") {
     }
 
    async function uploadNewImages() {
+    console.log(auth.currentUser.uid);
   const modal = document.getElementById('view-images-modal');
   const carId = modal.dataset.id;
   const files = document.getElementById('new-image-files').files;
