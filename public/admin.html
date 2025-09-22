@@ -392,6 +392,7 @@
 // Upload a single file to Firebase Storage
 
 async function uploadImage(file, folder = "cars") {
+  console.log(auth.currentUser.uid);
   try {
     const compressed = await compressImage(file);
     const safeName = compressed.name.replace(/[^a-z0-9.-]/gi, '_');
