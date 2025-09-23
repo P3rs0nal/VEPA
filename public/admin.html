@@ -10,179 +10,168 @@
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>VEPA AutoCare Admin</title>
       <style>
-         :root {
-         --bg-light: #fff;
-         --bg-dark: #000;
-         --primary: #5a31f4;
-         --text-dark: #111;
-         --text-light: #555;
-         --accent: #474747;
-         --radius: 6px;
-         --gap: 1rem;
-         --btn-height: 40px;
-         --input-height: 40px;
-         }
-         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-         body {
-         display: flex;
-         flex-direction: column;
-         min-height: 100vh;
-         font-family: 'Helvetica Neue', Arial, sans-serif;
-         background: var(--bg-light);
-         color: var(--text-dark);
-         }
-         header {
-         position: sticky; top: 0; width: 100%; z-index: 10;
-         background: rgba(255,255,255,0.95); backdrop-filter: blur(8px);
-         padding: var(--gap) calc(2*var(--gap));
-         display: flex; justify-content: space-between; align-items: center;
-         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-         }
-         .logo { font-size: 1.5rem; font-weight: bold; color: var(--text-dark); }
-         nav ul { list-style: none; display: flex; gap: var(--gap); flex-wrap: wrap; }
-         nav a {
-         font-size: 0.9rem; text-transform: uppercase; color: var(--text-light);
-         transition: color 0.2s;
-         }
-         nav a:hover { color: var(--primary); }
-         main { flex: 1; padding: calc(6*var(--gap)) var(--gap); }
-         /* Admin Controls Section (Add New Car + Import) */
-         .admin-controls {
-         display: flex; flex-wrap: wrap; gap: var(--gap);
-         margin-bottom: calc(2*var(--gap));
-         justify-content: space-between;
-         align-items: flex-end;
-         }
-         .admin-controls input,
-         .admin-controls select {
-         padding: 0 0.75rem; font-size: 0.95rem; height: var(--input-height);
-         border: 1px solid #ccc; border-radius: var(--radius); flex: 1 1 200px;
-         }
-         .admin-controls button {
-         background: var(--primary); color: var(--bg-light);
-         border: none; cursor: pointer; height: var(--btn-height);
-         padding: 0 1rem; font-size: 0.95rem; border-radius: var(--radius);
-         transition: background 0.2s;
-         }
-         .admin-controls button:hover { background: #7b3ea6; }
-         .admin-controls .import-btn {
-         background: var(--accent); margin-left: auto;
-         }
-         .admin-controls .import-btn:hover {
-         background: #333333;
-         }
-         .admin-controls .hidden-file-input {
-         display: none;
-         }
-         /* View Images Modal - Image Wrappers */
-         #view-images-modal .image-list div {
-         display: inline-block;
-         margin: 0.25rem;
-         text-align: center;
-         }
-         /* Delete buttons under images */
-         #view-images-modal .image-list div button {
-         margin-top: 4px;
-         font-size: 0.75rem;
-         padding: 2px 6px;
-         border: none;
-         border-radius: 4px;
-         background: #e74c3c;
-         color: white;
-         cursor: pointer;
-         transition: opacity 0.2s, background 0.2s;
-         }
-         #view-images-modal .image-list div button:hover {
-         opacity: 0.85;
-         background: #c0392b;
-         }
-         /* Filter / Search Section */
-         .admin-filter-sort {
-         display: flex; flex-wrap: wrap; gap: var(--gap);
-         margin-bottom: calc(2*var(--gap)); justify-content: space-between;
-         background: rgba(0,0,0,0.05); padding: var(--gap); border-radius: var(--radius);
-         }
-         .admin-filter-sort input,
-         .admin-filter-sort select {
-         flex: 1 1 200px; padding: 0 0.75rem;
-         font-size: 0.95rem; height: var(--input-height);
-         border: 1px solid #ccc; border-radius: var(--radius);
-         }
-         .admin-filter-sort button {
-         background: var(--primary); color: var(--bg-light);
-         border: none; cursor: pointer; padding: 0 1rem;
-         font-size: 0.95rem; height: var(--btn-height); border-radius: var(--radius);
-         transition: background 0.2s;
-         }
-         .admin-filter-sort button:hover { background: #7b3ea6; }
-         /* Table Wrapper */
-         .table-wrapper { overflow-x: auto; }
-         table {
-         width: 100%; border-collapse: collapse; min-width: 800px;
-         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-         }
-         th, td {
-         padding: var(--gap); text-align: center;
-         border-bottom: 1px solid rgba(0,0,0,0.1);
-         }
-         th {
-         background: var(--primary); color: var(--bg-light); text-transform: uppercase;
-         font-size: 0.9rem;
-         }
-         td img.thumbnail {
-         width: 80px; height: 60px; object-fit: cover; border-radius: var(--radius);
-         cursor: pointer; transition: transform 0.2s;
-         }
-         td img.thumbnail:hover {
-         transform: scale(1.1);
-         }
-         .action-btn {
-         padding: 0.35rem 0.75rem; border: none; border-radius: var(--radius);
-         cursor: pointer; color: #fff; font-size: 0.85rem; transition: opacity 0.2s;
-         }
-         .action-btn:hover { opacity: 0.8; }
-         .edit-btn { background: #00d203; margin-right: 4px; }
-         .delete-btn { background: #e74c3c; }
-         /* Modal Base */
-         .modal {
-         display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7);
-         justify-content: center; align-items: center; padding: var(--gap); z-index: 50;
-         }
-         .modal.show { display: flex; }
-         .modal-content {
-         background: var(--bg-light); padding: calc(2*var(--gap));
-         border-radius: var(--radius); max-width: 600px; width: 100%;
-         max-height: 90%; overflow-y: auto; position: relative;
-         box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-         }
-         .modal-content h2 {
-         margin-bottom: var(--gap); font-size: 1.25rem;
-         }
-         .modal-content .close-btn {
-         position: absolute; top: var(--gap); right: var(--gap);
-         background: none; border: none; font-size: 1.5rem; cursor: pointer;
-         }
-         .modal-content label {
-         display: block; margin-top: var(--gap); font-weight: 500;
-         }
-         .modal-content input,
-         .modal-content select {
-         width: 100%; padding: 0.5rem; margin-top: 0.25rem;
-         border: 1px solid #ccc; border-radius: var(--radius);
-         font-size: 0.95rem;
-         }
-         .image-list {
-         display: flex; gap: 0.5rem; margin-top: var(--gap); overflow-x: auto;
-         }
-         @media (max-width:768px) {
-         header { flex-direction: column; gap: var(--gap); }
-         .admin-controls input, .admin-controls select {
-         flex: 1 1 100%; margin-bottom: var(--gap);
-         }
-         table { min-width: unset; }
-         .table-wrapper { margin-bottom: var(--gap); }
-         }
-      </style>
+:root {
+  /* Palette from Style 1 */
+  --bg-light: #F8F9FA;
+  --bg-dark: #343A40;
+  --primary: #6C757D;
+  --text-dark: #212529;
+  --text-light: #495057;
+  --accent: #CED4DA;
+  --radius: 12px;
+  --gap: 1rem;
+  --btn-height: 40px;
+  --input-height: 40px;
+}
+
+/* Reset & Global */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  display: flex; flex-direction: column; min-height: 100vh;
+  font-family: 'Poppins', sans-serif;
+  background: var(--bg-light);
+  color: var(--text-dark);
+}
+
+/* Header */
+header {
+  position: sticky; top: 0; width: 100%; z-index: 10;
+  background: var(--bg-light); 
+  backdrop-filter: blur(8px);
+  padding: var(--gap) calc(2*var(--gap));
+  display: flex; justify-content: space-between; align-items: center;
+  box-shadow: 0 2px 4px rgba(52,58,64,0.1);
+}
+.logo { font-size: 1.5rem; font-weight: bold; color: var(--text-dark); }
+nav ul { list-style: none; display: flex; gap: var(--gap); flex-wrap: wrap; }
+nav a { font-size: 0.9rem; text-transform: uppercase; color: var(--text-light); transition: color 0.2s; }
+nav a:hover { color: var(--primary); }
+
+/* Main Section */
+main { flex: 1; padding: calc(6*var(--gap)) var(--gap); }
+
+/* Admin Controls */
+.admin-controls {
+  display: flex; flex-wrap: wrap; gap: var(--gap);
+  margin-bottom: calc(2*var(--gap)); justify-content: space-between;
+  align-items: flex-end;
+}
+.admin-controls input,
+.admin-controls select {
+  padding: 0 0.75rem; font-size: 0.95rem; height: var(--input-height);
+  border: 1px solid var(--accent); border-radius: var(--radius); flex: 1 1 200px;
+}
+.admin-controls button {
+  background: var(--primary); color: var(--bg-light);
+  border: none; cursor: pointer; height: var(--btn-height);
+  padding: 0 1rem; font-size: 0.95rem; border-radius: var(--radius);
+  transition: background 0.2s;
+}
+.admin-controls button:hover { background: var(--text-dark); }
+.admin-controls .import-btn { background: var(--primary); margin-left: auto; }
+.admin-controls .import-btn:hover { background: var(--text-light); }
+.admin-controls .hidden-file-input { display: none; }
+
+/* Filter / Search Section */
+.admin-filter-sort {
+  display: flex; flex-wrap: wrap; gap: var(--gap);
+  margin-bottom: calc(2*var(--gap)); justify-content: space-between;
+  background: var(--bg-card, #DEE2E6); padding: var(--gap); border-radius: var(--radius);
+}
+.admin-filter-sort input,
+.admin-filter-sort select {
+  flex: 1 1 200px; padding: 0 0.75rem;
+  font-size: 0.95rem; height: var(--input-height);
+  border: 1px solid var(--accent); border-radius: var(--radius);
+}
+.admin-filter-sort button {
+  background: var(--primary); color: var(--bg-light);
+  border: none; cursor: pointer; padding: 0 1rem;
+  font-size: 0.95rem; height: var(--btn-height); border-radius: var(--radius);
+  transition: background 0.2s;
+}
+.admin-filter-sort button:hover { background: var(--text-dark); }
+
+/* Table */
+.table-wrapper { overflow-x: auto; }
+table {
+  width: 100%; border-collapse: collapse; min-width: 800px;
+  box-shadow: 0 2px 8px rgba(52,58,64,0.1);
+}
+th, td {
+  padding: var(--gap); text-align: center;
+  border-bottom: 1px solid var(--accent);
+}
+th {
+  background: var(--primary); color: var(--bg-light); text-transform: uppercase;
+  font-size: 0.9rem;
+}
+td img.thumbnail {
+  width: 80px; height: 60px; object-fit: cover; border-radius: var(--radius);
+  cursor: pointer; transition: transform 0.2s;
+}
+td img.thumbnail:hover { transform: scale(1.1); }
+
+.action-btn {
+  padding: 0.35rem 0.75rem; border: none; border-radius: var(--radius);
+  cursor: pointer; color: #fff; font-size: 0.85rem; transition: opacity 0.2s;
+}
+.action-btn:hover { opacity: 0.8; }
+.edit-btn { background: #00d203; margin-right: 4px; }
+.delete-btn { background: #e74c3c; }
+
+/* Modal */
+.modal {
+  display: none; position: fixed; inset: 0; background: rgba(52,58,64,0.7);
+  justify-content: center; align-items: center; padding: var(--gap); z-index: 50;
+}
+.modal.show { display: flex; }
+.modal-content {
+  background: var(--bg-light); padding: calc(2*var(--gap));
+  border-radius: var(--radius); max-width: 600px; width: 100%;
+  max-height: 90%; overflow-y: auto; position: relative;
+  box-shadow: 0 8px 20px rgba(52,58,64,0.2);
+}
+.modal-content h2 { margin-bottom: var(--gap); font-size: 1.25rem; }
+.modal-content .close-btn {
+  position: absolute; top: var(--gap); right: var(--gap);
+  background: none; border: none; font-size: 1.5rem; cursor: pointer;
+}
+.modal-content label {
+  display: block; margin-top: var(--gap); font-weight: 500;
+}
+.modal-content input,
+.modal-content select {
+  width: 100%; padding: 0.5rem; margin-top: 0.25rem;
+  border: 1px solid var(--accent); border-radius: var(--radius);
+  font-size: 0.95rem;
+}
+
+footer { background: #343A40; color: #F8F9FA; text-align:center; padding:2rem 1rem; }
+footer a { color: #F8F9FA; }
+
+/* Image List */
+.image-list { display: flex; gap: 0.5rem; margin-top: var(--gap); overflow-x: auto; }
+#view-images-modal .image-list div { display: inline-block; margin: 0.25rem; text-align: center; }
+#view-images-modal .image-list div button {
+  margin-top: 4px; font-size: 0.75rem; padding: 2px 6px;
+  border: none; border-radius: 4px;
+  background: #e74c3c; color: white;
+  cursor: pointer; transition: opacity 0.2s, background 0.2s;
+}
+#view-images-modal .image-list div button:hover {
+  opacity: 0.85; background: #c0392b;
+}
+
+/* Responsive */
+@media (max-width:768px) {
+  header { flex-direction: column; gap: var(--gap); }
+  .admin-controls input, .admin-controls select { flex: 1 1 100%; margin-bottom: var(--gap); }
+  table { min-width: unset; }
+  .table-wrapper { margin-bottom: var(--gap); }
+}
+</style>
+
    </head>
    <body>
       <!-- Loading Overlay -->
@@ -226,8 +215,10 @@
          <div class="logo">VEPA Admin</div>
          <nav>
             <ul>
-               <li><a href="index">Home</a></li>
-               <li><a href="inventory">Inventory</a></li>
+               <li><a href="/">Home</a></li>
+                <li><a href="inventory">Inventory</a></li>
+                <li><a href="services">Services</a></li>
+                <li><a href="about">About VEPA</a></li>
                <li><a href="javascript:doSignOut()">Logout</a></li>
             </ul>
          </nav>
@@ -523,7 +514,7 @@
            body.innerHTML = '';
            data.forEach(car => {
              const tr = document.createElement('tr');
-             const thumb = car.images?.[0]?.url || 'GenCar.png';
+             const thumb = car.images?.[0]?.url || 'vepa logo.png';
              tr.innerHTML =
                `<td><img class="thumbnail" src="${thumb}" onclick="openImageModal('${car.id}')"></td>` +
                `<td>${car.vin}</td>` +
@@ -1022,8 +1013,6 @@
          displayCarsAdmin();
           hideLoading();
          }
-         
-         
          
          // expose modified functions
          window.addCar = addCar;

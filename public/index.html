@@ -10,240 +10,178 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>VEPA AutoCare</title>
   <style>
-    :root {
-      --color-bg-light: #fff;
-      --color-bg-dark: #000;
-      --color-primary: #5a31f4;
-      --color-text: #111;
-      --color-text-light: #555;
-      --color-accent: #474747;
-    }
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; }
-    body {
-      font-family: 'Helvetica Neue', Arial, sans-serif;
-      background: var(--color-bg-light);
-      color: var(--color-text);
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-    }
-    a { text-decoration: none; color: inherit; }
-    header {
-      display: flex; align-items: center; justify-content: space-between;
-      flex-wrap: wrap;
-      padding: 1rem 2rem; background: var(--color-bg-light);
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1); position: sticky; top:0; z-index:10;
-    }
-    .logo { font-size: 1.5rem; font-weight: bold; }
-    .welcome {
-      margin-left: 1rem; font-size: 0.9rem;
-      color: var(--color-text-light); display: none;
-    }
-    nav ul {
-      list-style: none; display: flex; align-items: center; gap: 1.5rem;
-      flex-wrap: wrap;
-    }
-    nav ul li a,
-    .contact-toggle,
-    .login-toggle {
-      font-weight: 500; text-transform: uppercase; font-size: 0.9rem;
-      color: var(--color-text-light); cursor: pointer; white-space: nowrap;
-    }
-    nav ul li a:hover,
-    .contact-toggle:hover,
-    .login-toggle:hover { color: var(--color-primary); }
-    #signout-nav button {
-      background: none; border: none; font: inherit; font-weight: 500;
-      text-transform: uppercase; font-size: 0.9rem;
-      color: var(--color-text-light); cursor: pointer;
-      white-space: nowrap;
-    }
-    #signout-nav button:hover { color: var(--color-primary); }
+:root {
+  /* Color Palette from Style 1 */
+  --color-bg-light: #F8F9FA;      /* page background */
+  --color-bg-dark: #343A40;       /* sidebar/footer dark bg */
+  --color-primary: #6C757D;       /* buttons and accents */
+  --color-text: #212529;          /* main text */
+  --color-text-light: #495057;    /* secondary text */
+  --color-accent: #CED4DA;        /* borders/lines */
+  --radius: 12px;
+}
 
-    .contact-sidebar,
-    .login-sidebar {
-      position: fixed; top: 0; right: 0;
-      width: 280px; height: 100%;
-      background: var(--color-bg-dark);
-      color: var(--color-bg-light);
-      transform: translateX(100%);
-      transition: transform 0.3s ease;
-      padding: 2rem; z-index: 20;
-    }
-    .contact-sidebar.open,
-    .login-sidebar.open { transform: translateX(0); }
-    .contact-sidebar h2,
-    .login-sidebar h2 {
-      margin-bottom: 1rem; font-size: 1.5rem;
-    }
-    .contact-sidebar p,
-    .login-sidebar p {
-      margin-bottom: 0.75rem; font-size: 0.95rem;
-    }
-    #close-contact,
-    #close-login {
-      position: absolute; top: 1rem; right: 1rem;
-      background: none; border: none;
-      color: var(--color-bg-light); font-size: 1.2rem;
-      cursor: pointer;
-    }
-
-    .hero {
-      position: relative; overflow: hidden;
-      display: flex; justify-content: center; align-items: center;
-      height: 100vh; text-align: center;
-    }
-    .video-bg-container {
-      position: absolute; top: 0; left: 0;
-      width: 100%; height: 100%; overflow: hidden;
-      z-index: -1;
-    }
-    .video-bg {
-      position: absolute; top: 0; left: 0;
-      width: 100%; height: 100%;
-      object-fit: cover;
-      opacity: 0;
-      transition: opacity 1s ease-in-out;
-    }
-    .video-bg.visible { opacity: 1; }
-    .hero-content {
-      position: relative; z-index: 1;
-      background: rgba(0,0,0,0.5);
-      backdrop-filter: blur(4px);
-      padding: 1.5rem 2rem;
-      border-radius: 0.5rem;
-      color: var(--color-bg-light);
-      max-width: 90%;
-    }
-    .hero-content h1 {
-      font-size: 3rem; font-weight: 300; margin-bottom: 1rem;
-    }
-    .hero-content p {
-      color:white; margin-bottom: 1.5rem;
-    }
-    .hero-content .btn {
-      display: inline-block; padding: 0.75rem 2rem;
-      background: var(--color-primary);
-      color: var(--color-bg-light);
-      border-radius: 2rem; font-weight: 600;
-      transition: opacity 0.3s;
-    }
-    .hero-content .btn:hover { opacity: 0.8; }
-
-   #testimonials {
-      position: relative;
-      background: #f9f9f9;
-      padding: 4rem 2rem;
-      overflow: hidden;
-      text-align: center;
-    }
-    #testimonials h2 {
-      font-family: 'Helvetica Neue', Arial, sans-serif;
-      font-size: 2.5rem;
-      font-weight: 300;
-      color: #111;
-      margin-bottom: 2.5rem;
-    }
-    .testimonial-slider {
-      display: flex;
-      width:100%;
-      transition: transform 0.5s ease;
-      will-change: transform;
-    }
-    .testimonial-slide {
-      width: 100%;
-      flex: 0 0 100%;
-      box-sizing: border-box;
-      max-width: 100%;
-      padding: 0 1rem;
-    }
-    .testimonial-text {
-      font-family: 'Helvetica Neue', Arial, sans-serif;
-      font-size: 1.2rem;
-      font-style: italic;
-      line-height: 1.6;
-      color: #222;
-      margin-bottom: 1.5rem;
-      max-width: 700px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-    .testimonial-author {
-      font-family: 'Helvetica Neue', Arial, sans-serif;
-      font-size: 1rem;
-      font-weight: 600;
-      color: #555;
-    }
-    .slider-btn {
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      background: none;
-      border: none;
-      font-size: 2.5rem;
-      color: rgba(0, 0, 0, 0.5);
-      cursor: pointer;
-      padding: 0 0.5rem;
-      transition: color 0.2s;
-      user-select: none;
-    }
-    .slider-btn:hover {
-      color: rgba(0, 0, 0, 0.8);
-    }
-    .prev-btn {
-      left: 1rem;
-    }
-    .next-btn {
-      right: 1rem;
-    }
-    @media (max-width: 768px) {
-      #testimonials h2 {
-        font-size: 2rem;
-      }
-      .testimonial-text {
-        font-size: 1.1rem;
-      }
-      .slider-btn {
-        font-size: 2rem;
-      }
-    }
-    @media (max-width: 480px) {
-      .testimonial-text {
-        font-size: 1rem;
-      }
-      .slider-btn {
-        font-size: 1.5rem;
-      }
-    }
-.slider-buttons {
-  position: absolute;
-  top: 50%;
-  left: 0;
-  right: 0;
+/* Reset & global */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Poppins', sans-serif;
+  background: var(--color-bg-light);
+  color: var(--color-text);
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  min-height: 100vh;
+}
+a { text-decoration: none; color: inherit; }
+
+/* Header */
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap;
+  padding: 1rem 2rem;
+  background: var(--color-bg-light);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  position: sticky; top:0; z-index:10;
+}
+.logo { font-size: 1.5rem; font-weight: bold; color: var(--color-text); }
+.welcome {
+  margin-left: 1rem; font-size: 0.9rem;
+  color: var(--color-text-light); display: none;
+}
+nav ul {
+  list-style: none; display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;
+}
+nav ul li a,
+.contact-toggle,
+.login-toggle,
+#signout-nav button {
+  font-weight: 500; text-transform: uppercase; font-size: 0.9rem;
+  color: var(--color-text-light); cursor: pointer; white-space: nowrap;
+  background: none; border: none; font: inherit;
+}
+nav ul li a:hover,
+.contact-toggle:hover,
+.login-toggle:hover,
+#signout-nav button:hover { color: var(--color-primary); }
+
+/* Sidebars */
+.contact-sidebar,
+.login-sidebar {
+  position: fixed; top: 0; right: 0;
+  width: 280px; height: 100%;
+  background: var(--color-bg-dark);
+  color: var(--color-bg-light);
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+  padding: 2rem; z-index: 20;
+  border-radius: var(--radius) 0 0 var(--radius);
+}
+.contact-sidebar.open,
+.login-sidebar.open { transform: translateX(0); }
+.contact-sidebar h2,
+.login-sidebar h2 { margin-bottom: 1rem; font-size: 1.5rem; }
+.contact-sidebar p,
+.login-sidebar p { margin-bottom: 0.75rem; font-size: 0.95rem; }
+#close-contact,
+#close-login {
+  position: absolute; top: 1rem; right: 1rem;
+  background: none; border: none;
+  color: var(--color-bg-light); font-size: 1.2rem;
+  cursor: pointer;
+}
+
+/* Hero Section */
+.hero {
+  position: relative; overflow: hidden;
+  display: flex; justify-content: center; align-items: center;
+  height: 100vh; text-align: center;
+}
+.video-bg-container {
+  position: absolute; top: 0; left: 0;
+  width: 100%; height: 100%; overflow: hidden;
+  z-index: -1;
+}
+.video-bg {
+  position: absolute; top: 0; left: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 1s ease-in-out;
+}
+.video-bg.visible { opacity: 1; }
+.hero-content {
+  position: relative; z-index: 1;
+  background: rgba(52,58,64,0.5);
+  backdrop-filter: blur(4px);
+  padding: 1.5rem 2rem;
+  border-radius: var(--radius);
+  color: var(--color-bg-light);
+  max-width: 90%;
+}
+.hero-content h1 {
+  font-family: 'Poppins', sans-serif;
+  font-size: 3rem; font-weight: 600; margin-bottom: 1rem;
+  color: var(--color-accent);
+}
+.hero-content p {
+  color: var(--color-accent); margin-bottom: 1.5rem;
+}
+.hero-content .btn {
+  display: inline-block; padding: 0.75rem 2rem;
+  background: var(--color-primary);
+  color: var(--color-bg-light);
+  border-radius: 2rem; font-weight: 600;
+  transition: opacity 0.3s;
+}
+.hero-content .btn:hover { opacity: 0.8; }
+
+/* Testimonials */
+#testimonials {
+  position: relative;
+  background: var(--color-bg-light);
+  padding: 4rem 2rem;
+  overflow: hidden;
+  text-align: center;
+}
+#testimonials h2 {
+  font-family: 'Poppins', sans-serif;
+  font-size: 2.5rem; font-weight: 600;
+  color: var(--color-text); margin-bottom: 2.5rem;
+}
+.testimonial-slider {
+  display: flex; width: 100%;
+  transition: transform 0.5s ease;
+}
+.testimonial-slide {
+  width: 100%; flex: 0 0 100%; box-sizing: border-box;
+  max-width: 100%; padding: 0 1rem;
+}
+.testimonial-text {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.2rem; font-style: italic;
+  line-height: 1.6; color: var(--color-text-light);
+  margin-bottom: 1.5rem; max-width: 700px; margin-left:auto; margin-right:auto;
+}
+.testimonial-author {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1rem; font-weight: 600;
+  color: var(--color-text-light);
+}
+.slider-buttons {
+  position: absolute; top: 50%; left: 0; right: 0;
+  display: flex; justify-content: space-between;
   transform: translateY(-50%);
 }
 .slider-buttons button {
-  background: rgba(0,0,0,0.5);
-  border: none;
-  color: #fff;
-  font-size: 1.5rem;
-  padding: 0.5rem 1rem;
-  cursor: pointer;
-  border-radius: 50%;
+  background: var(--color-primary);
+  border: none; color: var(--color-bg-light);
+  font-size: 1.5rem; padding: 0.5rem 1rem;
+  cursor: pointer; border-radius: 50%;
   transition: background 0.3s;
 }
-.slider-buttons button:hover { background: rgba(0,0,0,0.7); }
-@media (max-width: 900px) {
-  .testimonial { flex: 0 0 80%; }
-}
-@media (max-width: 600px) {
-  .testimonial { flex: 0 0 100%; }
-  #testimonials h2 { font-size: 2rem; }
-}
+.slider-buttons button:hover { background: var(--color-text); }
 
+/* Footer */
 footer {
   background: var(--color-bg-dark);
   color: var(--color-bg-light);
@@ -254,22 +192,16 @@ footer {
 }
 footer a { color: var(--color-bg-light); }
 
-    footer {
-      background: var(--color-bg-dark);
-      color: var(--color-bg-light);
-      text-align: center;
-      padding: 2rem 1rem;
-      margin-top: auto;
-      font-size: 0.9rem;
-    }
-    footer a { color: var(--color-bg-light); }
+/* Responsive */
+@media (max-width:768px) {
+  .hero-content h1 { font-size: 2.5rem; }
+  nav ul { gap: 1rem; }
+}
+@media (max-width:480px) {
+  .testimonial-text { font-size: 1rem; }
+}
+</style>
 
-    @media (max-width:768px) {
-      .hero-content h1 { font-size: 2.5rem; }
-      nav ul { gap: 1rem; }
-      .testimonials-grid { grid-template-columns: 1fr; }
-    }
-  </style>
 </head>
 <body>
   <header>
@@ -279,10 +211,10 @@ footer a { color: var(--color-bg-light); }
       <ul>
         <li><a href="/">Home</a></li>
         <li><a href="inventory">Inventory</a></li>
-        <!-- <li><a href="services">Services</a></li> -->
-        <!-- <li><a href="about">About VEPA</a></li> -->
+        <li><a href="services">Services</a></li>
+        <li><a href="about">About VEPA</a></li>
         <li id="admin-link" style="display:none"><a href="admin">Admin</a></li>
-        <!-- <li><a href="contact.html">Contact</a></li> -->
+        <li><a href="contact">Contact</a></li>
         <li class="login-toggle">Login/Signup</li>
         <li id="signout-nav" style="display:none;"><button id="signout-btn">Sign Out</button></li>
       </ul>
@@ -300,8 +232,8 @@ footer a { color: var(--color-bg-light); }
   <aside class="login-sidebar" id="login-sidebar">
     <button id="close-login">×</button>
     <h2>Login / Signup</h2>
-    <p><a href="login.html">Log In</a></p>
-    <p><a href="signup.html">Sign Up</a></p>
+    <p><a href="login">Log In</a></p>
+    <p><a href="signup">Sign Up</a></p>
   </aside>
 
   <section id="hero" class="hero">
@@ -311,8 +243,9 @@ footer a { color: var(--color-bg-light); }
     </div>
     <div class="hero-content">
       <h1>Find Your Dream Car</h1>
-      <p>Browse our current selection with effortless, transparent service.</p>
-      <a href="inventory.html" class="btn">Browse Inventory</a>
+      <p>Browse our current selection or check out what services we have to offer!</p>
+      <a href="inventory" class="btn">Inventory</a>
+      <a href="services" class="btn">Services</a>
     </div>
   </section>
 

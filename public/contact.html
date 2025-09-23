@@ -9,101 +9,129 @@
   <meta name="theme-color" content="#000000">
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>VEPA AutoCare – Contact</title>
-  <style>
-    :root {
-      --color-bg-light: #fff;
-      --color-bg-dark: #000;
-      --color-primary: #9d4edd;
-      --color-text: #111;
-      --color-text-light: #555;
-      --color-accent: #474747;
-    }
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: 'Helvetica Neue', Arial, sans-serif;
-      background: var(--color-bg-light);
-      color: var(--color-text);
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-    }
-    a { text-decoration: none; color: inherit; }
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 1rem 2rem;
-      background: var(--color-bg-light);
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    .logo { font-size: 1.5rem; font-weight: bold; }
-    nav a {
-      margin-left: 1.5rem;
-      font-weight: 500;
-      text-transform: uppercase;
-      font-size: 0.9rem;
-      color: var(--color-text-light);
-    }
-    nav a:hover { color: var(--color-primary); }
-    main {
-      flex: 1;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 2rem 1rem;
-    }
-    .form-container {
-      background: rgba(0, 0, 0, 0.05);
-      padding: 2rem;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      width: 100%;
-      max-width: 400px;
-    }
-    .form-container h2 {
-      text-align: center;
-      font-weight: 300;
-      margin-bottom: 1.5rem;
-    }
-    .form-container input,
-    .form-container textarea {
-      width: 100%;
-      padding: 0.75rem;
-      margin-bottom: 1rem;
-      border: 1px solid var(--color-accent);
-      border-radius: 4px;
-      font-size: 1rem;
-      background: var(--color-bg-light);
-      color: var(--color-text);
-    }
-    .form-container button {
-      width: 100%;
-      padding: 0.75rem;
-      background: var(--color-primary);
-      color: var(--color-bg-light);
-      border: none;
-      border-radius: 4px;
-      font-weight: bold;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: background 0.2s ease;
-    }
-    .form-container button:hover {
-      background: #7b3ea6;
-    }
-    #status-message {
-      text-align: center;
-      font-size: 0.9rem;
-      min-height: 1.2rem;
-      margin-top: 0.5rem;
-    }
-    footer {
-      text-align: center;
-      padding: 1rem;
-      font-size: 0.8rem;
-      color: var(--color-text-light);
-    }
-  </style>
+ <style>
+:root {
+  --bg-page: #F8F9FA;
+  --bg-filter: #E9ECEF;
+  --bg-card: #DEE2E6;
+  --overlay: rgba(52,58,64,0.7);
+  --text-dark: #212529;
+  --title: #343A40;
+  --price: #495057;
+  --border: #CED4DA;
+  --btn: #6C757D;
+  --btn-hover: #495057;
+  --radius: 12px;
+  --gap: 1rem;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin:0; padding:0; }
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background: var(--bg-page);
+  color: var(--text-dark);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+a { text-decoration: none; color: inherit; }
+
+/* Header */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background: var(--bg-page);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.logo { font-size: 1.5rem; font-weight: bold; color: var(--title); }
+nav a { margin-left: 1.5rem; font-weight: 500; text-transform: uppercase; font-size: 0.9rem; color: var(--text-dark); }
+nav a:hover { color: var(--price); }
+
+/* Main Form */
+main {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem 1rem;
+}
+
+.form-container {
+  background: var(--bg-filter);
+  padding: 2rem;
+  border-radius: var(--radius);
+  box-shadow: 0 6px 18px var(--overlay);
+  width: 100%;
+  max-width: 400px;
+}
+
+.form-container h2 {
+  text-align: center;
+  font-weight: 600;
+  font-size: 1.75rem;
+  margin-bottom: 1.5rem;
+  color: var(--title);
+}
+
+.form-container input,
+.form-container textarea {
+  width: 100%;
+  padding: 0.75rem;
+  margin-bottom: var(--gap);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 1rem;
+  background: var(--bg-page);
+  color: var(--text-dark);
+  transition: border-color 0.2s ease;
+}
+
+.form-container input:focus,
+.form-container textarea:focus {
+  border-color: var(--price);
+  outline: none;
+}
+
+.form-container button {
+  width: 100%;
+  padding: 0.75rem;
+  background: var(--btn);
+  color: var(--bg-page);
+  border: none;
+  border-radius: var(--radius);
+  font-weight: bold;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.form-container button:hover {
+  background: var(--btn-hover);
+}
+
+#status-message {
+  text-align: center;
+  font-size: 0.9rem;
+  min-height: 1.2rem;
+  margin-top: 0.5rem;
+  color: var(--text-dark);
+}
+
+/* Footer */
+footer {
+  text-align: center;
+  padding: 2rem 1rem;
+  font-size: 0.9rem;
+  color: var(--text-dark);
+}
+footer a { color: var(--title); }
+</style>
+
+
 </head>
 <body>
   <header>
@@ -137,7 +165,7 @@
       apiKey: "AIzaSyBcKnjZm5LYqj5jx5VEqx9ywspgZyxNfsA",
       authDomain: "vepa-24b46.firebaseapp.com",
       projectId: "vepa-24b46",
-      storageBucket: "vepa-24b46.appspot.com",
+      storageBucket: "vepa-24b46.firebasestorage.app",
       messagingSenderId: "170936495301",
       appId: "1:170936495301:web:6f15b8fa08deeb01d5d4ac",
       measurementId: "G-F8NFZ6SRKR"
@@ -177,7 +205,7 @@
         });
 
         await addDoc(collection(db, 'mail'), {
-          to: ['vepaautoshop1904@gmail.com'],
+          to: ['contact@vepaautocare.com'],
           replyTo: user.email,
           message: {
             subject: `[VEPA Website] General Inquiry – ${user.name}`,
