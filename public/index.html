@@ -64,6 +64,57 @@ nav ul li a:hover,
 .login-toggle:hover,
 #signout-nav button:hover { color: var(--color-primary); }
 
+.menu-toggle {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  cursor: pointer;
+}
+.menu-toggle span {
+  width: 25px;
+  height: 3px;
+  background: var(--color-text);
+  border-radius: 3px;
+}
+
+@media (max-width: 768px) {
+  /* Center welcome message */
+  .welcome {
+    display: block;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.9rem;
+    color: var(--color-text-light);
+    white-space: nowrap;
+  }
+
+  nav {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: var(--color-bg-light);
+    width: 220px;
+    border-radius: 0 0 var(--radius) var(--radius);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    padding: 1rem;
+  }
+
+  nav ul {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  nav.show {
+    display: block;
+  }
+
+  .menu-toggle {
+    display: flex;
+  }
+}
+
 /* Sidebars */
 .contact-sidebar,
 .login-sidebar {
@@ -205,21 +256,28 @@ footer a { color: var(--color-bg-light); }
 </head>
 <body>
   <header>
-    <div class="logo">VEPA</div>
-    <div id="welcome-message" class="welcome"></div>
-    <nav>
-      <ul>
-        <li><a href="/">Home</a></li>
-        <li><a href="inventory">Inventory</a></li>
-        <li><a href="services">Services</a></li>
-        <li><a href="about">About VEPA</a></li>
-        <li id="admin-link" style="display:none"><a href="admin">Admin</a></li>
-        <li><a href="contact">Contact</a></li>
-        <li class="login-toggle">Login/Signup</li>
-        <li id="signout-nav" style="display:none;"><button id="signout-btn">Sign Out</button></li>
-      </ul>
-    </nav>
-  </header>
+  <div class="logo">VEPA</div>
+
+  <div id="welcome-message" class="welcome"></div>
+
+  <div class="menu-toggle" id="menu-toggle">
+    <span></span><span></span><span></span>
+  </div>
+
+  <nav id="nav-links">
+    <ul>
+      <li><a href="/">Home</a></li>
+      <li><a href="inventory">Inventory</a></li>
+      <li><a href="services">Services</a></li>
+      <li><a href="about">About VEPA</a></li>
+      <li id="admin-link" style="display:none"><a href="admin">Admin</a></li>
+      <li><a href="contact">Contact</a></li>
+      <li class="login-toggle">Login/Signup</li>
+      <li id="signout-nav" style="display:none;"><button id="signout-btn">Sign Out</button></li>
+    </ul>
+  </nav>
+</header>
+
 
   <aside class="contact-sidebar" id="contact-sidebar">
     <button id="close-contact">×</button>
@@ -304,6 +362,15 @@ footer a { color: var(--color-bg-light); }
   const signoutNav = document.getElementById('signout-nav');
   const welcomeEl = document.getElementById('welcome-message');
   const adminLink = document.getElementById('admin-link');
+
+  // Hamburger menu toggle
+const menuToggle = document.getElementById("menu-toggle");
+const navLinks = document.getElementById("nav-links");
+
+menuToggle.addEventListener("click", () => {
+  navLinks.classList.toggle("show");
+});
+
 
   if (user) {
     loginToggle.style.display = 'none';

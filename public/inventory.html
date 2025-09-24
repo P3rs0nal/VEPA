@@ -16,6 +16,9 @@
   --border: #CED4DA;
   --btn: #6C757D;
   --btn-hover: #495057;
+  --color-primary: #6C757D;
+  --color-text-light: #495057;
+
   --radius: 12px;
   --gap: 1rem;
 }
@@ -42,15 +45,110 @@ nav ul { list-style:none; display:flex; gap:1.5rem; }
 nav li a, .contact-toggle { cursor:pointer; font-weight:500; text-transform:uppercase; color: var(--text-dark); }
 nav li a:hover, .contact-toggle:hover { color: var(--price); }
 
-/* Contact Sidebar */
-.contact-sidebar {
-  position: fixed; top:0; right:0; height:100%; width:300px;
-  background: #343A40; color: #F8F9FA;
-  transform: translateX(100%); transition: transform 0.3s ease;
-  padding: 2rem; z-index:20;
+/* Hamburger menu */
+.menu-toggle {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  cursor: pointer;
 }
-.contact-sidebar.open { transform: translateX(0); }
-#close-sidebar { position:absolute; top:1rem; right:1rem; background:none; border:none; font-size:1.5rem; cursor:pointer; color:#F8F9FA; }
+.menu-toggle span {
+  width: 25px;
+  height: 3px;
+  background: var(--text-dark);
+  border-radius: 3px;
+}
+
+/* Mobile styles */
+@media (max-width: 768px) {
+  /* Center welcome message */
+  .welcome {
+    display: block;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.9rem;
+    color: var(--text-dark);
+    white-space: nowrap;
+  }
+
+  nav {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    color: var(--text-dark);
+    background: var(--bg-card);
+    width: 220px;
+    border-radius: 0 0 var(--radius) var(--radius);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    padding: 1rem;
+  }
+
+  nav ul {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  nav.show {
+    display: block;
+  }
+
+  .menu-toggle {
+    display: flex;
+  }
+}
+
+#signout-nav button {
+  font-weight: 500;
+  text-transform: uppercase;   /* <-- makes all letters uppercase */
+  font-size: 0.9rem;
+  color: var(--color-text-light);
+  cursor: pointer;
+  white-space: nowrap;
+  background: none;
+  border: none;
+  font: inherit;
+}
+
+#login-toggle {
+  font-weight: 500;
+  text-transform: uppercase;   /* <-- makes all letters uppercase */
+  font-size: 0.9rem;
+  color: var(--color-text-light);
+  cursor: pointer;
+  white-space: nowrap;
+  background: none;
+  border: none;
+  font: inherit;
+}
+
+nav ul li a,
+.contact-toggle,
+.login-toggle,
+#signout-nav button {
+  font-weight: 500;
+  text-transform: uppercase;
+  font-size: 0.9rem;
+  color: var(--text-dark);
+  cursor: pointer;
+  white-space: nowrap;
+  background: none;
+  border: none;
+  font: inherit;
+}
+
+nav ul li a:hover,
+.contact-toggle:hover,
+.login-toggle:hover,
+#signout-nav button:hover {
+  color: var(--btn-hover); /* or --color-primary if you define it */
+}
+
+nav ul li a:hover,
+.contact-toggle:hover,
+.login-toggle:hover,
+#signout-nav button:hover { color: var(--color-primary); }
 
 /* Filter Toggle */
 .filter-toggle-container {
@@ -195,29 +293,50 @@ footer { background: #343A40; color: #F8F9FA; text-align:center; padding:2rem 1r
 footer a { color: #F8F9FA; }
 
 @media(max-width:768px){ .inventory-grid{grid-template-columns:1fr;} }
+@media (max-width:768px) {
+  .hero-content h1 { font-size: 2.5rem; }
+  nav ul { gap: 1rem; }
+}
+@media (max-width:480px) {
+  .testimonial-text { font-size: 1rem; }
+}
+
 </style>
 </head>
 <body>
 <header>
   <div class="logo">VEPA</div>
-  <nav>
+
+  <!-- Center email -->
+  <div id="welcome-message" class="welcome"></div>
+
+  <!-- Hamburger menu -->
+  <div class="menu-toggle" id="menu-toggle">
+    <span></span><span></span><span></span>
+  </div>
+
+  <nav id="nav-links">
     <ul>
       <li><a href="/">Home</a></li>
-        <li><a href="inventory">Inventory</a></li>
-        <li><a href="services">Services</a></li>
-        <li><a href="about">About VEPA</a></li>
-      <li><a href="#" class="contact-toggle">Contact</a></li>
+      <li><a href="inventory">Inventory</a></li>
+      <li><a href="services">Services</a></li>
+      <li><a href="about">About VEPA</a></li>
+      <li id="admin-link" style="display:none"><a href="admin">Admin</a></li>
+      <li><a href="contact">Contact</a></li>
+      <li class="login-toggle"><a href="login">Login/Signup</a></li>
+      <li id="signout-nav" style="display:none;"><button id="signout-btn">Sign Out</button></li>
     </ul>
   </nav>
 </header>
 
-<aside id="contact-sidebar" class="contact-sidebar">
+
+<!-- <aside id="contact-sidebar" class="contact-sidebar">
   <button id="close-sidebar">×</button>
   <h2>Contact Us</h2>
   <p>1904 Western Ave, Albany, NY 12203</p>
   <p>(518) 456-5682</p>
   <p><a href="mailto:vepaautoshop1904@gmail.com">vepaautoshop1904@gmail.com</a></p>
-</aside>
+</aside> -->
 
 <div class="filter-toggle-container">
   <button id="filter-toggle-btn">Show Filters</button>
@@ -262,8 +381,12 @@ footer a { color: #F8F9FA; }
 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js';
-import { getFirestore, collection, getDocs } from 'https://www.gstatic.com/firebasejs/11.5.0/firebase-firestore.js';
-
+import { getFirestore, collection, getDocs, doc, getDoc } from 'https://www.gstatic.com/firebasejs/11.5.0/firebase-firestore.js';
+import {
+      getAuth,
+      onAuthStateChanged,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-auth.js";
 const firebaseConfig = {
   apiKey: 'AIzaSyBcKnjZm5LYqj5jx5VEqx9ywspgZyxNfsA',
   authDomain: 'vepa-24b46.firebaseapp.com',
@@ -275,6 +398,7 @@ const firebaseConfig = {
 };
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
 
 const grid = document.getElementById('inventory-grid');
 let allCars = [];
@@ -285,6 +409,50 @@ async function fetchCarData(){
   populateFilters();
   displayCars(allCars);
 }
+onAuthStateChanged(auth, async (user) => {
+  const loginToggle = document.querySelector('.login-toggle');
+  const signoutNav = document.getElementById('signout-nav');
+  const welcomeEl = document.getElementById('welcome-message');
+  const adminLink = document.getElementById('admin-link');
+
+  // Hamburger menu toggle
+const menuToggle = document.getElementById("menu-toggle");
+const navLinks = document.getElementById("nav-links");
+
+menuToggle.addEventListener("click", () => {
+  navLinks.classList.toggle("show");
+});
+
+
+  if (user) {
+    loginToggle.style.display = 'none';
+    signoutNav.style.display = 'inline-flex';
+    welcomeEl.textContent = `Welcome, ${user.email}`;
+    welcomeEl.style.display = 'block';
+
+    try {
+      // Use UID, not email
+      const snap = await getDoc(doc(db, "users", user.uid));
+      if (snap.exists() && snap.data().isAdmin) {
+        sessionStorage.setItem('admin-auth', 'true');
+        adminLink.style.display = 'inline-flex';
+      } else {
+        sessionStorage.removeItem('admin-auth');
+        adminLink.style.display = 'none';
+      }
+    } catch (err) {
+      console.error("Failed to fetch user document:", err);
+      adminLink.style.display = 'none';
+    }
+
+  } else {
+    loginToggle.style.display = 'inline-flex';
+    signoutNav.style.display = 'none';
+    welcomeEl.style.display = 'none';
+    adminLink.style.display = 'none';
+    sessionStorage.removeItem('admin-auth');
+  }
+});
 
 const filterToggleBtn = document.getElementById('filter-toggle-btn');
 const filtersDiv = document.querySelector('.filters');
@@ -460,8 +628,8 @@ document.getElementById('apply-filters').addEventListener('click',()=>{
 });
 document.getElementById('reset-filters').addEventListener('click',()=>displayCars(allCars));
 
-document.querySelector('.contact-toggle').onclick = ()=>document.getElementById('contact-sidebar').classList.toggle('open');
-document.getElementById('close-sidebar').onclick = ()=>document.getElementById('contact-sidebar').classList.remove('open');
+// document.querySelector('.contact-toggle').onclick = ()=>document.getElementById('contact-sidebar').classList.toggle('open');
+// document.getElementById('close-sidebar').onclick = ()=>document.getElementById('contact-sidebar').classList.remove('open');
 
 window.openDetails=openDetails;
 window.closeDetails=closeDetails;

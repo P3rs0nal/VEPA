@@ -57,6 +57,62 @@ nav ul li a:hover,
 .contact-toggle:hover,
 .login-toggle:hover,
 #signout-nav button:hover { color: var(--color-primary); }
+.menu-toggle {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  cursor: pointer;
+}
+.menu-toggle span {
+  width: 25px;
+  height: 3px;
+  background: var(--color-text);
+  border-radius: 3px;
+}
+
+@media (max-width: 768px) {
+  /* Center welcome message */
+  .welcome {
+    display: block;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.9rem;
+    color: var(--color-text-light);
+    white-space: nowrap;
+  }
+
+  nav {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: var(--color-bg-light);
+    width: 220px;
+    border-radius: 0 0 var(--radius) var(--radius);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    padding: 1rem;
+  }
+
+  nav ul {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  nav.show {
+    display: block;
+  }
+
+  .menu-toggle {
+    display: flex;
+  }
+}
+
+.login-toggle {
+  text-transform: uppercase;
+  cursor: pointer;
+  font-weight: 500;
+}
 
 /* Main Section */
 main { flex: 1; padding: 4rem 2rem; max-width: 1000px; margin: auto; }
@@ -69,7 +125,7 @@ section { margin-bottom: 4rem; }
   font-size: 2.5rem; margin-bottom: 1rem;
   color: var(--color-primary);
 }
-.about-hero p { font-size: 1.1rem; color: var(--color-text-light); }
+.about-hero h2 { font-size: 1.1rem; color: var(--color-text-light); }
 
 /* About Grid */
 .about-grid {
@@ -117,22 +173,32 @@ footer a { color: var(--color-bg-light); }
 </head>
 <body>
   <header>
-    <div class="logo">VEPA</div>
-    <nav>
-      <ul>
-        <li><a href="/">Home</a></li>
-        <li><a href="inventory">Inventory</a></li>
-        <li><a href="services">Services</a></li>
-        <li><a href="about">About VEPA</a></li>
-        <li><a href="contact">Contact</a></li>
-      </ul>
-    </nav>
-  </header>
+  <div class="logo">VEPA</div>
+
+  <div id="welcome-message" class="welcome"></div>
+
+  <div class="menu-toggle" id="menu-toggle">
+    <span></span><span></span><span></span>
+  </div>
+
+  <nav id="nav-links">
+    <ul>
+      <li><a href="/">Home</a></li>
+      <li><a href="inventory">Inventory</a></li>
+      <li><a href="services">Services</a></li>
+      <li><a href="about">About VEPA</a></li>
+      <li id="admin-link" style="display:none"><a href="admin">Admin</a></li>
+      <li><a href="contact">Contact</a></li>
+      <li class="login-toggle"><a href="login">Login/Signup</a></li>
+      <li id="signout-nav" style="display:none;"><button id="signout-btn">Sign Out</button></li>
+    </ul>
+  </nav>
+</header>
 
   <main>
     <section class="about-hero">
       <h1>About VEPA Auto Care</h1>
-      <p>Automotive services done honestly</p>
+      <h2>Automotive services done right</h2>
     </section>
 
     <section class="about-grid">
@@ -169,5 +235,73 @@ footer a { color: var(--color-bg-light); }
     <p>(518) 456-5682 | <a href="mailto:vepaautoshop1904@gmail.com">vepaautoshop1904@gmail.com</a></p>
     <p>&copy; 2025 VEPA AutoCare. All Rights Reserved.</p>
   </footer>
+  <script type="module">
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-firestore.js";
+
+ import {
+      getAuth,
+      onAuthStateChanged,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-auth.js";
+
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js";
+     const firebaseConfig = {
+      apiKey: "AIzaSyBcKnjZm5LYqj5jx5VEqx9ywspgZyxNfsA",
+      authDomain: "vepa-24b46.firebaseapp.com",
+      projectId: "vepa-24b46",
+      storageBucket: "vepa-24b46.appspot.app",
+      messagingSenderId: "170936495301",
+      appId: "1:170936495301:web:6f15b8fa08deeb01d5d4ac",
+      measurementId: "G-F8NFZ6SRKR"
+    };
+    const app  = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    onAuthStateChanged(auth, async (user) => {
+  const loginToggle = document.querySelector('.login-toggle');
+  const signoutNav = document.getElementById('signout-nav');
+  const welcomeEl = document.getElementById('welcome-message');
+  const adminLink = document.getElementById('admin-link');
+
+  // Hamburger menu toggle
+const menuToggle = document.getElementById("menu-toggle");
+const navLinks = document.getElementById("nav-links");
+
+menuToggle.addEventListener("click", () => {
+  navLinks.classList.toggle("show");
+});
+
+
+  if (user) {
+    loginToggle.style.display = 'none';
+    signoutNav.style.display = 'inline-flex';
+    welcomeEl.textContent = `Welcome, ${user.email}`;
+    welcomeEl.style.display = 'block';
+
+    try {
+      // Use UID, not email
+      const snap = await getDoc(doc(db, "users", user.uid));
+      if (snap.exists() && snap.data().isAdmin) {
+        sessionStorage.setItem('admin-auth', 'true');
+        adminLink.style.display = 'inline-flex';
+      } else {
+        sessionStorage.removeItem('admin-auth');
+        adminLink.style.display = 'none';
+      }
+    } catch (err) {
+      console.error("Failed to fetch user document:", err);
+      adminLink.style.display = 'none';
+    }
+
+  } else {
+    loginToggle.style.display = 'inline-flex';
+    signoutNav.style.display = 'none';
+    welcomeEl.style.display = 'none';
+    adminLink.style.display = 'none';
+    sessionStorage.removeItem('admin-auth');
+  }
+});
+  </script>
 </body>
 </html>

@@ -21,6 +21,12 @@
   --border: #CED4DA;
   --btn: #6C757D;
   --btn-hover: #495057;
+  --color-bg-light: #F8F9FA;      /* page background */
+  --color-bg-dark: #343A40;       /* footer/header dark bg */
+  --color-primary: #6C757D;       /* accents/buttons */
+  --color-text: #212529;          /* main text */
+  --color-text-light: #495057;    /* secondary text */
+  --color-accent: #CED4DA;        /* borders/lines */
   --radius: 12px;
   --gap: 1rem;
 }
@@ -40,16 +46,72 @@ a { text-decoration: none; color: inherit; }
 
 /* Header */
 header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 2rem;
+  position: sticky; top:0; width:100%;
   background: var(--bg-page);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 1rem 2rem; z-index: 10; border-bottom: 1px solid var(--border);
 }
 .logo { font-size: 1.5rem; font-weight: bold; color: var(--title); }
-nav a { margin-left: 1.5rem; font-weight: 500; text-transform: uppercase; font-size: 0.9rem; color: var(--text-dark); }
-nav a:hover { color: var(--price); }
+nav ul { list-style:none; display:flex; gap:1.5rem; }
+nav li a, .contact-toggle { cursor:pointer; font-weight:500; text-transform:uppercase; color: var(--text-dark); }
+nav li a:hover, .contact-toggle:hover { color: var(--price); }
+
+.menu-toggle {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  cursor: pointer;
+}
+.menu-toggle span {
+  width: 25px;
+  height: 3px;
+  background: var(--color-text);
+  border-radius: 3px;
+}
+
+@media (max-width: 768px) {
+  /* Center welcome message */
+  .welcome {
+    display: block;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.9rem;
+    color: var(--color-text-light);
+    white-space: nowrap;
+  }
+
+  nav {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: var(--color-bg-light);
+    width: 220px;
+    border-radius: 0 0 var(--radius) var(--radius);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    padding: 1rem;
+  }
+
+  nav ul {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  nav.show {
+    display: block;
+  }
+
+  .menu-toggle {
+    display: flex;
+  }
+}
+
+.login-toggle {
+  text-transform: uppercase;
+  cursor: pointer;
+  font-weight: 500;
+}
 
 /* Main Form */
 main {
@@ -135,11 +197,27 @@ footer a { color: var(--title); }
 </head>
 <body>
   <header>
-    <div class="logo">VEPA</div>
-    <nav>
-      <a href="/">Home</a>
-    </nav>
-  </header>
+  <div class="logo">VEPA</div>
+
+  <div id="welcome-message" class="welcome"></div>
+
+  <div class="menu-toggle" id="menu-toggle">
+    <span></span><span></span><span></span>
+  </div>
+
+  <nav id="nav-links">
+    <ul>
+      <li><a href="/">Home</a></li>
+      <li><a href="inventory">Inventory</a></li>
+      <li><a href="services">Services</a></li>
+      <li><a href="about">About VEPA</a></li>
+      <li id="admin-link" style="display:none"><a href="admin">Admin</a></li>
+      <li><a href="contact">Contact</a></li>
+      <li class="login-toggle"><a href="login">Login/Signup</a></li>
+      <li id="signout-nav" style="display:none;"><button id="signout-btn">Sign Out</button></li>
+    </ul>
+  </nav>
+</header>
 
   <main>
     <div class="form-container">
@@ -158,8 +236,10 @@ footer a { color: var(--title); }
   <footer>&copy; 2025 VEPA AutoCare</footer>
 
 <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-    import { getFirestore, collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js';
+    import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc } from 'https://www.gstatic.com/firebasejs/11.5.0/firebase-firestore.js';
+    import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/11.5.0/firebase-auth.js';
+
 
     const app = initializeApp({
       apiKey: "AIzaSyBcKnjZm5LYqj5jx5VEqx9ywspgZyxNfsA",
@@ -175,6 +255,54 @@ footer a { color: var(--title); }
 
     const form = document.getElementById('inquiryForm');
     const statusMsg = document.getElementById('status-message');
+
+    const auth = getAuth(app);
+  
+
+    onAuthStateChanged(auth, async (user) => {
+  const loginToggle = document.querySelector('.login-toggle');
+  const signoutNav = document.getElementById('signout-nav');
+  const welcomeEl = document.getElementById('welcome-message');
+  const adminLink = document.getElementById('admin-link');
+
+  // Hamburger menu toggle
+const menuToggle = document.getElementById("menu-toggle");
+const navLinks = document.getElementById("nav-links");
+
+menuToggle.addEventListener("click", () => {
+  navLinks.classList.toggle("show");
+});
+
+
+  if (user) {
+    loginToggle.style.display = 'none';
+    signoutNav.style.display = 'inline-flex';
+    welcomeEl.textContent = `Welcome, ${user.email}`;
+    welcomeEl.style.display = 'block';
+
+    try {
+      // Use UID, not email
+      const snap = await getDoc(doc(db, "users", user.uid));
+      if (snap.exists() && snap.data().isAdmin) {
+        sessionStorage.setItem('admin-auth', 'true');
+        adminLink.style.display = 'inline-flex';
+      } else {
+        sessionStorage.removeItem('admin-auth');
+        adminLink.style.display = 'none';
+      }
+    } catch (err) {
+      console.error("Failed to fetch user document:", err);
+      adminLink.style.display = 'none';
+    }
+
+  } else {
+    loginToggle.style.display = 'inline-flex';
+    signoutNav.style.display = 'none';
+    welcomeEl.style.display = 'none';
+    adminLink.style.display = 'none';
+    sessionStorage.removeItem('admin-auth');
+  }
+});
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -205,7 +333,7 @@ footer a { color: var(--title); }
         });
 
         await addDoc(collection(db, 'mail'), {
-          to: ['contact@vepaautocare.com'],
+          to: ['vepaautoshop1904@gmail.com'],
           replyTo: user.email,
           message: {
             subject: `[VEPA Website] General Inquiry – ${user.name}`,
