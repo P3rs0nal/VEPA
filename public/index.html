@@ -187,50 +187,69 @@ nav ul li a:hover,
 .hero-content .btn:hover { opacity: 0.8; }
 
 /* Testimonials */
-#testimonials {
+#inventory-carousel {
   position: relative;
   background: var(--color-bg-light);
   padding: 4rem 2rem;
   overflow: hidden;
   text-align: center;
 }
-#testimonials h2 {
+#inventory-carousel h2 {
   font-family: 'Poppins', sans-serif;
-  font-size: 2.5rem; font-weight: 600;
-  color: var(--color-text); margin-bottom: 2.5rem;
-}
-.testimonial-slider {
-  display: flex; width: 100%;
-  transition: transform 0.5s ease;
-}
-.testimonial-slide {
-  width: 100%; flex: 0 0 100%; box-sizing: border-box;
-  max-width: 100%; padding: 0 1rem;
-}
-.testimonial-text {
-  font-family: 'Poppins', sans-serif;
-  font-size: 1.2rem; font-style: italic;
-  line-height: 1.6; color: var(--color-text-light);
-  margin-bottom: 1.5rem; max-width: 700px; margin-left:auto; margin-right:auto;
-}
-.testimonial-author {
-  font-family: 'Poppins', sans-serif;
-  font-size: 1rem; font-weight: 600;
+  font-size: 3rem; font-weight: 600; margin-bottom: 1rem;
   color: var(--color-text-light);
 }
-.slider-buttons {
-  position: absolute; top: 50%; left: 0; right: 0;
-  display: flex; justify-content: space-between;
-  transform: translateY(-50%);
+.inventory-slider-container {
+  display: flex; align-items: center; justify-content: center; position: relative;
 }
-.slider-buttons button {
+.inventory-slider {
+  display: flex;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  gap: 1rem;
+  padding-bottom: 1rem;
+}
+.inventory-card {
+  flex: 0 0 280px;
+  background: #DEE2E6;
+  border-radius: var(--radius);
+  overflow: hidden;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.inventory-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+.inventory-card img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+}
+.inventory-card h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0.5rem 0;
+}
+.inventory-card p {
+  font-weight: bold;
+  color: var(--color-text-light);
+  margin-bottom: 0.5rem;
+}
+.slider-btn {
   background: var(--color-primary);
-  border: none; color: var(--color-bg-light);
-  font-size: 1.5rem; padding: 0.5rem 1rem;
-  cursor: pointer; border-radius: 50%;
-  transition: background 0.3s;
+  border: none;
+  color: var(--color-bg-light);
+  font-size: 1.5rem;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  border-radius: 50%;
 }
-.slider-buttons button:hover { background: var(--color-text); }
+.slider-btn:hover {
+  background: var(--color-text);
+}
+
 
 /* Footer */
 footer {
@@ -306,14 +325,27 @@ footer a { color: var(--color-bg-light); }
       <a href="services" class="btn">Services</a>
     </div>
   </section>
+<section id="inventory-carousel">
+  <h2>See Some of Our Inventory</h2>
+  <div class="inventory-slider-container">
+    <button class="slider-btn prev-btn" aria-label="Previous vehicle">‹</button>
+    <div class="inventory-slider"></div>
+    <button class="slider-btn next-btn" aria-label="Next vehicle">›</button>
+  </div>
+</section>
 
   <section id="testimonials">
-    <h2>What Our Customers Say</h2>
-    <div class="testimonial-slider">
-    <!-- Elfsight Google Reviews | Untitled Google Reviews -->
-    <div class="taggbox" style="width:100%;height:100%;overflow:auto;" data-widget-id="299688" data-website="1"></div><script src="https://widget.taggbox.com/embed.min.js" type="text/javascript"></script>
-      <!-- Dynamic testimonial slides will be injected here -->
-    </div>
+
+<!-- Start of OpenWidget (www.openwidget.com) code -->
+<script>
+  window.__ow = window.__ow || {};
+  window.__ow.organizationId = "81e7c95e-6d01-4d80-80ab-f918131bc1df";
+  window.__ow.integration_name = "manual_settings";
+  window.__ow.product_name = "openwidget";   
+  ;(function(n,t,c){function i(n){return e._h?e._h.apply(null,n):e._q.push(n)}var e={_q:[],_h:null,_v:"2.0",on:function(){i(["on",c.call(arguments)])},once:function(){i(["once",c.call(arguments)])},off:function(){i(["off",c.call(arguments)])},get:function(){if(!e._h)throw new Error("[OpenWidget] You can't use getters before load.");return i(["get",c.call(arguments)])},call:function(){i(["call",c.call(arguments)])},init:function(){var n=t.createElement("script");n.async=!0,n.type="text/javascript",n.src="https://cdn.openwidget.com/openwidget.js",t.head.appendChild(n)}};!n.__ow.asyncInit&&e.init(),n.OpenWidget=n.OpenWidget||e}(window,document,[].slice))
+</script>
+<noscript>You need to <a href="https://www.openwidget.com/enable-javascript" rel="noopener nofollow">enable JavaScript</a> to use the communication tool powered by <a href="https://www.openwidget.com/" rel="noopener nofollow" target="_blank">OpenWidget</a></noscript>
+<!-- End of OpenWidget code -->
     <!-- <button class="slider-btn prev-btn" aria-label="Previous testimonial">‹</button> -->
     <!-- <button class="slider-btn next-btn" aria-label="Next testimonial">›</button> -->
   </section>
@@ -334,7 +366,7 @@ footer a { color: var(--color-bg-light); }
       document.getElementById('login-sidebar').classList.toggle('open');
     document.getElementById('close-login').onclick = () =>
       document.getElementById('login-sidebar').classList.remove('open');
-    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, getDocs, collection } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-firestore.js";
     
 
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js";
@@ -408,6 +440,68 @@ menuToggle.addEventListener("click", () => {
       sessionStorage.removeItem('admin-auth');
       window.location.reload();
     };
+const carouselSlider = document.querySelector('.inventory-slider');
+
+async function loadHomepageInventory(limit = 20
+) {
+  try {
+    const snap = await getDocs(collection(db, 'cars'));
+    const cars = snap.docs.map(doc => ({id: doc.id, ...doc.data()})).slice(0, limit);
+
+    cars.forEach(car => {
+      const card = document.createElement('div');
+      card.className = 'inventory-card';
+      const imgUrl = car.images?.[0]?.url || 'vepa logo.png';
+      card.innerHTML = `
+        <img src="${imgUrl}" alt="${car.make} ${car.model}" />
+        <h3>${car.year} ${car.make} ${car.model}</h3>
+        <p>$${Number(car.price).toLocaleString()}</p>
+      `;
+      carouselSlider.appendChild(card);
+
+      // Click navigates to inventory page with car ID as query param
+      card.addEventListener('click', () => {
+        window.location.href = `inventory`;
+      });
+    });
+
+    startCarouselAutoplay();
+  } catch (err) {
+    console.error('Failed to load homepage inventory:', err);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => loadHomepageInventory());
+
+
+// Carousel navigation buttons
+const prevBtn = document.querySelector('.prev-btn');
+const nextBtn = document.querySelector('.next-btn');
+
+prevBtn.addEventListener('click', () => {
+  carouselSlider.scrollBy({ left: -300, behavior: 'smooth' });
+});
+nextBtn.addEventListener('click', () => {
+  carouselSlider.scrollBy({ left: 300, behavior: 'smooth' });
+});
+
+// Autoplay
+let autoplayInterval;
+function startCarouselAutoplay(interval = 3000) {
+  if (autoplayInterval) clearInterval(autoplayInterval);
+  autoplayInterval = setInterval(() => {
+    carouselSlider.scrollBy({ left: 300, behavior: 'smooth' });
+    // If at end, jump back to start
+    if (carouselSlider.scrollLeft + carouselSlider.clientWidth >= carouselSlider.scrollWidth) {
+      carouselSlider.scrollTo({ left: 0, behavior: 'smooth' });
+    }
+  }, interval);
+}
+
+// Pause autoplay on hover
+carouselSlider.addEventListener('mouseenter', () => clearInterval(autoplayInterval));
+carouselSlider.addEventListener('mouseleave', () => startCarouselAutoplay());
+
 
     // Video rotation
     const videoFiles = [
