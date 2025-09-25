@@ -96,6 +96,21 @@ nav li a:hover, .contact-toggle:hover { color: var(--price); }
   font-weight: 500;
 }
 
+#signout-btn {
+  background: none;
+  border: none;
+  font: inherit;
+  color: var(--color-text);
+  text-transform: uppercase;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+}
+
+#signout-btn:hover {
+  color: var(--color-primary);
+}
+
 
 /* Hero Section */
 .hero {
@@ -177,7 +192,7 @@ footer a { color: var(--color-bg-light); }
       <li id="admin-link" style="display:none"><a href="admin">Admin</a></li>
       <li><a href="contact">Contact</a></li>
       <li class="login-toggle"><a href="login">Login/Signup</a></li>
-      <li id="signout-nav" style="display:none;"><button id="signout-btn">Sign Out</button></li>
+      <li  id="signout-nav" style="display:none;"><button id="signout-btn" class="login-toggle">Sign Out</button></li>
     </ul>
   </nav>
 </header>
