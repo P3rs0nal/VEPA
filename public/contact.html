@@ -1,393 +1,419 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <!-- <link rel="manifest" href="manifest.json"> -->
+  <meta charset="UTF-8"/>
   <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png">
   <link rel="shortcut icon" href="icons/favicon.ico">
-  <meta name="theme-color" content="#000000">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>VEPA AutoCare – Contact</title>
- <style>
-:root {
-  --bg-page: #F8F9FA;
-  --bg-filter: #E9ECEF;
-  --bg-card: #DEE2E6;
-  --overlay: rgba(52,58,64,0.7);
-  --text-dark: #212529;
-  --title: #343A40;
-  --price: #495057;
-  --border: #CED4DA;
-  --btn: #6C757D;
-  --btn-hover: #495057;
-  --color-bg-light: #F8F9FA;      /* page background */
-  --color-bg-dark: #343A40;       /* footer/header dark bg */
-  --color-primary: #6C757D;       /* accents/buttons */
-  --color-text: #212529;          /* main text */
-  --color-text-light: #495057;    /* secondary text */
-  --color-accent: #CED4DA;        /* borders/lines */
-  --radius: 12px;
-  --gap: 1rem;
-}
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Contact – VEPA AutoCare</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=Nunito+Sans:opsz,wght@6..12,400;6..12,500;6..12,600;6..12,700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:#F7F3EE; --card:#EDE9E0; --border:#D0C9BE; --muted:#9C9389;
+      --body:#3D3730; --dark:#1C1917; --red:#C8381A; --red-dk:#A02E14;
+      --nav-h:68px; --fd:'Barlow Condensed',sans-serif; --fb:'Nunito Sans',sans-serif;
+      --ease:0.25s ease; --r:10px;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    html{scroll-behavior:smooth;}
+    body{font-family:var(--fb);background:var(--bg);color:var(--body);display:flex;flex-direction:column;min-height:100vh;}
+    a{text-decoration:none;color:inherit;}
 
-*, *::before, *::after { box-sizing: border-box; margin:0; padding:0; }
+    /* ── PRELOADER ── */
+    #preloader{position:fixed;inset:0;background:var(--dark);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.25rem;transition:opacity .55s ease,visibility .55s ease;}
+    #preloader.done{opacity:0;visibility:hidden;}
+    .pl-logo{font-family:var(--fd);font-size:clamp(4rem,12vw,7rem);font-weight:800;letter-spacing:.08em;color:var(--bg);animation:pl-pulse 1.4s ease-in-out infinite;}
+    .pl-sub{font-size:.72rem;font-weight:600;letter-spacing:.35em;text-transform:uppercase;color:var(--muted);}
+    .pl-track{width:160px;height:2px;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden;}
+    .pl-fill{height:100%;width:0;background:var(--red);border-radius:2px;animation:pl-fill 1.1s cubic-bezier(.4,0,.2,1) forwards .2s;}
+    @keyframes pl-pulse{0%,100%{opacity:1}50%{opacity:.45}}
+    @keyframes pl-fill{from{width:0}to{width:100%}}
 
-body {
-  font-family: 'Poppins', sans-serif;
-  background: var(--bg-page);
-  color: var(--text-dark);
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
+    /* ── HEADER ── */
+    header{position:sticky;top:0;height:var(--nav-h);background:var(--dark);display:flex;align-items:center;justify-content:space-between;padding:0 2.5rem;z-index:100;border-bottom:1px solid rgba(255,255,255,.06);}
+    .logo{font-family:var(--fd);font-size:1.85rem;font-weight:800;letter-spacing:.06em;color:var(--bg);}
+    .logo em{color:var(--red);font-style:normal;}
+    .welcome-chip{font-size:.72rem;color:rgba(255,255,255,.45);margin-right:.25rem;}
+    nav ul{list-style:none;display:flex;align-items:center;gap:.15rem;}
+    nav ul li a,nav ul li button,.login-toggle{font-family:var(--fb);font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:rgba(255,255,255,.60);background:none;border:none;cursor:pointer;padding:.45rem .8rem;border-radius:6px;transition:color var(--ease),background var(--ease);}
+    nav ul li a:hover,nav ul li button:hover,.login-toggle:hover{color:var(--bg);background:rgba(255,255,255,.08);}
+    .menu-toggle{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:4px;}
+    .menu-toggle span{width:23px;height:2px;background:var(--bg);border-radius:2px;}
+    @media(max-width:768px){
+      .welcome-chip{display:none;}
+      nav{display:none;position:absolute;top:var(--nav-h);right:0;background:var(--dark);width:220px;padding:1rem;border-left:1px solid rgba(255,255,255,.07);border-bottom:1px solid rgba(255,255,255,.07);}
+      nav.open{display:block;}
+      nav ul{flex-direction:column;gap:.5rem;}
+      .menu-toggle{display:flex;}
+    }
 
-a { text-decoration: none; color: inherit; }
+    /* ── CONTACT LAYOUT ── */
+    .contact-wrap{
+      flex:1;display:grid;grid-template-columns:1fr 1.4fr;
+    }
 
-/* Header */
-header {
-  position: sticky; top:0; width:100%;
-  background: var(--bg-page);
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 1rem 2rem; z-index: 10; border-bottom: 1px solid var(--border);
-}
-.logo { font-size: 1.5rem; font-weight: bold; color: var(--title); }
-nav ul { list-style:none; display:flex; gap:1.5rem; }
-nav li a, .contact-toggle { cursor:pointer; font-weight:500; text-transform:uppercase; color: var(--text-dark); }
-nav li a:hover, .contact-toggle:hover { color: var(--price); }
+    /* Left info panel */
+    .info-panel{
+      background:var(--dark);padding:5rem 4rem;display:flex;flex-direction:column;justify-content:space-between;
+      position:relative;overflow:hidden;
+    }
+    .info-panel::after{
+      content:'';position:absolute;bottom:-4rem;right:-4rem;
+      width:280px;height:280px;border-radius:50%;
+      background:radial-gradient(circle,rgba(200,56,26,.22) 0%,transparent 70%);
+      pointer-events:none;
+    }
+    .info-panel-top{}
+    .eyebrow{font-family:var(--fb);font-size:.72rem;font-weight:700;letter-spacing:.32em;text-transform:uppercase;color:var(--red);display:flex;align-items:center;gap:.75rem;margin-bottom:1.25rem;}
+    .eyebrow::before{content:'';display:block;width:28px;height:2px;background:var(--red);}
+    .info-title{font-family:var(--fd);font-size:clamp(2.5rem,4vw,4rem);font-weight:800;text-transform:uppercase;color:var(--bg);line-height:.96;margin-bottom:1.5rem;}
+    .info-title em{color:var(--red);font-style:normal;}
+    .info-sub{font-size:.9rem;color:rgba(247,243,238,.5);line-height:1.7;margin-bottom:2.5rem;max-width:320px;}
 
-.menu-toggle {
-  display: none;
-  flex-direction: column;
-  gap: 5px;
-  cursor: pointer;
-}
-.menu-toggle span {
-  width: 25px;
-  height: 3px;
-  background: var(--color-text);
-  border-radius: 3px;
-}
+    .contact-cards{display:flex;flex-direction:column;gap:1rem;}
+    .contact-card{
+      display:flex;align-items:flex-start;gap:1rem;padding:1.1rem;
+      background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:var(--r);
+      transition:background var(--ease),border-color var(--ease);
+    }
+    .contact-card:hover{background:rgba(255,255,255,.07);border-color:rgba(200,56,26,.3);}
+    .cc-ico{
+      width:40px;height:40px;flex-shrink:0;border-radius:8px;
+      background:rgba(200,56,26,.15);display:flex;align-items:center;justify-content:center;font-size:1.1rem;
+    }
+    .cc-label{font-size:.68rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-bottom:.2rem;}
+    .cc-val{font-size:.9rem;color:rgba(247,243,238,.8);font-weight:500;}
+    .cc-val a{color:inherit;transition:color var(--ease);}
+    .cc-val a:hover{color:var(--red);}
 
-@media (max-width: 768px) {
-  /* Center welcome message */
-  .welcome {
-    display: block;
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 0.9rem;
-    color: var(--color-text-light);
-    white-space: nowrap;
-  }
+    .info-footer{padding-top:2rem;}
+    .info-footer-txt{font-size:.72rem;color:rgba(247,243,238,.25);letter-spacing:.08em;}
 
-  nav {
-    display: none;
-    position: absolute;
-    top: 100%;
-    right: 0;
-    background: var(--color-bg-light);
-    width: 220px;
-    border-radius: 0 0 var(--radius) var(--radius);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-    padding: 1rem;
-  }
+    /* Right form panel */
+    .form-panel{
+      background:var(--bg);padding:5rem 4.5rem;display:flex;flex-direction:column;justify-content:center;
+    }
+    .form-hd{margin-bottom:2.5rem;}
+    .form-hd h2{font-family:var(--fd);font-size:2.2rem;font-weight:700;text-transform:uppercase;color:var(--dark);margin-bottom:.3rem;}
+    .form-hd p{font-size:.88rem;color:var(--muted);}
 
-  nav ul {
-    flex-direction: column;
-    gap: 1rem;
-  }
+    /* Fields */
+    .field-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+    .field{display:flex;flex-direction:column;gap:.4rem;margin-bottom:1.1rem;}
+    .field label{font-size:.72rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);}
+    .field input,.field textarea,.field select{
+      width:100%;padding:.8rem 1rem;
+      border:1.5px solid var(--border);border-radius:8px;
+      font-family:var(--fb);font-size:.95rem;color:var(--body);
+      background:white;transition:border-color var(--ease),box-shadow var(--ease);
+      resize:none;
+    }
+    .field input:focus,.field textarea:focus,.field select:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(200,56,26,.12);outline:none;}
+    .field input::placeholder,.field textarea::placeholder{color:var(--border);}
 
-  nav.show {
-    display: block;
-  }
+    .char-count{font-size:.7rem;color:var(--muted);text-align:right;margin-top:.2rem;}
 
-  .menu-toggle {
-    display: flex;
-  }
-}
+    /* Submit */
+    .btn-submit{
+      width:100%;padding:.95rem;
+      background:var(--red);color:#fff;border:none;border-radius:8px;
+      font-family:var(--fb);font-size:.9rem;font-weight:700;letter-spacing:.08em;
+      text-transform:uppercase;cursor:pointer;
+      transition:background var(--ease),transform var(--ease),box-shadow var(--ease);
+      display:flex;align-items:center;justify-content:center;gap:.6rem;
+    }
+    .btn-submit:hover{background:var(--red-dk);transform:translateY(-1px);box-shadow:0 6px 20px rgba(200,56,26,.3);}
+    .btn-submit:disabled{opacity:.55;cursor:not-allowed;transform:none;box-shadow:none;}
 
-.login-toggle {
-  text-transform: uppercase;
-  cursor: pointer;
-  font-weight: 500;
-}
+    /* Status */
+    #status-msg{
+      margin-top:1rem;padding:.9rem 1rem;border-radius:8px;
+      font-size:.88rem;font-weight:500;display:none;
+    }
+    #status-msg.show{display:block;}
+    #status-msg.success{background:rgba(34,140,54,.08);border:1px solid rgba(34,140,54,.25);color:#1a7a30;}
+    #status-msg.error{background:rgba(200,56,26,.08);border:1px solid rgba(200,56,26,.2);color:var(--red);}
 
-#signout-btn {
-  background: none;
-  border: none;
-  font: inherit;
-  color: var(--color-text);
-  text-transform: uppercase;
-  font-weight: 500;
-  cursor: pointer;
-  padding: 0;
-}
+    /* ── FOOTER ── */
+    footer{background:#111;padding:3.5rem 6% 2rem;}
+    .ft-top{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:3rem;margin-bottom:2.5rem;}
+    .ft-brand .logo{font-size:2rem;display:inline-block;margin-bottom:.6rem;}
+    .ft-brand p{font-size:.85rem;color:rgba(255,255,255,.42);line-height:1.65;max-width:240px;}
+    .ft-col h4{font-size:.68rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.7);margin-bottom:1rem;}
+    .ft-col ul{list-style:none;display:flex;flex-direction:column;gap:.5rem;}
+    .ft-col ul li a{font-size:.85rem;color:rgba(255,255,255,.42);transition:color var(--ease);}
+    .ft-col ul li a:hover{color:rgba(255,255,255,.9);}
+    .ft-col p{font-size:.85rem;color:rgba(255,255,255,.42);margin-bottom:.3rem;}
+    .ft-col a{color:rgba(255,255,255,.42);transition:color var(--ease);}
+    .ft-col a:hover{color:var(--bg);}
+    .ft-bot{border-top:1px solid rgba(255,255,255,.07);padding-top:1.4rem;text-align:center;font-size:.78rem;color:rgba(255,255,255,.28);}
 
-#signout-btn:hover {
-  color: var(--color-primary);
-}
-
-/* Main Form */
-main {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 2rem 1rem;
-}
-
-.form-container {
-  background: var(--bg-filter);
-  padding: 2rem;
-  border-radius: var(--radius);
-  box-shadow: 0 6px 18px var(--overlay);
-  width: 100%;
-  max-width: 400px;
-}
-
-.form-container h2 {
-  text-align: center;
-  font-weight: 600;
-  font-size: 1.75rem;
-  margin-bottom: 1.5rem;
-  color: var(--title);
-}
-
-.form-container input,
-.form-container textarea {
-  width: 100%;
-  padding: 0.75rem;
-  margin-bottom: var(--gap);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  font-size: 1rem;
-  background: var(--bg-page);
-  color: var(--text-dark);
-  transition: border-color 0.2s ease;
-}
-
-.form-container input:focus,
-.form-container textarea:focus {
-  border-color: var(--price);
-  outline: none;
-}
-
-.form-container button {
-  width: 100%;
-  padding: 0.75rem;
-  background: var(--btn);
-  color: var(--bg-page);
-  border: none;
-  border-radius: var(--radius);
-  font-weight: bold;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-.form-container button:hover {
-  background: var(--btn-hover);
-}
-
-#status-message {
-  text-align: center;
-  font-size: 0.9rem;
-  min-height: 1.2rem;
-  margin-top: 0.5rem;
-  color: var(--text-dark);
-}
-
-/* Footer */
-footer {
-  text-align: center;
-  padding: 2rem 1rem;
-  font-size: 0.9rem;
-  color: var(--text-dark);
-}
-footer a { color: var(--title); }
-</style>
-
-
+    @media(max-width:900px){
+      .contact-wrap{grid-template-columns:1fr;}
+      .info-panel{padding:4rem 2.5rem;}
+      .form-panel{padding:4rem 2.5rem;}
+      .field-row{grid-template-columns:1fr;}
+    }
+    @media(max-width:768px){.ft-top{grid-template-columns:1fr;gap:2rem;}}
+  </style>
 </head>
 <body>
-  <header>
-  <div class="logo">VEPA</div>
 
-  <div id="welcome-message" class="welcome"></div>
+<!-- PRELOADER -->
+<div id="preloader">
+  <div class="pl-logo">VEPA</div>
+  <div class="pl-sub">AutoCare · Albany, NY</div>
+  <div class="pl-track"><div class="pl-fill"></div></div>
+</div>
 
-  <div class="menu-toggle" id="menu-toggle">
-    <span></span><span></span><span></span>
-  </div>
-
+<!-- HEADER -->
+<header>
+  <div class="logo">VEPA<em>.</em></div>
+  <span id="welcome-chip" class="welcome-chip" style="display:none"></span>
+  <div class="menu-toggle" id="menu-toggle"><span></span><span></span><span></span></div>
   <nav id="nav-links">
     <ul>
       <li><a href="/">Home</a></li>
       <li><a href="inventory">Inventory</a></li>
       <li><a href="services">Services</a></li>
-      <li><a href="about">About VEPA</a></li>
+      <li><a href="about">About</a></li>
       <li id="admin-link" style="display:none"><a href="admin">Admin</a></li>
       <li><a href="contact">Contact</a></li>
-      <li class="login-toggle"><a href="login">Login/Signup</a></li>
-      <li id="signout-nav" style="display:none;"><button id="signout-btn">Sign Out</button></li>
+      <li><span class="login-toggle">Login</span></li>
+      <li id="signout-nav" style="display:none"><button id="signout-btn">Sign Out</button></li>
     </ul>
   </nav>
 </header>
 
-  <main>
-    <div class="form-container">
-      <h2>Contact VEPA AutoCare</h2>
-      <form id="inquiryForm">
-        <input type="text" id="inquiryName" placeholder="Full Name" required />
-        <input type="text" id="inquiryPhone" placeholder="Phone Number" required />
-        <input type="email" id="inquiryEmail" placeholder="Email Address" required />
-        <textarea id="inquiryReason" rows="4" placeholder="What can we help you with?" required></textarea>
-        <button type="submit">Send Inquiry</button>
-        <div id="status-message"></div>
-      </form>
-    </div>
-  </main>
+<!-- CONTACT MAIN -->
+<div class="contact-wrap">
 
-  <footer>&copy; 2025 VEPA AutoCare</footer>
+  <!-- INFO PANEL -->
+  <div class="info-panel">
+    <div class="info-panel-top">
+      <div class="eyebrow">Get In Touch</div>
+      <h1 class="info-title">Let's<br><em>Talk.</em></h1>
+      <p class="info-sub">Have a question about a vehicle, a repair, or anything else? We'd love to hear from you. We typically respond within one business day.</p>
+
+      <div class="contact-cards">
+        <div class="contact-card">
+          <div class="cc-ico">📍</div>
+          <div>
+            <div class="cc-label">Location</div>
+            <div class="cc-val">1904 Western Ave, Albany, NY 12203</div>
+          </div>
+        </div>
+        <div class="contact-card">
+          <div class="cc-ico">📞</div>
+          <div>
+            <div class="cc-label">Phone</div>
+            <div class="cc-val"><a href="tel:5184565682">(518) 456-5682</a></div>
+          </div>
+        </div>
+        <div class="contact-card">
+          <div class="cc-ico">✉️</div>
+          <div>
+            <div class="cc-label">Email</div>
+            <div class="cc-val"><a href="mailto:contact@vepaautocare.com">contact@vepaautocare.com</a></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="info-footer">
+      <p class="info-footer-txt">© 2025 VEPA AutoCare · Albany, NY</p>
+    </div>
+  </div>
+
+  <!-- FORM PANEL -->
+  <div class="form-panel">
+    <div class="form-hd">
+      <h2>Send a Message</h2>
+      <p>Fill out the form and we'll get back to you as soon as possible.</p>
+    </div>
+
+    <form id="contact-form" novalidate>
+      <div class="field-row">
+        <div class="field">
+          <label for="contact-name">Full Name</label>
+          <input type="text" id="contact-name" placeholder="Jane Smith" required autocomplete="name">
+        </div>
+        <div class="field">
+          <label for="contact-phone">Phone Number</label>
+          <input type="tel" id="contact-phone" placeholder="(518) 555-0100" required autocomplete="tel">
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="contact-email">Email Address</label>
+        <input type="email" id="contact-email" placeholder="jane@example.com" required autocomplete="email">
+      </div>
+
+      <div class="field">
+        <label for="contact-subject">Subject</label>
+        <select id="contact-subject">
+          <option value="">Select a topic…</option>
+          <option value="vehicle">Question about a vehicle</option>
+          <option value="service">Book / inquire about a service</option>
+          <option value="pricing">Pricing question</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="contact-message">Message</label>
+        <textarea id="contact-message" rows="5" placeholder="Tell us how we can help…" maxlength="1000" required></textarea>
+        <div class="char-count"><span id="char-count">0</span> / 1000</div>
+      </div>
+
+      <button type="submit" class="btn-submit" id="submit-btn">
+        <span>Send Message</span>
+        <span>→</span>
+      </button>
+    </form>
+
+    <div id="status-msg"></div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="ft-top">
+    <div class="ft-brand">
+      <span class="logo">VEPA<em style="color:var(--red)">.</em></span>
+      <p>Albany's trusted family-owned auto shop for quality vehicles and reliable repairs.</p>
+    </div>
+    <div class="ft-col">
+      <h4>Navigate</h4>
+      <ul>
+        <li><a href="/">Home</a></li>
+        <li><a href="inventory">Inventory</a></li>
+        <li><a href="services">Services</a></li>
+        <li><a href="about">About</a></li>
+        <li><a href="contact">Contact</a></li>
+      </ul>
+    </div>
+    <div class="ft-col">
+      <h4>Contact</h4>
+      <p>1904 Western Ave<br>Albany, NY 12203</p>
+      <p><a href="tel:5184565682">(518) 456-5682</a></p>
+      <p><a href="mailto:contact@vepaautocare.com">contact@vepaautocare.com</a></p>
+    </div>
+  </div>
+  <div class="ft-bot">© 2025 VEPA AutoCare. All Rights Reserved.</div>
+</footer>
+
+<!-- Login sidebar -->
+<div id="login-sidebar" style="position:fixed;top:0;right:0;width:280px;height:100%;background:var(--dark);padding:2rem;z-index:200;transform:translateX(100%);transition:transform .3s ease;border-left:1px solid rgba(255,255,255,.07);">
+  <button id="close-login" style="position:absolute;top:1rem;right:1rem;background:none;border:none;color:rgba(255,255,255,.6);font-size:1.5rem;cursor:pointer;">×</button>
+  <h2 style="font-family:var(--fd);color:var(--bg);font-size:1.6rem;margin-bottom:1.25rem;">Login / Signup</h2>
+  <p style="margin-bottom:.75rem;"><a href="login" style="font-size:.9rem;color:rgba(255,255,255,.55);">Log In →</a></p>
+  <p><a href="signup" style="font-size:.9rem;color:rgba(255,255,255,.55);">Create Account →</a></p>
+</div>
 
 <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js';
-    import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc } from 'https://www.gstatic.com/firebasejs/11.5.0/firebase-firestore.js';
-    import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/11.5.0/firebase-auth.js';
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js';
+  import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc } from 'https://www.gstatic.com/firebasejs/11.5.0/firebase-firestore.js';
+  import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/11.5.0/firebase-auth.js';
 
+  const firebaseConfig = {
+    apiKey: "AIzaSyBcKnjZm5LYqj5jx5VEqx9ywspgZyxNfsA",
+    authDomain: "vepa-24b46.firebaseapp.com",
+    projectId: "vepa-24b46",
+    storageBucket: "vepa-24b46.firebasestorage.app",
+    messagingSenderId: "170936495301",
+    appId: "1:170936495301:web:6f15b8fa08deeb01d5d4ac",
+    measurementId: "G-F8NFZ6SRKR"
+  };
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const auth = getAuth(app);
 
-    const app = initializeApp({
-      apiKey: "AIzaSyBcKnjZm5LYqj5jx5VEqx9ywspgZyxNfsA",
-      authDomain: "vepa-24b46.firebaseapp.com",
-      projectId: "vepa-24b46",
-      storageBucket: "vepa-24b46.firebasestorage.app",
-      messagingSenderId: "170936495301",
-      appId: "1:170936495301:web:6f15b8fa08deeb01d5d4ac",
-      measurementId: "G-F8NFZ6SRKR"
-    });
+  /* Preloader */
+  window.addEventListener('load', () => setTimeout(() => document.getElementById('preloader').classList.add('done'), 900));
 
-    const db = getFirestore(app);
+  /* Nav */
+  document.getElementById('menu-toggle').addEventListener('click', () => document.getElementById('nav-links').classList.toggle('open'));
+  document.querySelector('.login-toggle').addEventListener('click', () => document.getElementById('login-sidebar').style.transform = 'translateX(0)');
+  document.getElementById('close-login').addEventListener('click', () => document.getElementById('login-sidebar').style.transform = 'translateX(100%)');
 
-    const form = document.getElementById('inquiryForm');
-    const statusMsg = document.getElementById('status-message');
+  /* Auth */
+  onAuthStateChanged(auth, async user => {
+    const lt = document.querySelector('.login-toggle'), sn = document.getElementById('signout-nav'),
+          wc = document.getElementById('welcome-chip'), al = document.getElementById('admin-link');
+    if (user) {
+      lt.style.display = 'none'; sn.style.display = 'inline-flex';
+      wc.textContent = `Hi, ${user.email.split('@')[0]}`; wc.style.display = 'inline';
+      try {
+        const snap = await getDoc(doc(db, "users", user.uid));
+        if (snap.exists() && snap.data().isAdmin) { sessionStorage.setItem('admin-auth','true'); al.style.display='inline-flex'; }
+      } catch(e){}
+    } else { lt.style.display='inline-flex'; sn.style.display='none'; wc.style.display='none'; al.style.display='none'; }
+  });
+  document.getElementById('signout-btn').addEventListener('click', async () => { await signOut(auth); sessionStorage.removeItem('admin-auth'); location.reload(); });
 
-    const auth = getAuth(app);
-  
+  /* Char counter */
+  const msgField = document.getElementById('contact-message');
+  msgField.addEventListener('input', () => {
+    document.getElementById('char-count').textContent = msgField.value.length;
+  });
 
-    onAuthStateChanged(auth, async (user) => {
-  const loginToggle = document.querySelector('.login-toggle');
-  const signoutNav = document.getElementById('signout-nav');
-  const welcomeEl = document.getElementById('welcome-message');
-  const adminLink = document.getElementById('admin-link');
+  /* Form submit */
+  const form = document.getElementById('contact-form');
+  const statusMsg = document.getElementById('status-msg');
+  const submitBtn = document.getElementById('submit-btn');
 
-  // Hamburger menu toggle
-const menuToggle = document.getElementById("menu-toggle");
-const navLinks = document.getElementById("nav-links");
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    statusMsg.className = ''; statusMsg.classList.remove('show');
 
-menuToggle.addEventListener("click", () => {
-  navLinks.classList.toggle("show");
-});
+    const name = document.getElementById('contact-name').value.trim();
+    const phone = document.getElementById('contact-phone').value.trim();
+    const email = document.getElementById('contact-email').value.trim();
+    const subject = document.getElementById('contact-subject').value;
+    const message = document.getElementById('contact-message').value.trim();
 
-
-  if (user) {
-    loginToggle.style.display = 'none';
-    signoutNav.style.display = 'inline-flex';
-    welcomeEl.textContent = `Welcome, ${user.email}`;
-    welcomeEl.style.display = 'block';
-
-    try {
-      // Use UID, not email
-      const snap = await getDoc(doc(db, "users", user.uid));
-      if (snap.exists() && snap.data().isAdmin) {
-        sessionStorage.setItem('admin-auth', 'true');
-        adminLink.style.display = 'inline-flex';
-      } else {
-        sessionStorage.removeItem('admin-auth');
-        adminLink.style.display = 'none';
-      }
-    } catch (err) {
-      console.error("Failed to fetch user document:", err);
-      adminLink.style.display = 'none';
+    if (!name || !phone || !email || !message) {
+      statusMsg.textContent = 'Please fill out all required fields.';
+      statusMsg.className = 'error show'; return;
     }
 
-  } else {
-    loginToggle.style.display = 'inline-flex';
-    signoutNav.style.display = 'none';
-    welcomeEl.style.display = 'none';
-    adminLink.style.display = 'none';
-    sessionStorage.removeItem('admin-auth');
-  }
-});
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span>Sending…</span>';
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      statusMsg.textContent = '';
-      const btn = form.querySelector('button[type="submit"]');
-      btn.disabled = true;
+    try {
+      await addDoc(collection(db, 'web_inquiries'), {
+        source: 'web', type: subject || 'general',
+        user: { name, phone, email }, message,
+        createdAt: serverTimestamp()
+      });
 
-      const user = {
-        name:  document.getElementById('inquiryName').value.trim(),
-        phone: document.getElementById('inquiryPhone').value.trim(),
-        email: document.getElementById('inquiryEmail').value.trim(),
-      };
-      const message = document.getElementById('inquiryReason').value.trim();
+      await addDoc(collection(db, 'mail'), {
+        to: ['vepaautoshop1904@gmail.com'],
+        replyTo: email,
+        message: {
+          subject: `[VEPA Website] ${subject ? subject.charAt(0).toUpperCase() + subject.slice(1) : 'General'} Inquiry – ${name}`,
+          text: `New inquiry from VEPA website:\n\nName: ${name}\nPhone: ${phone}\nEmail: ${email}\nSubject: ${subject || 'General'}\n\nMessage:\n${message}`,
+          html: `<h2>New Inquiry — ${subject || 'General'}</h2>
+<p><b>Name:</b> ${name}<br><b>Phone:</b> ${phone}<br><b>Email:</b> ${email}<br><b>Subject:</b> ${subject || 'General'}</p>
+<h3>Message</h3><p>${message.replace(/\n/g,'<br>')}</p><hr><small>VEPA Website Contact Form</small>`
+        }
+      });
 
-      if (!user.name || !user.phone || !user.email || !message) {
-        statusMsg.textContent = 'Please fill out all fields.';
-        btn.disabled = false;
-        return;
-      }
-
-      try {
-        await addDoc(collection(db, 'web_inquiries'), {
-          source: 'web',
-          type: 'general',
-          user,
-          message,
-          createdAt: serverTimestamp()
-        });
-
-        await addDoc(collection(db, 'mail'), {
-          to: ['vepaautoshop1904@gmail.com'],
-          replyTo: user.email,
-          message: {
-            subject: `[VEPA Website] General Inquiry – ${user.name}`,
-            text: `
-New General Inquiry from Website:
-
-Name: ${user.name}
-Phone: ${user.phone}
-Email: ${user.email}
-
-Message:
-${message}
-            `.trim(),
-            html: `
-              <h2>New General Inquiry (Website)</h2>
-              <p><b>Name:</b> ${user.name}<br/>
-              <b>Phone:</b> ${user.phone}<br/>
-              <b>Email:</b> ${user.email}</p>
-              <h3>Message:</h3>
-              <p>${message.replace(/\n/g, '<br/>')}</p>
-              <hr/>
-              <small>VEPA Website</small>
-            `
-          }
-        });
-
-        form.reset();
-        statusMsg.style.color = 'green';
-        statusMsg.textContent = 'Thanks! Your message was sent.';
-      } catch (err) {
-        console.error('Inquiry failed:', err);
-        statusMsg.style.color = 'red';
-        statusMsg.textContent = 'Something went wrong. Please try again later.';
-      } finally {
-        btn.disabled = false;
-      }
-    });
-  </script>
-
-
+      form.reset();
+      document.getElementById('char-count').textContent = '0';
+      statusMsg.textContent = '✓ Message sent! We\'ll be in touch soon.';
+      statusMsg.className = 'success show';
+    } catch (err) {
+      console.error('Contact form error:', err);
+      statusMsg.textContent = 'Something went wrong. Please call us at (518) 456-5682.';
+      statusMsg.className = 'error show';
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<span>Send Message</span><span>→</span>';
+    }
+  });
+</script>
 </body>
 </html>
