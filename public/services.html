@@ -125,6 +125,548 @@
     @media(max-width:900px){ .booking-inner{grid-template-columns:1fr;} }
     @media(max-width:640px){ .sec{padding:4rem 5%;} .booking-sec{padding:4rem 5%;} }
 
+    /* ── Booking Wizard Styles (updated for new theme) ── */
+
+    /* Booking wizard specific */
+
+    --step-active: var(--dark);
+
+    --step-done: var(--red);
+
+    --slot-bg: var(--card);
+
+    --slot-border: var(--border);
+
+    --slot-hover: var(--dark);
+
+    --slot-selected: var(--body);
+
+    /* Login prompt shown when user isn't logged in */
+
+    #booking-login-prompt {
+
+      max-width: 480px; margin: 0 auto;
+
+      background: var(--card); border-radius: var(--r);
+
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08); padding: 2.5rem;
+
+      text-align: center;
+
+    }
+
+    #booking-login-prompt .lock-icon { font-size: 2.5rem; margin-bottom: 1rem; display: block; }
+
+    #booking-login-prompt h3 { font-size: 1.2rem; margin-bottom: 0.5rem; }
+
+    #booking-login-prompt p  { color: var(--muted); font-size: 0.9rem; margin-bottom: 1.5rem; }
+
+    #booking-login-prompt a  {
+
+      display: inline-block; padding: 0.7rem 2rem;
+
+      background: var(--body); color: var(--bg);
+
+      border-radius: 2rem; font-weight: 600; font-size: 0.9rem;
+
+      transition: background var(--ease);
+
+    }
+
+    #booking-login-prompt a:hover { background: var(--dark); }
+
+    /* ── Wizard Card ────────────────────────────────────────────────── */
+
+    #booking-wizard {
+
+      max-width: 680px; margin: 0 auto;
+
+      background: var(--card); border-radius: var(--r);
+
+      box-shadow: 0 8px 32px rgba(0,0,0,0.14);
+
+      overflow: hidden;
+
+    }
+
+    /* Step indicator bar */
+
+    .wizard-steps {
+
+      display: flex;
+
+      background: var(--dark);
+
+    }
+
+    .wizard-step-tab {
+
+      flex: 1; padding: 0.85rem 0.5rem;
+
+      text-align: center; font-size: 0.78rem;
+
+      font-weight: 600; text-transform: uppercase;
+
+      letter-spacing: 0.05em;
+
+      color: rgba(255,255,255,0.45);
+
+      border-right: 1px solid rgba(255,255,255,0.1);
+
+      transition: color var(--ease), background var(--ease);
+
+      position: relative;
+
+    }
+
+    .wizard-step-tab:last-child { border-right: none; }
+
+    .wizard-step-tab.active  { color: #fff; background: rgba(255,255,255,0.12); }
+
+    .wizard-step-tab.done    { color: var(--step-done); }
+
+    .wizard-step-tab .tab-num {
+
+      display: block; font-size: 1rem; font-weight: 700; margin-bottom: 2px;
+
+    }
+
+    @media (max-width: 480px) {
+
+      .wizard-step-tab { font-size: 0.65rem; padding: 0.75rem 0.25rem; }
+
+    }
+
+    /* Step panels */
+
+    .wizard-body { padding: 2rem; min-height: 320px; }
+
+    .wizard-panel { display: none; }
+
+    .wizard-panel.active { display: block; }
+
+    .wizard-panel-title {
+
+      font-size: 1.1rem; font-weight: 600; margin-bottom: 1.25rem;
+
+      color: var(--body);
+
+    }
+
+    /* ── Step 1: Service picker ─────────────────────────────────────── */
+
+    .service-options {
+
+      display: grid;
+
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+
+      gap: 0.85rem;
+
+    }
+
+    .service-option {
+
+      border: 2px solid var(--slot-border);
+
+      border-radius: var(--r);
+
+      padding: 1rem 0.75rem;
+
+      text-align: center;
+
+      cursor: pointer;
+
+      transition: border-color var(--ease), background var(--ease), transform var(--ease);
+
+      user-select: none;
+
+    }
+
+    .service-option:hover { border-color: #868e96; transform: translateY(-2px); }
+
+    .service-option.selected {
+
+      border-color: var(--step-active);
+
+      background: var(--step-active);
+
+      color: var(--bg);
+
+    }
+
+    .service-option .opt-icon  { font-size: 1.6rem; display: block; margin-bottom: 0.4rem; }
+
+    .service-option .opt-name  { font-weight: 600; font-size: 0.9rem; }
+
+    .service-option .opt-dur   { font-size: 0.78rem; opacity: 0.7; margin-top: 2px; }
+
+    .service-option.selected .opt-dur { opacity: 0.85; }
+
+    /* ── Step 2: Date picker ────────────────────────────────────────── */
+
+    .date-picker-wrapper {
+
+      display: flex; flex-direction: column; align-items: flex-start; gap: 0.5rem;
+
+    }
+
+    .date-picker-wrapper label {
+
+      font-size: 0.88rem; color: var(--muted); font-weight: 500;
+
+    }
+
+    #booking-date {
+
+      padding: 0.65rem 0.9rem;
+
+      border: 2px solid var(--border);
+
+      border-radius: var(--r);
+
+      font-family: inherit; font-size: 1rem;
+
+      color: var(--body);
+
+      cursor: pointer;
+
+      transition: border-color var(--ease);
+
+      background: var(--card);
+
+    }
+
+    #booking-date:focus { outline: none; border-color: var(--step-active); }
+
+    .date-note { font-size: 0.82rem; color: var(--muted); margin-top: 0.5rem; }
+
+    .date-note strong { color: var(--body); }
+
+    /* ── Step 3: Time slots ─────────────────────────────────────────── */
+
+    .slots-loading {
+
+      display: flex; align-items: center; gap: 0.75rem;
+
+      color: var(--muted); font-size: 0.9rem;
+
+      padding: 2rem 0;
+
+    }
+
+    .spinner-sm {
+
+      width: 20px; height: 20px; border-radius: 50%;
+
+      border: 2px solid var(--border);
+
+      border-top-color: var(--body);
+
+      animation: spin 0.8s linear infinite;
+
+      flex-shrink: 0;
+
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .slots-empty {
+
+      text-align: center; padding: 2rem; color: var(--muted); font-size: 0.9rem;
+
+    }
+
+    .slots-empty .empty-icon { font-size: 2rem; display: block; margin-bottom: 0.5rem; }
+
+    .slots-grid {
+
+      display: grid;
+
+      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+
+      gap: 0.65rem;
+
+    }
+
+    .time-slot {
+
+      border: 2px solid var(--slot-border);
+
+      border-radius: var(--r);
+
+      padding: 0.55rem 0.5rem;
+
+      text-align: center;
+
+      cursor: pointer;
+
+      font-size: 0.88rem; font-weight: 500;
+
+      transition: border-color var(--ease), background var(--ease), transform var(--ease);
+
+      user-select: none;
+
+    }
+
+    .time-slot:hover { border-color: #868e96; transform: translateY(-1px); }
+
+    .time-slot.selected {
+
+      border-color: var(--step-active);
+
+      background: var(--step-active);
+
+      color: var(--bg);
+
+    }
+
+    /* ── Step 4: Confirm ────────────────────────────────────────────── */
+
+    .booking-summary {
+
+      background: var(--bg);
+
+      border-radius: var(--r);
+
+      border: 1px solid var(--border);
+
+      padding: 1.25rem 1.5rem;
+
+      margin-bottom: 1.5rem;
+
+    }
+
+    .booking-summary h3 {
+
+      font-size: 0.85rem; text-transform: uppercase;
+
+      letter-spacing: 0.05em; color: var(--muted);
+
+      margin-bottom: 0.85rem; font-weight: 600;
+
+    }
+
+    .summary-row {
+
+      display: flex; justify-content: space-between;
+
+      font-size: 0.92rem; padding: 0.35rem 0;
+
+      border-bottom: 1px solid var(--border);
+
+    }
+
+    .summary-row:last-child { border-bottom: none; }
+
+    .summary-row .label { color: var(--muted); }
+
+    .summary-row .value { font-weight: 600; text-align: right; }
+
+    .name-field-wrapper { margin-bottom: 1rem; }
+
+    .name-field-wrapper label { display: block; font-size: 0.88rem; font-weight: 500; margin-bottom: 0.4rem; }
+
+    .name-field-wrapper input {
+
+      width: 100%; padding: 0.65rem 0.85rem;
+
+      border: 2px solid var(--border);
+
+      border-radius: var(--r);
+
+      font-family: inherit; font-size: 0.95rem;
+
+      transition: border-color var(--ease);
+
+    }
+
+    .name-field-wrapper input:focus { outline: none; border-color: var(--step-active); }
+
+    /* ── Wizard Footer (nav buttons) ────────────────────────────────── */
+
+    .wizard-footer {
+
+      display: flex; justify-content: space-between; align-items: center;
+
+      padding: 1.25rem 2rem;
+
+      border-top: 1px solid var(--border);
+
+      background: #fafafa;
+
+      gap: 0.75rem;
+
+    }
+
+    .btn-wizard {
+
+      padding: 0.65rem 1.5rem; border: none; border-radius: 2rem;
+
+      font-family: inherit; font-size: 0.88rem; font-weight: 600;
+
+      cursor: pointer; transition: background var(--ease), opacity var(--ease);
+
+      text-transform: uppercase; letter-spacing: 0.03em;
+
+    }
+
+    .btn-back    { background: var(--border); color: var(--body); }
+
+    .btn-back:hover { background: #b5bec6; }
+
+    .btn-next    { background: var(--body); color: var(--bg); }
+
+    .btn-next:hover { background: var(--dark); }
+
+    .btn-next:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .btn-confirm { background: var(--red); color: var(--bg); }
+
+    .btn-confirm:hover { background: var(--red-dk); }
+
+    .btn-confirm:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ── Step 5: Success / Error screens ───────────────────────────── */
+
+    .result-screen {
+
+      text-align: center; padding: 2.5rem 1rem;
+
+    }
+
+    .result-screen .result-icon { font-size: 3.5rem; display: block; margin-bottom: 1rem; }
+
+    .result-screen h3 { font-size: 1.3rem; margin-bottom: 0.5rem; }
+
+    .result-screen p  { color: var(--muted); font-size: 0.9rem; line-height: 1.6; }
+
+    .result-screen .booking-id {
+
+      display: inline-block; margin-top: 1rem;
+
+      background: var(--bg); border: 1px solid var(--border);
+
+      border-radius: var(--r); padding: 0.5rem 1rem;
+
+      font-size: 0.82rem; font-family: monospace; color: var(--body);
+
+    }
+
+    .btn-reset {
+
+      display: inline-block; margin-top: 1.5rem;
+
+      padding: 0.65rem 1.75rem; background: var(--body); color: var(--bg);
+
+      border: none; border-radius: 2rem; font-family: inherit;
+
+      font-size: 0.88rem; font-weight: 600; cursor: pointer;
+
+      transition: background var(--ease);
+
+    }
+
+    .btn-reset:hover { background: var(--dark); }
+
+    /* Booking error message */
+
+    .booking-error {
+
+      background: #fff5f5; border: 1px solid #fcc; border-radius: var(--r);
+
+      color: var(--red); font-size: 0.88rem;
+
+      padding: 0.75rem 1rem; margin-bottom: 1rem;
+
+      display: none;
+
+    }
+
+    .booking-error.show { display: block; }
+
+    /* ── My Appointments panel ──────────────────────────────────────── */
+
+    .my-bookings-section {
+
+      padding: 0 5% 4rem;
+
+      max-width: 780px; margin: 0 auto;
+
+    }
+
+    .my-bookings-section h3 {
+
+      font-size: 1.3rem; font-weight: 700; margin-bottom: 1.25rem;
+
+      display: flex; align-items: center; gap: 0.5rem;
+
+    }
+
+    .no-bookings { color: var(--muted); font-size: 0.9rem; }
+
+    .appointment-card {
+
+      background: var(--card); border: 1px solid var(--border);
+
+      border-radius: var(--r); padding: 1.1rem 1.4rem;
+
+      margin-bottom: 0.75rem;
+
+      display: flex; justify-content: space-between; align-items: center;
+
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+
+      gap: 1rem; flex-wrap: wrap;
+
+    }
+
+    .appt-info .appt-service { font-weight: 600; font-size: 0.95rem; }
+
+    .appt-info .appt-time    { color: var(--muted); font-size: 0.85rem; margin-top: 2px; }
+
+    .appt-status {
+
+      display: inline-block; padding: 0.25rem 0.75rem;
+
+      border-radius: 2rem; font-size: 0.78rem; font-weight: 600;
+
+      text-transform: uppercase; letter-spacing: 0.03em;
+
+    }
+
+    .appt-status.confirmed { background: #e8f7f0; color: var(--red); }
+
+    .appt-status.pending   { background: #fff8e1; color: var(--red); }
+
+    .btn-cancel {
+
+      padding: 0.35rem 0.9rem; border: 1px solid var(--border);
+
+      border-radius: 2rem; background: var(--card); color: var(--red);
+
+      font-size: 0.8rem; font-weight: 600; cursor: pointer;
+
+      transition: background var(--ease), border-color var(--ease);
+
+      white-space: nowrap;
+
+    }
+
+    .btn-cancel:hover { background: #fff5f5; border-color: var(--red); }
+
+    /* ── Responsive ─────────────────────────────────────────────────── */
+
+    @media (max-width: 640px) {
+
+      .wizard-body { padding: 1.25rem; }
+
+      .wizard-footer { padding: 1rem 1.25rem; }
+
+      .service-options { grid-template-columns: 1fr 1fr; }
+
+    }
+
     /* ── WHY US ── */
     .why-sec{padding:5.5rem 7%;background:var(--card);}
     .why-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:2rem;margin-top:3rem;}
@@ -282,68 +824,134 @@
 </section>
 
 <!-- BOOKING SECTION -->
-<section class="booking-sec" id="book">
+<section class="booking-sec" id="booking">
   <div class="sec-label">Schedule</div>
-  <h2 class="sec-title">Book an Appointment</h2>
+  <div class="sec-title">Book an Appointment</div>
+  <p>Choose a service, pick a date, and select an available time. It takes under a minute.</p>
 
-  <div class="booking-inner">
-    <!-- Info side -->
-    <!-- <div class="booking-info">
-      <h3>How Booking Works</h3>
-      <p>Pick a time that works for you directly in our Google Calendar. We'll confirm your appointment and reach out if we have any questions before you arrive.</p>
-      <ol class="booking-steps">
-        <li><span class="step-n">1</span>Click "Book Now" and select a service type</li>
-        <li><span class="step-n">2</span>Choose your preferred date and time</li>
-        <li><span class="step-n">3</span>Enter your name, contact info, and vehicle details</li>
-        <li><span class="step-n">4</span>Receive a confirmation email with your appointment</li>
-      </ol>
-      <div class="booking-cta">
-        <!-- 
-          SETUP: Replace the href below with your Google Calendar appointment scheduling link.
-          1. Go to Google Calendar
-          2. Click + Create → More options → "Appointment schedule"
-          3. Set your availability windows
-          4. Copy the booking page link
-          5. Paste it below
-        -->
-        <!-- <a href="https://calendar.google.com/calendar/appointments" target="_blank" class="btn-r solid" id="book-btn">
-          📅 Book Now
-        </a>
-        <a href="contact" class="btn-r ghost">Or Contact Us Directly</a>
-        <p class="cal-note">You'll receive a confirmation email after booking. Call (518) 456-5682 with any questions.</p>
-      </div>
-    </div> -->
-
-    <!-- Calendar embed side -->
-    <div class="cal-embed-wrap">
-      <!-- 
-        OPTION A — Embedded calendar (recommended):
-        Replace the src below with your Google Calendar appointment scheduling URL + ?embed=true
-        Example: src="https://calendar.google.com/calendar/appointments/schedules/YOUR_SCHEDULE_ID?gv=op&embed=true"
-
-        OPTION B — Use the placeholder below if you haven't set up appointment slots yet.
-      -->
-      <div class="cal-placeholder" id="cal-placeholder">
-        <div class="cal-icon">📅</div>
-        <h4>Online Booking Coming Soon</h4>
-        <p>We're setting up our online booking system. In the meantime, call us or fill out our contact form to schedule your appointment.</p>
-        <a href="tel:5184565682" class="btn-r solid">(518) 456-5682</a>
-        <a href="contact" class="btn-r ghost">Contact Form</a>
-      </div>
-
-      <!-- Uncomment and fill in your Google Calendar schedule URL to enable the embed:
-      <iframe
-        src="YOUR_GOOGLE_CALENDAR_APPOINTMENT_SCHEDULE_URL?embed=true"
-        style="border:0"
-        width="100%"
-        height="600"
-        frameborder="0"
-        scrolling="no"
-        title="Book an appointment at VEPA AutoCare">
-      </iframe>
-      -->
-    </div>
+  <!-- Shown when user is NOT logged in -->
+  <div id="booking-login-prompt">
+    <span class="lock-icon">🔐</span>
+    <h3>Sign in to book</h3>
+    <p>Create a free account or log in to schedule your appointment online.</p>
+    <a href="login">Login / Sign Up</a>
   </div>
+
+  <!-- Booking wizard – shown when logged in -->
+  <div id="booking-wizard" style="display:none;">
+
+    <!-- Step tabs -->
+    <div class="wizard-steps" role="tablist">
+      <div class="wizard-step-tab active" data-step="1" role="tab">
+        <span class="tab-num">1</span>Service
+      </div>
+      <div class="wizard-step-tab" data-step="2" role="tab">
+        <span class="tab-num">2</span>Date
+      </div>
+      <div class="wizard-step-tab" data-step="3" role="tab">
+        <span class="tab-num">3</span>Time
+      </div>
+      <div class="wizard-step-tab" data-step="4" role="tab">
+        <span class="tab-num">4</span>Confirm
+      </div>
+    </div>
+
+    <!-- Step 1: Choose service -->
+    <div class="wizard-body">
+      <div class="wizard-panel active" id="panel-1">
+        <p class="wizard-panel-title">What service do you need?</p>
+        <div class="service-options" id="service-options">
+          <!-- Populated from BOOKING_API /services -->
+        </div>
+      </div>
+
+      <!-- Step 2: Choose date -->
+      <div class="wizard-panel" id="panel-2">
+        <p class="wizard-panel-title">Select a date</p>
+        <div class="date-picker-wrapper">
+          <label for="booking-date">Preferred date</label>
+          <input type="date" id="booking-date" />
+        </div>
+        <p class="date-note">
+          Business hours: <strong>Mon–Fri 8 AM–5 PM</strong> · <strong>Sat 9 AM–4 PM</strong> · <strong>Sun closed</strong>.<br>
+          Appointments available up to 30 days in advance.
+        </p>
+      </div>
+
+      <!-- Step 3: Choose time slot -->
+      <div class="wizard-panel" id="panel-3">
+        <p class="wizard-panel-title">Choose an available time</p>
+        <div id="slots-container"></div>
+      </div>
+
+      <!-- Step 4: Confirm -->
+      <div class="wizard-panel" id="panel-4">
+        <p class="wizard-panel-title">Confirm your appointment</p>
+        <div class="booking-summary">
+          <h3>Appointment Details</h3>
+          <div class="summary-row">
+            <span class="label">Service</span>
+            <span class="value" id="sum-service">—</span>
+          </div>
+          <div class="summary-row">
+            <span class="label">Date</span>
+            <span class="value" id="sum-date">—</span>
+          </div>
+          <div class="summary-row">
+            <span class="label">Time</span>
+            <span class="value" id="sum-time">—</span>
+          </div>
+          <div class="summary-row">
+            <span class="label">Duration</span>
+            <span class="value" id="sum-duration">—</span>
+          </div>
+        </div>
+        <div class="name-field-wrapper">
+          <label for="customer-name">Your name (for our records)</label>
+          <input type="text" id="customer-name" placeholder="First Last" autocomplete="name" />
+        </div>
+        <div class="booking-error" id="booking-error"></div>
+      </div>
+
+      <!-- Step 5a: Success -->
+      <div class="wizard-panel" id="panel-success">
+        <div class="result-screen">
+          <span class="result-icon">✅</span>
+          <h3>Appointment Confirmed!</h3>
+          <p>Your appointment has been booked and added to our calendar.<br>
+             We'll see you soon!</p>
+          <div class="booking-id" id="booking-id-display"></div>
+          <button class="btn-reset" id="btn-book-another">Book Another</button>
+        </div>
+      </div>
+
+      <!-- Step 5b: Error -->
+      <div class="wizard-panel" id="panel-error">
+        <div class="result-screen">
+          <span class="result-icon">❌</span>
+          <h3>Something went wrong</h3>
+          <p id="error-detail">Please try again or call us at (518) 456-5682.</p>
+          <button class="btn-reset" id="btn-try-again">Try Again</button>
+        </div>
+      </div>
+    </div><!-- /wizard-body -->
+
+    <!-- Footer nav buttons -->
+    <div class="wizard-footer" id="wizard-footer">
+      <button class="btn-wizard btn-back" id="btn-back" style="visibility:hidden;">← Back</button>
+      <button class="btn-wizard btn-next" id="btn-next" disabled>Next →</button>
+      <button class="btn-wizard btn-confirm" id="btn-confirm" style="display:none;">
+        Confirm Booking
+      </button>
+    </div>
+
+  </div><!-- /booking-wizard -->
+</section>
+
+<!-- ── My Appointments ────────────────────────────────────────── -->
+<section class="my-bookings-section" id="my-appointments" style="display:none;">
+  <h3>📅 Your Upcoming Appointments</h3>
+  <div id="appointments-list"><p class="no-bookings">Loading…</p></div>
 </section>
 
 <!-- FOOTER -->
@@ -382,47 +990,496 @@
 </div>
 
 <script type="module">
-  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-firestore.js";
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js";
-  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-auth.js";
+/* ─────────────────────────────────────────────────────────────────
+   Firebase imports
+───────────────────────────────────────────────────────────────── */
+import { initializeApp }   from 'https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js';
+import { getAuth, onAuthStateChanged, signOut }
+  from 'https://www.gstatic.com/firebasejs/11.5.0/firebase-auth.js';
+import { getFirestore, doc, getDoc }
+  from 'https://www.gstatic.com/firebasejs/11.5.0/firebase-firestore.js';
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyBcKnjZm5LYqj5jx5VEqx9ywspgZyxNfsA",
-    authDomain: "vepa-24b46.firebaseapp.com",
-    projectId: "vepa-24b46",
-    storageBucket: "vepa-24b46.appspot.app",
-    messagingSenderId: "170936495301",
-    appId: "1:170936495301:web:6f15b8fa08deeb01d5d4ac",
-    measurementId: "G-F8NFZ6SRKR"
-  };
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
+const firebaseConfig = {
+  apiKey:            'AIzaSyBcKnjZm5LYqj5jx5VEqx9ywspgZyxNfsA',
+  authDomain:        'vepa-24b46.firebaseapp.com',
+  projectId:         'vepa-24b46',
+  storageBucket:     'vepa-24b46.appspot.app',
+  messagingSenderId: '170936495301',
+  appId:             '1:170936495301:web:6f15b8fa08deeb01d5d4ac',
+  measurementId:     'G-F8NFZ6SRKR',
+};
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
 
-  window.addEventListener('load', () => setTimeout(() => document.getElementById('preloader').classList.add('done'), 900));
-  document.getElementById('menu-toggle').addEventListener('click', () => document.getElementById('nav-links').classList.toggle('open'));
+/* ─────────────────────────────────────────────────────────────────
+   Config – update BOOKING_API to your Render URL once deployed
+───────────────────────────────────────────────────────────────── */
+const BOOKING_API = 'https://vepa-calendar.onrender.com/'; // ← CHANGE THIS
+
+/* ─────────────────────────────────────────────────────────────────
+   Service icons (keyed by service key from the API)
+───────────────────────────────────────────────────────────────── */
+const SERVICE_ICONS = {
+  oil_change:    '🔧',
+  tire_rotation: '🔄',
+  inspection:    '🔍',
+  brake_service: '🛞',
+  general_repair:'🚗',
+};
+
+/* ─────────────────────────────────────────────────────────────────
+   State
+───────────────────────────────────────────────────────────────── */
+let currentUser     = null;
+let currentStep     = 1;
+let selectedService = null; // { key, name, duration }
+let selectedDate    = null; // 'YYYY-MM-DD'
+let selectedSlot    = null; // { start, end, display }
+let availableSlots  = [];
+
+/* ─────────────────────────────────────────────────────────────────
+   Auth state
+───────────────────────────────────────────────────────────────── */
+onAuthStateChanged(auth, async user => {
+  currentUser = user;
+
+  // Header
+  const loginToggle = document.querySelector('.login-toggle');
+  const signoutNav  = document.getElementById('signout-nav');
+  const welcomeEl   = document.getElementById('welcome-chip');
+  const adminLink   = document.getElementById('admin-link');
+
+  // Hamburger
+  const menuToggle = document.getElementById('menu-toggle');
+  const navLinks   = document.getElementById('nav-links');
+  menuToggle.addEventListener('click', () => navLinks.classList.toggle('show'));
+
+  // Login sidebar
   document.querySelector('.login-toggle').addEventListener('click', () => document.getElementById('login-sidebar').style.transform = 'translateX(0)');
   document.getElementById('close-login').addEventListener('click', () => document.getElementById('login-sidebar').style.transform = 'translateX(100%)');
 
-  onAuthStateChanged(auth, async user => {
-    const lt = document.querySelector('.login-toggle'), sn = document.getElementById('signout-nav'),
-          wc = document.getElementById('welcome-chip'), al = document.getElementById('admin-link');
-    if (user) {
-      lt.style.display = 'none'; sn.style.display = 'inline-flex';
-      wc.textContent = `Hi, ${user.email.split('@')[0]}`; wc.style.display = 'inline';
-      try {
-        const snap = await getDoc(doc(db, "users", user.uid));
-        if (snap.exists() && snap.data().isAdmin) { sessionStorage.setItem('admin-auth','true'); al.style.display = 'inline-flex'; }
-      } catch(e){}
-    } else { lt.style.display = 'inline-flex'; sn.style.display = 'none'; wc.style.display = 'none'; al.style.display = 'none'; }
-  });
-  document.getElementById('signout-btn').addEventListener('click', async () => { await signOut(auth); sessionStorage.removeItem('admin-auth'); location.reload(); });
+  if (user) {
+    loginToggle.style.display = 'none';
+    signoutNav.style.display  = 'inline-flex';
+    welcomeEl.textContent     = `Welcome, ${user.email}`;
+    welcomeEl.style.display   = 'block';
 
-  /* Video rotation */
-  const vids = ['backgroundVids/OilPour2.MP4','backgroundVids/LiftGoingDown.MP4','backgroundVids/OilPour1.MP4','backgroundVids/ReplacingCap.MP4'];
-  const v1 = document.getElementById('vid1'), v2 = document.getElementById('vid2');
-  let vi = 0;
-  v1.src = vids[0]; v1.play().catch(()=>{});
+    // Admin check
+    try {
+      const snap = await getDoc(doc(db, 'users', user.uid));
+      if (snap.exists() && snap.data().isAdmin) {
+        sessionStorage.setItem('admin-auth', 'true');
+        adminLink.style.display = 'inline-flex';
+      }
+    } catch {}
+
+    // Show booking wizard
+    document.getElementById('booking-login-prompt').style.display = 'none';
+    document.getElementById('booking-wizard').style.display        = 'block';
+    document.getElementById('my-appointments').style.display       = 'block';
+
+    initWizard();
+    loadUserBookings();
+
+  } else {
+    loginToggle.style.display = 'inline-flex';
+    signoutNav.style.display  = 'none';
+    welcomeEl.style.display   = 'none';
+    adminLink.style.display   = 'none';
+    sessionStorage.removeItem('admin-auth');
+
+    document.getElementById('booking-login-prompt').style.display = 'block';
+    document.getElementById('booking-wizard').style.display        = 'none';
+    document.getElementById('my-appointments').style.display       = 'none';
+  }
+});
+
+document.getElementById('signout-btn')?.addEventListener('click', async () => {
+  await signOut(auth);
+  sessionStorage.removeItem('admin-auth');
+  window.location.reload();
+});
+
+/* ─────────────────────────────────────────────────────────────────
+   Wizard initialisation – fetch services from API
+───────────────────────────────────────────────────────────────── */
+async function initWizard() {
+  // Set date constraints
+  const today  = new Date();
+  const maxDay = new Date(today);
+  maxDay.setDate(today.getDate() + 30);
+  const datePicker = document.getElementById('booking-date');
+  datePicker.min = today.toISOString().slice(0, 10);
+  datePicker.max = maxDay.toISOString().slice(0, 10);
+  // Default to tomorrow
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1);
+  datePicker.value = tomorrow.toISOString().slice(0, 10);
+  selectedDate = datePicker.value;
+
+  // Date change listener
+  datePicker.addEventListener('change', () => {
+    selectedDate = datePicker.value;
+    selectedSlot = null;
+    checkNextEnabled();
+  });
+
+  // Load services
+  try {
+    const res  = await fetch(`${BOOKING_API}/services`);
+    const data = await res.json();
+    renderServiceOptions(data.services || []);
+  } catch {
+    document.getElementById('service-options').innerHTML =
+      '<p style="color:#dc3545;font-size:.9rem;">Could not load services. Check your connection.</p>';
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   Render service picker cards
+───────────────────────────────────────────────────────────────── */
+function renderServiceOptions(services) {
+  const container = document.getElementById('service-options');
+  container.innerHTML = '';
+  services.forEach(svc => {
+    const div = document.createElement('div');
+    div.className = 'service-option';
+    div.dataset.key = svc.key;
+    div.innerHTML = `
+      <span class="opt-icon">${SERVICE_ICONS[svc.key] || '🔩'}</span>
+      <div class="opt-name">${svc.name}</div>
+      <div class="opt-dur">${svc.duration} min</div>
+    `;
+    div.addEventListener('click', () => {
+      document.querySelectorAll('.service-option').forEach(el => el.classList.remove('selected'));
+      div.classList.add('selected');
+      selectedService = svc;
+      checkNextEnabled();
+    });
+    container.appendChild(div);
+  });
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   Step navigation
+───────────────────────────────────────────────────────────────── */
+function goToStep(step) {
+  currentStep = step;
+
+  // Update panels
+  document.querySelectorAll('.wizard-panel').forEach(p => p.classList.remove('active'));
+  const target = document.getElementById(`panel-${step}`);
+  if (target) target.classList.add('active');
+
+  // Update step tabs
+  document.querySelectorAll('.wizard-step-tab').forEach(tab => {
+    const n = parseInt(tab.dataset.step);
+    tab.classList.remove('active', 'done');
+    if (n === step) tab.classList.add('active');
+    else if (n < step) tab.classList.add('done');
+  });
+
+  // Footer buttons
+  const btnBack    = document.getElementById('btn-back');
+  const btnNext    = document.getElementById('btn-next');
+  const btnConfirm = document.getElementById('btn-confirm');
+  const footer     = document.getElementById('wizard-footer');
+
+  const isResult = step === 'success' || step === 'error';
+  footer.style.display = isResult ? 'none' : '';
+
+  btnBack.style.visibility = (step <= 1) ? 'hidden' : 'visible';
+
+  if (step === 4) {
+    btnNext.style.display    = 'none';
+    btnConfirm.style.display = 'inline-block';
+    populateConfirmSummary();
+  } else {
+    btnNext.style.display    = 'inline-block';
+    btnConfirm.style.display = 'none';
+  }
+
+  checkNextEnabled();
+
+  // Fetch slots when arriving at step 3
+  if (step === 3) fetchSlots();
+}
+
+function checkNextEnabled() {
+  const btn = document.getElementById('btn-next');
+  if (!btn) return;
+  const allowed = {
+    1: () => !!selectedService,
+    2: () => !!selectedDate,
+    3: () => !!selectedSlot,
+    4: () => true,
+  };
+  const check = allowed[currentStep];
+  btn.disabled = check ? !check() : true;
+}
+
+document.getElementById('btn-next').addEventListener('click', () => {
+  if (currentStep < 4) goToStep(currentStep + 1);
+});
+document.getElementById('btn-back').addEventListener('click', () => {
+  if (currentStep > 1) goToStep(currentStep - 1);
+});
+
+/* ─────────────────────────────────────────────────────────────────
+   Fetch available slots
+───────────────────────────────────────────────────────────────── */
+async function fetchSlots() {
+  const container = document.getElementById('slots-container');
+  container.innerHTML = `
+    <div class="slots-loading">
+      <div class="spinner-sm"></div>
+      Checking availability…
+    </div>`;
+  selectedSlot = null;
+  checkNextEnabled();
+
+  try {
+    const url = `${BOOKING_API}/availability?date=${selectedDate}&service=${selectedService.key}`;
+    const res  = await fetch(url);
+    const data = await res.json();
+
+    if (data.closed) {
+      container.innerHTML = `
+        <div class="slots-empty">
+          <span class="empty-icon">🚫</span>
+          We're closed on ${formatDateDisplay(selectedDate)}. Please pick another day.
+        </div>`;
+      return;
+    }
+
+    availableSlots = data.slots || [];
+
+    if (!availableSlots.length) {
+      container.innerHTML = `
+        <div class="slots-empty">
+          <span class="empty-icon">😔</span>
+          No available slots on ${formatDateDisplay(selectedDate)} for a ${selectedService.name}.<br>
+          <a href="#" id="try-another-date" style="color:var(--body);text-decoration:underline;font-weight:600;">Try another date</a>
+        </div>`;
+      document.getElementById('try-another-date')?.addEventListener('click', e => {
+        e.preventDefault(); goToStep(2);
+      });
+      return;
+    }
+
+    renderSlots(availableSlots);
+
+  } catch (err) {
+    container.innerHTML = `
+      <div class="slots-empty">
+        <span class="empty-icon">⚠️</span>
+        Could not load slots. Please check your connection.
+      </div>`;
+  }
+}
+
+function renderSlots(slots) {
+  const container = document.getElementById('slots-container');
+  container.innerHTML = `<div class="slots-grid" id="slots-grid"></div>`;
+  const grid = document.getElementById('slots-grid');
+
+  slots.forEach(slot => {
+    const div = document.createElement('div');
+    div.className = 'time-slot';
+    div.textContent = slot.display;
+    div.addEventListener('click', () => {
+      document.querySelectorAll('.time-slot').forEach(el => el.classList.remove('selected'));
+      div.classList.add('selected');
+      selectedSlot = slot;
+      checkNextEnabled();
+    });
+    grid.appendChild(div);
+  });
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   Populate confirmation summary
+───────────────────────────────────────────────────────────────── */
+function populateConfirmSummary() {
+  document.getElementById('sum-service').textContent  = selectedService?.name ?? '—';
+  document.getElementById('sum-date').textContent     = formatDateDisplay(selectedDate);
+  document.getElementById('sum-time').textContent     = selectedSlot?.display ?? '—';
+  document.getElementById('sum-duration').textContent = `${selectedService?.duration} minutes`;
+  document.getElementById('booking-error').classList.remove('show');
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   Submit booking
+───────────────────────────────────────────────────────────────── */
+document.getElementById('btn-confirm').addEventListener('click', async () => {
+  const btn = document.getElementById('btn-confirm');
+  const errEl = document.getElementById('booking-error');
+  errEl.classList.remove('show');
+  btn.disabled = true;
+  btn.textContent = 'Booking…';
+
+  try {
+    const idToken = await currentUser.getIdToken();
+    const name    = document.getElementById('customer-name').value.trim() || currentUser.email;
+
+    const res = await fetch(`${BOOKING_API}/book`, {
+      method: 'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization': `Bearer ${idToken}`,
+      },
+      body: JSON.stringify({
+        date:         selectedDate,
+        start:        selectedSlot.start,
+        end:          selectedSlot.end,
+        service:      selectedService.key,
+        customerName: name,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.error || 'Booking failed');
+
+    // Show success screen
+    document.getElementById('booking-id-display').textContent =
+      `Booking ID: ${data.bookingId}`;
+    document.querySelectorAll('.wizard-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('panel-success').classList.add('active');
+    document.getElementById('wizard-footer').style.display = 'none';
+    document.querySelectorAll('.wizard-step-tab').forEach(t => t.classList.remove('active', 'done'));
+
+    // Refresh bookings list
+    loadUserBookings();
+
+  } catch (err) {
+    errEl.textContent = err.message;
+    errEl.classList.add('show');
+    btn.disabled    = false;
+    btn.textContent = 'Confirm Booking';
+  } finally {
+    btn.disabled    = false;
+    btn.textContent = 'Confirm Booking';
+  }
+});
+
+/* Reset wizard */
+document.getElementById('btn-book-another')?.addEventListener('click', resetWizard);
+document.getElementById('btn-try-again')?.addEventListener('click', resetWizard);
+
+function resetWizard() {
+  selectedService = null;
+  selectedDate    = null;
+  selectedSlot    = null;
+  currentStep     = 1;
+  document.querySelectorAll('.service-option').forEach(el => el.classList.remove('selected'));
+  document.getElementById('customer-name').value = '';
+  document.getElementById('wizard-footer').style.display = '';
+  goToStep(1);
+  // Re-init date
+  const datePicker = document.getElementById('booking-date');
+  const tomorrow   = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  datePicker.value = tomorrow.toISOString().slice(0, 10);
+  selectedDate     = datePicker.value;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   Load user's upcoming bookings
+───────────────────────────────────────────────────────────────── */
+async function loadUserBookings() {
+  const listEl = document.getElementById('appointments-list');
+  listEl.innerHTML = '<p class="no-bookings">Loading…</p>';
+
+  try {
+    const idToken = await currentUser.getIdToken();
+    const res     = await fetch(`${BOOKING_API}/bookings`, {
+      headers: { 'Authorization': `Bearer ${idToken}` },
+    });
+    const data = await res.json();
+    const bookings = data.bookings || [];
+
+    if (!bookings.length) {
+      listEl.innerHTML = '<p class="no-bookings">No upcoming appointments.</p>';
+      return;
+    }
+
+    listEl.innerHTML = '';
+    bookings.forEach(b => {
+      const card = document.createElement('div');
+      card.className = 'appointment-card';
+      const dt = new Date(b.start);
+      const dateStr = dt.toLocaleDateString('en-US', {
+        weekday: 'short', month: 'short', day: 'numeric',
+        timeZone: 'America/New_York',
+      });
+      const timeStr = dt.toLocaleTimeString('en-US', {
+        hour: '2-digit', minute: '2-digit', hour12: true,
+        timeZone: 'America/New_York',
+      });
+      card.innerHTML = `
+        <div class="appt-info">
+          <div class="appt-service">${b.serviceName}</div>
+          <div class="appt-time">${dateStr} · ${timeStr} (${b.duration} min)</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;">
+          <span class="appt-status ${b.status}">${b.status}</span>
+          <button class="btn-cancel" data-id="${b.id}">Cancel</button>
+        </div>
+      `;
+      card.querySelector('.btn-cancel').addEventListener('click', () => cancelBooking(b.id));
+      listEl.appendChild(card);
+    });
+
+  } catch (err) {
+    listEl.innerHTML = '<p class="no-bookings" style="color:#dc3545;">Failed to load bookings.</p>';
+  }
+}
+
+async function cancelBooking(bookingId) {
+  if (!confirm('Cancel this appointment?')) return;
+  try {
+    const idToken = await currentUser.getIdToken();
+    const res = await fetch(`${BOOKING_API}/bookings/${bookingId}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${idToken}` },
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Could not cancel');
+    alert('Appointment cancelled.');
+    loadUserBookings();
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   Utility
+───────────────────────────────────────────────────────────────── */
+function formatDateDisplay(dateStr) {
+  if (!dateStr) return '—';
+  // Parse as local date (avoid UTC shift)
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString('en-US', {
+    weekday: 'long', month: 'long', day: 'numeric',
+  });
+}
+
+/* Video rotation */
+const vids = ['backgroundVids/OilPour2.MP4','backgroundVids/LiftGoingDown.MP4','backgroundVids/OilPour1.MP4','backgroundVids/ReplacingCap.MP4'];
+const v1 = document.getElementById('vid1'), v2 = document.getElementById('vid2');
+let vi = 0;
+v1.src = vids[0]; v1.play().catch(()=>{}) ;
+setInterval(() => {
+  vi = (vi+1) % vids.length;
+  const nxt = v1.classList.contains('on') ? v2 : v1, cur = v1.classList.contains('on') ? v1 : v2;
+  nxt.src = vids[vi]; nxt.play().catch(()=>{}) ;
+  nxt.onloadeddata = () => { cur.classList.remove('on'); nxt.classList.add('on'); };
+}, 5000);
+
+window.addEventListener('load', () => setTimeout(() => document.getElementById('preloader').classList.add('done'), 900));
+</script>
   setInterval(() => {
     vi = (vi+1) % vids.length;
     const nxt = v1.classList.contains('on') ? v2 : v1, cur = v1.classList.contains('on') ? v1 : v2;
