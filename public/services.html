@@ -1323,7 +1323,7 @@ document.getElementById('btn-confirm').addEventListener('click', async () => {
     const idToken = await currentUser.getIdToken();
     const name    = document.getElementById('customer-name').value.trim() || currentUser.email;
 
-    const res = await fetch(`${BOOKING_API}/book`, {
+    const res = await fetch(`${BOOKING_API}book`, {
       method: 'POST',
       headers: {
         'Content-Type':  'application/json',
@@ -1441,7 +1441,7 @@ async function cancelBooking(bookingId) {
   if (!confirm('Cancel this appointment?')) return;
   try {
     const idToken = await currentUser.getIdToken();
-    const res = await fetch(`${BOOKING_API}/bookings/${bookingId}`, {
+    const res = await fetch(`${BOOKING_API}bookings/${bookingId}`, {
       method: 'DELETE',
       headers: { 'Authorization': `Bearer ${idToken}` },
     });
