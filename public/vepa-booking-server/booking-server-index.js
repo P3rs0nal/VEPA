@@ -387,6 +387,7 @@ app.get('/bookings', verifyToken, async (req, res) => {
 
     return res.json({ bookings });
   } catch (err) {
+    console.println("error:L " + bookings)
     console.error('Fetch bookings error:', err.message);
     return res.status(500).json({ error: 'Failed to fetch bookings.' });
   }
