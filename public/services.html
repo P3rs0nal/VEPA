@@ -1127,7 +1127,7 @@ async function initWizard() {
 
   // Load services
   try {
-    const res  = await fetch(`${BOOKING_API}/services`);
+    const res  = await fetch(`${BOOKING_API}services`);
     const data = await res.json();
     renderServiceOptions(data.services || []);
   } catch {
@@ -1394,7 +1394,7 @@ async function loadUserBookings() {
 
   try {
     const idToken = await currentUser.getIdToken();
-    const res     = await fetch(`${BOOKING_API}/bookings`, {
+    const res     = await fetch(`${BOOKING_API}bookings`, {
       headers: { 'Authorization': `Bearer ${idToken}` },
     });
     const data = await res.json();
