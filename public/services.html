@@ -1240,7 +1240,7 @@ async function fetchSlots() {
   checkNextEnabled();
 
   try {
-    const url = `${BOOKING_API}/availability?date=${selectedDate}&service=${selectedService.key}`;
+    const url = `${BOOKING_API}availability?date=${selectedDate}&service=${selectedService.key}`;
     const res  = await fetch(url);
     const data = await res.json();
 
