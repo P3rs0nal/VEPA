@@ -89,6 +89,7 @@
     }
     .booking-sec .sec-label{color:rgba(200,56,26,.9);}
     .booking-sec .sec-title{color:var(--bg);}
+    .booking-sec > p{color:rgba(247,243,238,.85);margin-top:0.85rem;margin-bottom:2rem;max-width:680px;line-height:1.7;}
     .booking-inner{display:grid;grid-template-columns:1fr 1.6fr;gap:4rem;align-items:start;margin-top:1rem;}
     .booking-info h3{font-family:var(--fd);font-size:1.4rem;font-weight:700;text-transform:uppercase;color:var(--bg);margin-bottom:1rem;}
     .booking-info p{font-size:.9rem;color:rgba(247,243,238,.55);line-height:1.7;margin-bottom:1.25rem;}
@@ -179,7 +180,7 @@
 
     #booking-wizard {
 
-      max-width: 680px; margin: 0 auto;
+      max-width: 680px; margin: 1.5rem auto 0;
 
       background: var(--card); border-radius: var(--r);
 
@@ -491,7 +492,8 @@
 
     .name-field-wrapper label { display: block; font-size: 0.88rem; font-weight: 500; margin-bottom: 0.4rem; }
 
-    .name-field-wrapper input {
+    .name-field-wrapper input,
+    .name-field-wrapper select {
 
       width: 100%; padding: 0.65rem 0.85rem;
 
@@ -503,9 +505,16 @@
 
       transition: border-color var(--ease);
 
+      background: #fff;
+
     }
 
-    .name-field-wrapper input:focus { outline: none; border-color: var(--step-active); }
+    .name-field-wrapper input:focus,
+    .name-field-wrapper select:focus { outline: none; border-color: var(--step-active); }
+
+    .vehicle-select-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+
+    @media (max-width: 640px) { .vehicle-select-grid { grid-template-columns: 1fr; } }
 
     /* ── Wizard Footer (nav buttons) ────────────────────────────────── */
 
@@ -613,7 +622,7 @@
 
     .my-bookings-section {
 
-      padding: 0 5% 4rem;
+      padding: 2rem 5% 4rem;
 
       max-width: 780px; margin: 0 auto;
 
@@ -627,7 +636,47 @@
 
     }
 
-    .no-bookings { color: var(--muted); font-size: 0.9rem; }
+    #appointments-list {
+
+      min-height: 160px;
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: center;
+
+    }
+
+    .no-bookings {
+
+      display: inline-flex;
+
+      align-items: center;
+
+      justify-content: center;
+
+      padding: 1.4rem 1.6rem;
+
+      width: 100%;
+
+      max-width: 540px;
+
+      border-radius: var(--r);
+
+      border: 1px solid var(--border);
+
+      background: var(--card);
+
+      color: var(--muted);
+
+      font-size: 0.95rem;
+
+      text-align: center;
+
+      box-shadow: 0 8px 20px rgba(0,0,0,0.04);
+
+    }
 
     .appointment-card {
 
@@ -929,6 +978,30 @@
             <span class="label">Duration</span>
             <span class="value" id="sum-duration">—</span>
           </div>
+          <div class="summary-row">
+            <span class="label">Vehicle</span>
+            <span class="value" id="sum-vehicle">—</span>
+          </div>
+        </div>
+        <div class="vehicle-select-grid">
+          <div class="name-field-wrapper">
+            <label for="vehicle-make">Vehicle make</label>
+            <select id="vehicle-make">
+              <option value="">Select make</option>
+            </select>
+          </div>
+          <div class="name-field-wrapper">
+            <label for="vehicle-model">Vehicle model</label>
+            <select id="vehicle-model" disabled>
+              <option value="">Select model</option>
+            </select>
+          </div>
+        </div>
+        <div class="name-field-wrapper">
+          <label for="vehicle-year">Vehicle year</label>
+          <select id="vehicle-year">
+            <option value="">Select year</option>
+          </select>
         </div>
         <div class="name-field-wrapper">
           <label for="customer-name">Your name (for our records)</label>
@@ -944,6 +1017,7 @@
           <h3>Appointment Confirmed!</h3>
           <p>Your appointment has been booked and added to our calendar.<br>
              We'll see you soon!</p>
+          <p class="email-confirmation" id="email-confirmation-message" style="display:none; margin-top: .75rem; color: var(--dark);"></p>
           <div class="booking-id" id="booking-id-display"></div>
           <button class="btn-reset" id="btn-book-another">Book Another</button>
         </div>
@@ -1052,6 +1126,19 @@ const SERVICE_ICONS = {
   general_repair:'🚗',
 };
 
+const VEHICLE_OPTIONS = {
+  Honda: ['Civic', 'Accord', 'CR-V', 'Pilot'],
+  Toyota: ['Corolla', 'Camry', 'RAV4', 'Highlander'],
+  Ford: ['F-150', 'Escape', 'Explorer', 'Mustang'],
+  Chevrolet: ['Silverado', 'Equinox', 'Malibu', 'Tahoe'],
+  Nissan: ['Altima', 'Sentra', 'Rogue', 'Pathfinder'],
+  Jeep: ['Wrangler', 'Grand Cherokee', 'Cherokee'],
+  BMW: ['3 Series', '5 Series', 'X3', 'X5'],
+  Subaru: ['Impreza', 'Outback', 'Forester', 'Crosstrek'],
+  Hyundai: ['Elantra', 'Sonata', 'Tucson', 'Santa Fe'],
+  Kia: ['Soul', 'Sportage', 'Sorento', 'Forte'],
+};
+
 /* ─────────────────────────────────────────────────────────────────
    State
 ───────────────────────────────────────────────────────────────── */
@@ -1150,6 +1237,8 @@ async function initWizard() {
   });
 
   // Load services
+  initVehicleSelectors();
+
   try {
     const res  = await fetch(`${BOOKING_API}services`);
     const data = await res.json();
@@ -1232,15 +1321,24 @@ function goToStep(step) {
 
 function checkNextEnabled() {
   const btn = document.getElementById('btn-next');
-  if (!btn) return;
-  const allowed = {
-    1: () => !!selectedService,
-    2: () => !!selectedDate,
-    3: () => !!selectedSlot,
-    4: () => true,
-  };
-  const check = allowed[currentStep];
-  btn.disabled = check ? !check() : true;
+  if (btn) {
+    const allowed = {
+      1: () => !!selectedService,
+      2: () => !!selectedDate,
+      3: () => !!selectedSlot,
+      4: () => true,
+    };
+    const check = allowed[currentStep];
+    btn.disabled = check ? !check() : true;
+  }
+
+  const confirmBtn = document.getElementById('btn-confirm');
+  if (confirmBtn) {
+    const vehicleMakeModel = getSelectedVehicle();
+    const vehicleYear = document.getElementById('vehicle-year')?.value.trim();
+    const vehicleValid = !!vehicleMakeModel && isValidVehicleYear(vehicleYear);
+    confirmBtn.disabled = currentStep === 4 && !(selectedSlot && vehicleValid);
+  }
 }
 
 document.getElementById('btn-next').addEventListener('click', () => {
@@ -1325,11 +1423,67 @@ function renderSlots(slots) {
 /* ─────────────────────────────────────────────────────────────────
    Populate confirmation summary
 ───────────────────────────────────────────────────────────────── */
+function getSelectedVehicle() {
+  const make  = document.getElementById('vehicle-make')?.value;
+  const model = document.getElementById('vehicle-model')?.value;
+  return make && model ? `${make} ${model}` : '';
+}
+
+function isValidVehicleYear(yearStr) {
+  const year = Number(yearStr);
+  const currentYear = new Date().getFullYear();
+  return /^[0-9]{4}$/.test(yearStr) && year >= 1900 && year <= currentYear + 1;
+}
+
+function initVehicleSelectors() {
+  const makeEl = document.getElementById('vehicle-make');
+  const modelEl = document.getElementById('vehicle-model');
+  const yearEl = document.getElementById('vehicle-year');
+  const currentYear = new Date().getFullYear();
+
+  const yearOptions = ['<option value="">Select year</option>'];
+  for (let y = currentYear + 1; y >= 1900; y--) {
+    yearOptions.push(`<option value="${y}">${y}</option>`);
+  }
+  yearEl.innerHTML = yearOptions.join('');
+
+  makeEl.innerHTML = `<option value="">Select make</option>${Object.keys(VEHICLE_OPTIONS)
+    .map(make => `<option value="${make}">${make}</option>`)
+    .join('')}`;
+  modelEl.innerHTML = '<option value="">Select model</option>';
+  modelEl.disabled = true;
+
+  makeEl.addEventListener('change', () => {
+    const selectedMake = makeEl.value;
+    modelEl.innerHTML = '<option value="">Select model</option>';
+    if (selectedMake) {
+      VEHICLE_OPTIONS[selectedMake].forEach(model => {
+        const option = document.createElement('option');
+        option.value = model;
+        option.textContent = model;
+        modelEl.appendChild(option);
+      });
+      modelEl.disabled = false;
+    } else {
+      modelEl.disabled = true;
+    }
+    checkNextEnabled();
+  });
+
+  modelEl.addEventListener('change', checkNextEnabled);
+  yearEl.addEventListener('change', checkNextEnabled);
+}
+
 function populateConfirmSummary() {
+  const vehicleMakeModel = getSelectedVehicle();
+  const vehicleYear = document.getElementById('vehicle-year')?.value.trim();
   document.getElementById('sum-service').textContent  = selectedService?.name ?? '—';
   document.getElementById('sum-date').textContent     = formatDateDisplay(selectedDate);
   document.getElementById('sum-time').textContent     = selectedSlot?.display ?? '—';
   document.getElementById('sum-duration').textContent = `${selectedService?.duration} minutes`;
+  document.getElementById('sum-vehicle').textContent  = vehicleMakeModel
+    ? `${vehicleYear ? vehicleYear + ' ' : ''}${vehicleMakeModel}`
+    : '—';
   document.getElementById('booking-error').classList.remove('show');
 }
 
@@ -1346,6 +1500,13 @@ document.getElementById('btn-confirm').addEventListener('click', async () => {
   try {
     const idToken = await currentUser.getIdToken();
     const name    = document.getElementById('customer-name').value.trim() || currentUser.email;
+    const vehicleMakeModel = getSelectedVehicle();
+    const vehicleYear      = document.getElementById('vehicle-year').value.trim();
+    const currentYear = new Date().getFullYear();
+
+    if (!vehicleMakeModel || !vehicleYear || !isValidVehicleYear(vehicleYear)) {
+      throw new Error(`Please provide your vehicle make/model and a valid year between 1900 and ${currentYear + 1}.`);
+    }
 
     const res = await fetch(`${BOOKING_API}book`, {
       method: 'POST',
@@ -1354,11 +1515,13 @@ document.getElementById('btn-confirm').addEventListener('click', async () => {
         'Authorization': `Bearer ${idToken}`,
       },
       body: JSON.stringify({
-        date:         selectedDate,
-        start:        selectedSlot.start,
-        end:          selectedSlot.end,
-        service:      selectedService.key,
-        customerName: name,
+        date:              selectedDate,
+        start:             selectedSlot.start,
+        end:               selectedSlot.end,
+        service:           selectedService.key,
+        customerName:      name,
+        vehicleMakeModel,
+        vehicleYear,
       }),
     });
 
@@ -1369,6 +1532,13 @@ document.getElementById('btn-confirm').addEventListener('click', async () => {
     // Show success screen
     document.getElementById('booking-id-display').textContent =
       `Booking ID: ${data.bookingId}`;
+    const emailMsg = document.getElementById('email-confirmation-message');
+    if (emailMsg) {
+      emailMsg.textContent = data.emailSent
+        ? 'A confirmation email has been sent to your address.'
+        : 'Your appointment is confirmed. We were unable to send the confirmation email right now.';
+      emailMsg.style.display = 'block';
+    }
     document.querySelectorAll('.wizard-panel').forEach(p => p.classList.remove('active'));
     document.getElementById('panel-success').classList.add('active');
     document.getElementById('wizard-footer').style.display = 'none';
@@ -1399,6 +1569,7 @@ function resetWizard() {
   currentStep     = 1;
   document.querySelectorAll('.service-option').forEach(el => el.classList.remove('selected'));
   document.getElementById('customer-name').value = '';
+  document.getElementById('email-confirmation-message').style.display = 'none';
   document.getElementById('wizard-footer').style.display = '';
   goToStep(1);
   // Re-init date

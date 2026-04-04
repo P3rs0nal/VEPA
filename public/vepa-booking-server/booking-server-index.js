@@ -7,6 +7,7 @@ const express  = require('express');
 const cors     = require('cors');
 const { google } = require('googleapis');
 const admin    = require('firebase-admin');
+const nodemailer = require('nodemailer');
 const { DateTime, Duration } = require('luxon');
 
 // ─── Firebase Admin Init ──────────────────────────────────────────────────────
@@ -23,6 +24,21 @@ const gcalAuth = new google.auth.GoogleAuth({
 });
 const calendar = google.calendar({ version: 'v3', auth: gcalAuth });
 const CALENDAR_ID = process.env.GOOGLE_CALENDAR_ID; // e.g. abc123@group.calendar.google.com
+
+const EMAIL_HOST = process.env.EMAIL_HOST;
+const EMAIL_PORT = Number(process.env.EMAIL_PORT || 587);
+const EMAIL_USER = process.env.EMAIL_USER;
+const EMAIL_PASS = process.env.EMAIL_PASS;
+const EMAIL_FROM = process.env.EMAIL_FROM || EMAIL_USER;
+
+const emailTransporter = (EMAIL_HOST && EMAIL_USER && EMAIL_PASS)
+  ? nodemailer.createTransport({
+      host: EMAIL_HOST,
+      port: EMAIL_PORT,
+      secure: EMAIL_PORT === 465,
+      auth: { user: EMAIL_USER, pass: EMAIL_PASS },
+    })
+  : null;
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const TZ = 'America/New_York';
@@ -287,12 +303,20 @@ app.get('/availability', async (req, res) => {
  *   5. Save booking document to Firestore.
  */
 app.post('/book', verifyToken, async (req, res) => {
-  const { date, start, end, service, customerName } = req.body;
+  const { date, start, end, service, customerName, vehicleMakeModel, vehicleYear } = req.body;
   const { uid, email } = req.user;
 
   // ── Input validation ──
   if (!date || !start || !end || !service)
     return res.status(400).json({ error: 'Missing required fields: date, start, end, service.' });
+  if (!vehicleMakeModel || !vehicleYear)
+    return res.status(400).json({ error: 'Vehicle make/model and year are required.' });
+  if (!/^[0-9]{4}$/.test(String(vehicleYear)))
+    return res.status(400).json({ error: 'Please provide a valid 4-digit vehicle year.' });
+  const year = Number(vehicleYear);
+  const currentYear = DateTime.now().setZone(TZ).year;
+  if (year < 1900 || year > currentYear + 1)
+    return res.status(400).json({ error: `Please provide a valid vehicle year between 1900 and ${currentYear + 1}.` });
 
   const serviceInfo = SERVICES[service];
   if (!serviceInfo)
@@ -346,19 +370,22 @@ app.post('/book', verifyToken, async (req, res) => {
     await bookingRef.set({
       uid,
       email,
-      name:        customerName || email,
+      name:            customerName || email,
       service,
-      serviceName: serviceInfo.name,
-      duration:    serviceInfo.duration,
+      serviceName:     serviceInfo.name,
+      duration:        serviceInfo.duration,
+      vehicleMakeModel: vehicleMakeModel || null,
+      vehicleYear:      vehicleYear || null,
       date,
       start,
       end,
-      status:      'pending',          // will be updated to 'confirmed' below
-      googleEventId: null,
-      createdAt:   admin.firestore.FieldValue.serverTimestamp(),
+      status:          'pending',          // will be updated to 'confirmed' below
+      googleEventId:   null,
+      createdAt:       admin.firestore.FieldValue.serverTimestamp(),
     });
 
     let googleEventId = null;
+    let emailSent = false;
 
     try {
       // ── STEP 4: Create Google Calendar event ──
@@ -366,13 +393,15 @@ app.post('/book', verifyToken, async (req, res) => {
         calendarId: CALENDAR_ID,
         sendUpdates: 'all', 
         requestBody: {
-          summary: `${serviceInfo.name} – ${customerName || email}`,
+          summary: `${serviceInfo.name} – ${customerName || email}${vehicleMakeModel ? ` – ${vehicleMakeModel} ${vehicleYear || ''}` : ''}`,
           description: [
             `Service:  ${serviceInfo.name} (${serviceInfo.duration} min)`,
             `Customer: ${customerName || 'N/A'}`,
+            vehicleMakeModel ? `Vehicle:  ${vehicleMakeModel}` : null,
+            vehicleYear ? `Year:     ${vehicleYear}` : null,
             `Email:    ${email}`,
             `Booking:  ${bookingRef.id}`,
-          ].join('\n'),
+          ].filter(Boolean).join('\n'),
           start: { dateTime: start, timeZone: TZ },
           end:   { dateTime: end,   timeZone: TZ },
           colorId: '2', // sage green – visually distinct on the calendar
@@ -389,10 +418,53 @@ app.post('/book', verifyToken, async (req, res) => {
     // ── STEP 5: Update Firestore record to confirmed ──
     await bookingRef.update({ status: 'confirmed', googleEventId });
 
+    if (emailTransporter) {
+      try {
+        const startTime = DateTime.fromISO(start, { zone: TZ });
+        const appointmentDate = startTime.toLocaleString(DateTime.DATE_FULL);
+        const appointmentTime = startTime.toLocaleString(DateTime.TIME_SIMPLE);
+        await emailTransporter.sendMail({
+          from: EMAIL_FROM,
+          to: email,
+          subject: `VEPA Appointment Confirmed for ${appointmentDate} at ${appointmentTime}`,
+          text: [
+            `Hello ${customerName || email},`,
+            '',
+            `Your appointment has been confirmed. Here are the details:`,
+            `Service: ${serviceInfo.name}`,
+            `Vehicle: ${vehicleMakeModel || 'N/A'}`,
+            `Year: ${vehicleYear || 'N/A'}`,
+            `Date: ${appointmentDate}`,
+            `Time: ${appointmentTime}`,
+            `Duration: ${serviceInfo.duration} minutes`,
+            '',
+            `If you need to reschedule, please contact us.`,
+          ].join('\n'),
+          html: [
+            `<p>Hello ${customerName || email},</p>`,
+            `<p>Your appointment has been confirmed. Here are the details:</p>`,
+            `<ul>`,
+            `<li><strong>Service:</strong> ${serviceInfo.name}</li>`,
+            `<li><strong>Vehicle:</strong> ${vehicleMakeModel || 'N/A'}</li>`,
+            `<li><strong>Year:</strong> ${vehicleYear || 'N/A'}</li>`,
+            `<li><strong>Date:</strong> ${appointmentDate}</li>`,
+            `<li><strong>Time:</strong> ${appointmentTime}</li>`,
+            `<li><strong>Duration:</strong> ${serviceInfo.duration} minutes</li>`,
+            `</ul>`,
+            `<p>If you need to reschedule, please contact us.</p>`,
+          ].join(''),
+        });
+        emailSent = true;
+      } catch (emailErr) {
+        console.error('Confirmation email failed:', emailErr.message);
+      }
+    }
+
     return res.json({
       success:   true,
       bookingId: bookingRef.id,
       eventId:   googleEventId,
+      emailSent: emailSent,
       message:   `Your ${serviceInfo.name} appointment has been confirmed.`,
     });
 
