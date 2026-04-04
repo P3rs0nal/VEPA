@@ -303,7 +303,7 @@ app.get('/availability', async (req, res) => {
  *   5. Save booking document to Firestore.
  */
 app.post('/book', verifyToken, async (req, res) => {
-  const { date, start, end, service, customerName, vehicleMakeModel, vehicleYear } = req.body;
+  const { date, start, end, service, customerName, vehicleMakeModel, vehicleYear, additionalNotes } = req.body;
   const { uid, email } = req.user;
 
   // ── Input validation ──
@@ -376,6 +376,7 @@ app.post('/book', verifyToken, async (req, res) => {
       duration:        serviceInfo.duration,
       vehicleMakeModel: vehicleMakeModel || null,
       vehicleYear:      vehicleYear || null,
+      additionalNotes:  additionalNotes || null,
       date,
       start,
       end,
@@ -399,6 +400,7 @@ app.post('/book', verifyToken, async (req, res) => {
             `Customer: ${customerName || 'N/A'}`,
             vehicleMakeModel ? `Vehicle:  ${vehicleMakeModel}` : null,
             vehicleYear ? `Year:     ${vehicleYear}` : null,
+            additionalNotes ? `Notes:   ${additionalNotes}` : null,
             `Email:    ${email}`,
             `Booking:  ${bookingRef.id}`,
           ].filter(Boolean).join('\n'),
@@ -434,12 +436,13 @@ app.post('/book', verifyToken, async (req, res) => {
             `Service: ${serviceInfo.name}`,
             `Vehicle: ${vehicleMakeModel || 'N/A'}`,
             `Year: ${vehicleYear || 'N/A'}`,
+            additionalNotes ? `Notes: ${additionalNotes}` : null,
             `Date: ${appointmentDate}`,
             `Time: ${appointmentTime}`,
             `Duration: ${serviceInfo.duration} minutes`,
             '',
             `If you need to reschedule, please contact us.`,
-          ].join('\n'),
+          ].filter(Boolean).join('\n'),
           html: [
             `<p>Hello ${customerName || email},</p>`,
             `<p>Your appointment has been confirmed. Here are the details:</p>`,
@@ -447,12 +450,13 @@ app.post('/book', verifyToken, async (req, res) => {
             `<li><strong>Service:</strong> ${serviceInfo.name}</li>`,
             `<li><strong>Vehicle:</strong> ${vehicleMakeModel || 'N/A'}</li>`,
             `<li><strong>Year:</strong> ${vehicleYear || 'N/A'}</li>`,
+            additionalNotes ? `<li><strong>Notes:</strong> ${additionalNotes.replace(/\n/g, '<br>')}</li>` : null,
             `<li><strong>Date:</strong> ${appointmentDate}</li>`,
             `<li><strong>Time:</strong> ${appointmentTime}</li>`,
             `<li><strong>Duration:</strong> ${serviceInfo.duration} minutes</li>`,
             `</ul>`,
             `<p>If you need to reschedule, please contact us.</p>`,
-          ].join(''),
+          ].filter(Boolean).join(''),
         });
         emailSent = true;
       } catch (emailErr) {
