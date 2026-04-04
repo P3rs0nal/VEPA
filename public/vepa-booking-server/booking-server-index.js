@@ -68,7 +68,7 @@ app.use(cors({
     'http://127.0.0.1:5501',
     'http://localhost:3000',
   ],
-  methods: ['GET', 'POST', 'OPTIONS'],
+  methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 app.use(express.json());
@@ -235,14 +235,37 @@ app.get('/availability', async (req, res) => {
     const dayEnd   = DateTime.fromISO(`${date}T23:59:59`, { zone: TZ }).toUTC().toISO();
 
     const busyPeriods = await getCalendarBusy(dayStart, dayEnd);
+    // Generate all possible slots
     const slots = generateSlots(date, hours.open, hours.close, serviceInfo.duration, busyPeriods);
 
+    // ── 48-hour minimum booking window ──
+    const now = DateTime.now().setZone(TZ);
+    const minBookingTime = now.plus({ hours: 48 });
+
+    console.log('Availability check:', { date, now: now.toISO(), minBookingTime: minBookingTime.toISO() });
+
+    // Filter out slots that are too soon
+    const filteredSlots = slots.filter(slot => {
+      const slotTime = DateTime.fromISO(slot.start).setZone(TZ);
+      const isValid = slotTime >= minBookingTime;
+      if (!isValid) console.log('Filtered out slot:', slot.start, slotTime.toISO());
+      return isValid;
+    });
+
+    // Optional: message if everything is filtered out
+    let message = null;
+    if (filteredSlots.length === 0) {
+      message = 'No available slots (must book at least 48 hours in advance).';
+    }
+
+    // Return response
     return res.json({
       date,
       service:  serviceInfo,
       hours:    hours,
-      slots,
-      count:    slots.length,
+      slots:    filteredSlots,
+      count:    filteredSlots.length,
+      message,
     });
 
   } catch (err) {
@@ -276,8 +299,19 @@ app.post('/book', verifyToken, async (req, res) => {
     return res.status(400).json({ error: `Unknown service "${service}".` });
 
   // Validate that start/end match expected duration (prevent tampering)
-  const startDT    = DateTime.fromISO(start);
-  const endDT      = DateTime.fromISO(end);
+  const startDT    = DateTime.fromISO(start).setZone(TZ);
+  const endDT      = DateTime.fromISO(end).setZone(TZ);
+  const now = DateTime.now().setZone(TZ);
+  const minBookingTime = now.plus({ hours: 48 });
+
+  console.log('Booking attempt:', { start, end, now: now.toISO(), minBookingTime: minBookingTime.toISO(), startDT: startDT.toISO() });
+
+  if (startDT < minBookingTime) {
+    console.log('Rejected: too soon');
+    return res.status(400).json({
+      error: 'Appointments must be booked at least 48 hours in advance.'
+    });
+  }
   const expectedEnd = startDT.plus({ minutes: serviceInfo.duration });
   if (Math.abs(endDT.diff(expectedEnd, 'minutes').minutes) > 1)
     return res.status(400).json({ error: 'Slot times do not match service duration.' });
@@ -330,6 +364,7 @@ app.post('/book', verifyToken, async (req, res) => {
       // ── STEP 4: Create Google Calendar event ──
       const event = await calendar.events.insert({
         calendarId: CALENDAR_ID,
+        sendUpdates: 'all', 
         requestBody: {
           summary: `${serviceInfo.name} – ${customerName || email}`,
           description: [
