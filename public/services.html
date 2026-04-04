@@ -1504,12 +1504,5 @@ setInterval(() => {
 
 window.addEventListener('load', () => setTimeout(() => document.getElementById('preloader').classList.add('done'), 900));
 </script>
-  setInterval(() => {
-    vi = (vi+1) % vids.length;
-    const nxt = v1.classList.contains('on') ? v2 : v1, cur = v1.classList.contains('on') ? v1 : v2;
-    nxt.src = vids[vi]; nxt.play().catch(()=>{});
-    nxt.onloadeddata = () => { cur.classList.remove('on'); nxt.classList.add('on'); };
-  }, 5000);
-</script>
 </body>
 </html>
