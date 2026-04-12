@@ -5,6 +5,8 @@
   <link rel="shortcut icon" href="icons/favicon.ico">
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Services & Booking – VEPA AutoCare</title>
+  <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+  <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Nunito+Sans:opsz,wght@6..12,400;6..12,500;6..12,600;6..12,700&display=swap" rel="stylesheet">
@@ -746,7 +748,7 @@
     .why-sec{padding:5.5rem 7%;background:var(--card);}
     .why-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:2rem;margin-top:3rem;}
     .why-item{text-align:center;padding:1.5rem;}
-    .why-ico{font-size:2.5rem;margin-bottom:1rem;}
+    .why-ico{font-size:3rem;margin-bottom:1rem;}
     .why-title{font-family:var(--fd);font-size:1.2rem;font-weight:700;text-transform:uppercase;color:var(--dark);margin-bottom:.5rem;}
     .why-desc{font-size:.85rem;color:var(--muted);line-height:1.6;}
 
@@ -921,22 +923,23 @@
   <div class="sec-title">Our Promise to You</div>
   <div class="why-grid">
     <div class="why-item">
-      <div class="why-ico">🤝</div>
+      <ion-icon name="cash-outline" class="why-ico"></ion-icon>
       <div class="why-title">Honest Pricing</div>
       <p class="why-desc">No surprise charges. We explain every repair and cost upfront before we start.</p>
     </div>
     <div class="why-item">
-      <div class="why-ico">👨‍👩‍👧</div>
+      <ion-icon name="storefront-outline" class="why-ico"></ion-icon>
+
       <div class="why-title">Family Owned</div>
       <p class="why-desc">Locally owned and operated since 2022. Your neighbors, not a franchise.</p>
     </div>
     <div class="why-item">
-      <div class="why-ico">⚡</div>
+      <ion-icon name="flash-outline" class="why-ico"></ion-icon>
       <div class="why-title">Fast Turnaround</div>
       <p class="why-desc">We respect your time. Most services are completed same-day when possible.</p>
     </div>
     <div class="why-item">
-      <div class="why-ico">🛡️</div>
+      <ion-icon name="shield-half-outline" class="why-ico"></ion-icon>
       <div class="why-title">Quality Parts</div>
       <p class="why-desc">We use quality OEM and aftermarket parts, nothing substandard on your vehicle.</p>
     </div>
@@ -1170,24 +1173,43 @@ const BOOKING_API = 'https://vepa-calendar.onrender.com/'; // ← CHANGE THIS
    Service icons (keyed by service key from the API)
 ───────────────────────────────────────────────────────────────── */
 const SERVICE_ICONS = {
-  oil_change:    '🔧',
-  tire_rotation: '🔄',
-  inspection:    '🔍',
-  brake_service: '🛞',
-  general_repair:'🚗',
+  oil_change:    '<ion-icon name="color-fill-outline"></ion-icon>',
+  tire_rotation: '<ion-icon name="refresh-outline"></ion-icon>',
+  inspection:    '<ion-icon name="search-outline"></ion-icon>',
+  brake_service: '<ion-icon name="stop-outline"></ion-icon>',
+  general_repair:'<ion-icon name="build-outline"></ion-icon>',
 };
 
 const VEHICLE_OPTIONS = {
-  Honda: ['Civic', 'Accord', 'CR-V', 'Pilot'],
-  Toyota: ['Corolla', 'Camry', 'RAV4', 'Highlander'],
-  Ford: ['F-150', 'Escape', 'Explorer', 'Mustang'],
-  Chevrolet: ['Silverado', 'Equinox', 'Malibu', 'Tahoe'],
-  Nissan: ['Altima', 'Sentra', 'Rogue', 'Pathfinder'],
-  Jeep: ['Wrangler', 'Grand Cherokee', 'Cherokee'],
-  BMW: ['3 Series', '5 Series', 'X3', 'X5'],
-  Subaru: ['Impreza', 'Outback', 'Forester', 'Crosstrek'],
-  Hyundai: ['Elantra', 'Sonata', 'Tucson', 'Santa Fe'],
-  Kia: ['Soul', 'Sportage', 'Sorento', 'Forte'],
+  Acura: ['ILX', 'TLX', 'RDX', 'MDX', 'NSX'],
+  Audi: ['A3', 'A4', 'A5', 'A6', 'A7', 'A8', 'Q3', 'Q5', 'Q7', 'Q8', 'TT', 'R8'],
+  BMW: ['1 Series', '2 Series', '3 Series', '4 Series', '5 Series', '6 Series', '7 Series', '8 Series', 'X1', 'X2', 'X3', 'X4', 'X5', 'X6', 'X7', 'Z4', 'i3', 'i8'],
+  Buick: ['Enclave', 'Encore', 'Envision', 'LaCrosse', 'Regal'],
+  Cadillac: ['ATS', 'CT4', 'CT5', 'CT6', 'CTS', 'Escalade', 'XT4', 'XT5', 'XT6', 'XTS'],
+  Chevrolet: ['Blazer', 'Bolt', 'Camaro', 'Colorado', 'Corvette', 'Cruze', 'Equinox', 'Express', 'Impala', 'Malibu', 'Silverado', 'Sonic', 'Spark', 'Suburban', 'Tahoe', 'Trailblazer', 'Traverse', 'Trax', 'Volt'],
+  Chrysler: ['200', '300', 'Pacifica', 'Voyager'],
+  Dodge: ['Avenger', 'Caliber', 'Caravan', 'Challenger', 'Charger', 'Dart', 'Durango', 'Journey', 'Nitro', 'Ram', 'Viper'],
+  Ford: ['Bronco', 'C-Max', 'EcoSport', 'Edge', 'Escape', 'Expedition', 'Explorer', 'F-150', 'F-250', 'F-350', 'Fiesta', 'Flex', 'Focus', 'Fusion', 'Mustang', 'Ranger', 'Taurus', 'Transit'],
+  GMC: ['Acadia', 'Canyon', 'Savana', 'Sierra', 'Terrain', 'Yukon', 'Yukon XL'],
+  Honda: ['Accord', 'Civic', 'Clarity', 'CR-V', 'CR-Z', 'Element', 'Fit', 'HR-V', 'Insight', 'Odyssey', 'Passport', 'Pilot', 'Ridgeline'],
+  Hyundai: ['Accent', 'Elantra', 'Genesis', 'Ioniq', 'Kona', 'Nexo', 'Palisade', 'Santa Cruz', 'Santa Fe', 'Sonata', 'Tucson', 'Veloster', 'Venue'],
+  Infiniti: ['G35', 'G37', 'Q50', 'Q60', 'Q70', 'QX30', 'QX50', 'QX60', 'QX70', 'QX80'],
+  Jeep: ['Cherokee', 'Compass', 'Gladiator', 'Grand Cherokee', 'Liberty', 'Patriot', 'Renegade', 'Wrangler'],
+  Kia: ['Cadenza', 'Carnival', 'Forte', 'K5', 'Niro', 'Optima', 'Rio', 'Sedona', 'Seltos', 'Sorento', 'Soul', 'Sportage', 'Stinger', 'Telluride'],
+  Lexus: ['CT', 'ES', 'GS', 'GX', 'IS', 'LC', 'LS', 'LX', 'NX', 'RC', 'RX', 'SC', 'UX'],
+  Lincoln: ['Aviator', 'Continental', 'Corsair', 'MKC', 'MKS', 'MKT', 'MKX', 'MKZ', 'Nautilus', 'Navigator'],
+  Mazda: ['3', '6', 'CX-3', 'CX-30', 'CX-5', 'CX-7', 'CX-9', 'MX-5 Miata'],
+  Mercedes: ['A-Class', 'B-Class', 'C-Class', 'CLA', 'CLS', 'E-Class', 'G-Class', 'GLA', 'GLB', 'GLC', 'GLE', 'GLS', 'M-Class', 'S-Class', 'SL', 'SLC', 'SLK'],
+  Mitsubishi: ['Eclipse Cross', 'Galant', 'Lancer', 'Mirage', 'Outlander', 'Outlander Sport', 'RVR'],
+  Nissan: ['370Z', 'Altima', 'Armada', 'Frontier', 'GT-R', 'Juke', 'Kicks', 'Leaf', 'Maxima', 'Murano', 'NV', 'Pathfinder', 'Quest', 'Rogue', 'Rogue Sport', 'Sentra', 'Titan', 'Titan XD', 'Versa', 'Xterra'],
+  Porsche: ['718 Boxster', '718 Cayman', '911', 'Boxster', 'Cayenne', 'Cayman', 'Macan', 'Panamera', 'Taycan'],
+  Ram: ['1500', '2500', '3500', 'ProMaster'],
+  Subaru: ['Ascent', 'BRZ', 'Crosstrek', 'Forester', 'Impreza', 'Legacy', 'Outback', 'WRX', 'XV Crosstrek'],
+  Tesla: ['Model 3', 'Model S', 'Model X', 'Model Y', 'Roadster'],
+  Toyota: ['4Runner', '86', 'Avalon', 'Camry', 'Corolla', 'Cressida', 'Echo', 'FJ Cruiser', 'Highlander', 'Land Cruiser', 'Matrix', 'Mirai', 'Prius', 'RAV4', 'Sequoia', 'Sienna', 'Solara', 'Tacoma', 'Tundra', 'Venza', 'Yaris'],
+  Volkswagen: ['Arteon', 'Atlas', 'Beetle', 'CC', 'Eos', 'Golf', 'GTI', 'Jetta', 'Passat', 'Routan', 'Tiguan', 'Touareg'],
+  Volvo: ['C30', 'C70', 'S40', 'S60', 'S80', 'S90', 'V40', 'V50', 'V60', 'V70', 'V90', 'XC40', 'XC60', 'XC70', 'XC90'],
+  Other: ['Other']
 };
 
 /* ─────────────────────────────────────────────────────────────────
