@@ -2,7 +2,7 @@
   "name": "vepa-booking-server",
   "version": "1.0.0",
   "description": "VEPA AutoCare appointment booking backend – Express + Firebase Admin + Google Calendar",
-  "main": "index.js",
+  "main": "booking-server-index.js",
   "engines": {
     "node": ">=18.0.0"
   },
