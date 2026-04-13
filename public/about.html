@@ -34,14 +34,39 @@
     header{position:sticky;top:0;height:var(--nav-h);background:var(--dark);display:flex;align-items:center;justify-content:space-between;padding:0 2.5rem;z-index:100;border-bottom:1px solid rgba(255,255,255,.06);}
     .logo{font-family:var(--fd);font-size:1.85rem;font-weight:800;letter-spacing:.06em;color:var(--bg);}
     .logo em{color:var(--red);font-style:normal;}
-    .welcome-chip{font-size:.72rem;color:rgba(255,255,255,.45);margin-right:.25rem;}
+    .user-chip {
+  display: none; /* shown via JS */
+  align-items: center;
+  gap: .45rem;
+  background: rgba(255,255,255,.07);
+  border: 1px solid rgba(255,255,255,.11);
+  border-radius: 100px;
+  padding: .3rem .85rem .3rem .35rem;
+  cursor: default;
+  margin-right: .5rem;
+  transition: background .25s ease;
+}
+.user-chip:hover { background: rgba(255,255,255,.11); }
+.user-chip-avatar {
+  width: 26px; height: 26px; border-radius: 50%;
+  background: #C8381A; color: #fff;
+  font-size: .7rem; font-weight: 700; text-transform: uppercase;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.user-chip-email {
+  font-size: .73rem; color: rgba(255,255,255,.75); font-weight: 500;
+  max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+@media(max-width:768px){
+  .user-chip .user-chip-email { display: none; } /* avatar-only on mobile */
+}
     nav ul{list-style:none;display:flex;align-items:center;gap:.15rem;}
     nav ul li a,nav ul li button,.login-toggle{font-family:var(--fb);font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:rgba(255,255,255,.60);background:none;border:none;cursor:pointer;padding:.45rem .8rem;border-radius:6px;transition:color var(--ease),background var(--ease);}
     nav ul li a:hover,nav ul li button:hover,.login-toggle:hover{color:var(--bg);background:rgba(255,255,255,.08);}
     .menu-toggle{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:4px;}
     .menu-toggle span{width:23px;height:2px;background:var(--bg);border-radius:2px;}
     @media(max-width:768px){
-      .welcome-chip{display:none;}
       nav{display:none;position:absolute;top:var(--nav-h);right:0;background:var(--dark);width:220px;padding:1rem;border-left:1px solid rgba(255,255,255,.07);border-bottom:1px solid rgba(255,255,255,.07);}
       nav.open{display:block;}
       nav ul{flex-direction:column;gap:.5rem;}
@@ -157,6 +182,20 @@
     .ft-bot{border-top:1px solid rgba(255,255,255,.07);padding-top:1.4rem;text-align:center;font-size:.78rem;color:rgba(255,255,255,.28);}
     @media(max-width:900px){.story-sec{grid-template-columns:1fr;gap:3rem;}.location-sec{grid-template-columns:1fr;}.story-text{padding-left:0;}.year-badge{bottom:1rem;right:1rem;}}
     @media(max-width:768px){.ft-top{grid-template-columns:1fr;gap:2rem;}}
+    #cookie-banner{
+  position:fixed;bottom:0;left:0;right:0;z-index:900;
+  background:var(--dark);border-top:1px solid rgba(255,255,255,.08);
+  padding:1rem 2rem;display:flex;align-items:center;gap:1.25rem;flex-wrap:wrap;
+  transition:transform .4s ease;
+}
+#cookie-banner.hidden{transform:translateY(110%);}
+.cookie-text{font-size:.8rem;color:rgba(247,243,238,.65);line-height:1.5;flex:1;min-width:220px;}
+.cookie-text a{color:rgba(200,56,26,.9);text-decoration:underline;}
+.cookie-btns{display:flex;gap:.6rem;flex-shrink:0;}
+.btn-cookie-accept{background:var(--red);color:#fff;border:none;padding:.5rem 1.25rem;border-radius:6px;font-family:var(--fb);font-size:.78rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:background .25s ease;}
+.btn-cookie-accept:hover{background:var(--red-dk);}
+.btn-cookie-dismiss{background:transparent;color:rgba(255,255,255,.45);border:1px solid rgba(255,255,255,.15);padding:.5rem 1rem;border-radius:6px;font-family:var(--fb);font-size:.78rem;font-weight:600;cursor:pointer;transition:all .25s ease;}
+.btn-cookie-dismiss:hover{color:rgba(255,255,255,.75);border-color:rgba(255,255,255,.3);}
   </style>
 </head>
 <body>
@@ -171,7 +210,10 @@
 <!-- HEADER -->
 <header>
   <div class="logo">VEPA<em>.</em></div>
-  <span id="welcome-chip" class="welcome-chip" style="display:none"></span>
+   <div class="user-chip" id="user-chip">
+  <div class="user-chip-avatar" id="user-avatar-letter">U</div>
+  <span class="user-chip-email" id="user-chip-email">user@email.com</span>
+</div>
   <div class="menu-toggle" id="menu-toggle"><span></span><span></span><span></span></div>
   <nav id="nav-links">
     <ul>
@@ -324,7 +366,11 @@
       <p><a href="mailto:contact@vepaautocare.com">contact@vepaautocare.com</a></p>
     </div>
   </div>
-  <div class="ft-bot">© 2025 VEPA AutoCare. All Rights Reserved.</div>
+  <div class="ft-bot">
+  © 2025 VEPA AutoCare. All Rights Reserved.
+  &nbsp;·&nbsp;
+  <a href="privacy" style="color:rgba(255,255,255,.38);text-decoration:underline;">Privacy Policy</a>
+</div>
 </footer>
 
 <!-- Login sidebar -->
@@ -357,19 +403,48 @@
   document.getElementById('menu-toggle').addEventListener('click', () => document.getElementById('nav-links').classList.toggle('open'));
   document.querySelector('.login-toggle').addEventListener('click', () => document.getElementById('login-sidebar').style.transform = 'translateX(0)');
   document.getElementById('close-login').addEventListener('click', () => document.getElementById('login-sidebar').style.transform = 'translateX(100%)');
-
+/* ── Cookie banner ── */
+const COOKIE_KEY = 'vepa_cookie_consent';
+const banner     = document.getElementById('cookie-banner');
+if (localStorage.getItem(COOKIE_KEY)) banner.classList.add('hidden');
+document.getElementById('cookie-accept').addEventListener('click',()=>{
+  localStorage.setItem(COOKIE_KEY,'all'); banner.classList.add('hidden');
+});
+document.getElementById('cookie-dismiss').addEventListener('click',()=>{
+  localStorage.setItem(COOKIE_KEY,'essential'); banner.classList.add('hidden');
+});
   onAuthStateChanged(auth, async user => {
-    const lt = document.querySelector('.login-toggle'), sn = document.getElementById('signout-nav'),
-          wc = document.getElementById('welcome-chip'), al = document.getElementById('admin-link');
-    if (user) {
-      lt.style.display = 'none'; sn.style.display = 'inline-flex';
-      wc.textContent = `Hi, ${user.email.split('@')[0]}`; wc.style.display = 'inline';
-      try {
-        const snap = await getDoc(doc(db, "users", user.uid));
-        if (snap.exists() && snap.data().isAdmin) { sessionStorage.setItem('admin-auth','true'); al.style.display='inline-flex'; }
-      } catch(e){}
-    } else { lt.style.display='inline-flex'; sn.style.display='none'; wc.style.display='none'; al.style.display='none'; }
-  });
+  const chip     = document.getElementById('user-chip');
+  const loginLi  = document.querySelector('.login-toggle')?.closest('li') || document.querySelector('.login-toggle');
+  const signoutN = document.getElementById('signout-nav');
+  const al       = document.getElementById('admin-link');
+ 
+
+  
+  if (user) {
+    // Populate chip
+    document.getElementById('user-avatar-letter').textContent = user.email.charAt(0).toUpperCase();
+    document.getElementById('user-chip-email').textContent    = user.email;
+    chip.style.display    = 'flex';
+    if (loginLi) loginLi.style.display = 'none';
+    signoutN.style.display = 'inline-flex';
+ 
+    // Admin check
+    try {
+      const snap = await getDoc(doc(db, 'users', user.uid));
+      if (snap.exists() && snap.data().isAdmin) {
+        sessionStorage.setItem('admin-auth', 'true');
+        if (al) al.style.display = 'inline-flex';
+      }
+    } catch(e) {}
+ 
+  } else {
+    chip.style.display    = 'none';
+    if (loginLi) loginLi.style.display = 'inline-flex';
+    signoutN.style.display = 'none';
+    if (al) al.style.display = 'none';
+  }
+});
   document.getElementById('signout-btn').addEventListener('click', async () => { await signOut(auth); sessionStorage.removeItem('admin-auth'); location.reload(); });
 </script>
 </body>

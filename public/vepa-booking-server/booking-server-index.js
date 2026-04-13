@@ -49,10 +49,10 @@ const TZ = 'America/New_York';
  */
 const SERVICES = {
   oil_change:    { name: 'Oil Change',    duration: 30 },
-  tire_rotation: { name: 'Tire Rotation', duration: 45 },
-  inspection:    { name: 'Inspection',    duration: 60 },
-  brake_service: { name: 'Brake Service', duration: 60 },
-  general_repair:{ name: 'General Repair',duration: 90 },
+  tire_rotation: { name: 'Tire Rotation', duration: 90 },
+  inspection:    { name: 'Inspection',    duration: 30 },
+  brake_service: { name: 'Brake Service', duration: 120 },
+  general_repair:{ name: 'General Repair',duration: 120 },
 };
 
 /**
