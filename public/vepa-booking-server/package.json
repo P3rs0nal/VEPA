@@ -8,7 +8,7 @@
   },
   "scripts": {
     "start": "node booking-server-index.js",
-    "dev":   "nodemon index.js"
+    "dev":   "nodemon booking-server-index.js"
   },
   "dependencies": {
     "cors":           "^2.8.5",
