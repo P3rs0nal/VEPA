@@ -477,10 +477,16 @@ app.get('/bookings', requireAuth, async (req, res) => {
   try {
     const snap = await db.collection('bookings')
       .where('userId', '==', req.user.uid)
-      .where('start',  '>=', new Date().toISOString())
       .orderBy('start', 'asc')
       .get();
-    res.json({ bookings: snap.docs.map(d => ({ id: d.id, ...d.data() })) });
+
+    const now = DateTime.now().toISO();
+
+    const bookings = snap.docs
+      .map(d => ({ id: d.id, ...d.data() }))
+      .filter(b => b.start >= now);
+
+    res.json({ bookings });
   } catch (err) {
     console.error('Fetch bookings error:', err);
     res.status(500).json({ error: 'Could not fetch bookings' });
