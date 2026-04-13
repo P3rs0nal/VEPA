@@ -1,554 +1,543 @@
-/**
- * VEPA AutoCare – Appointment Booking Server
- * Express + Firebase Admin + Google Calendar API (Service Account)
- */
+const express      = require('express');
+const cors         = require('cors');
+const { google }   = require('googleapis');
+const admin        = require('firebase-admin');
+const { DateTime } = require('luxon');
+const nodemailer   = require('nodemailer');
 
-const express  = require('express');
-const cors     = require('cors');
-const { google } = require('googleapis');
-const admin    = require('firebase-admin');
-const nodemailer = require('nodemailer');
-const { DateTime, Duration } = require('luxon');
+const app  = express();
+const PORT = process.env.PORT || 3001;
 
-// ─── Firebase Admin Init ──────────────────────────────────────────────────────
-// Reads the full service-account JSON from an env variable (single-line JSON string)
-const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
+/* ─────────────────────────────────────────────────────────────────
+   Firebase Admin
+───────────────────────────────────────────────────────────────── */
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.cert({
+      projectId:   process.env.FIREBASE_PROJECT_ID,
+      privateKey:  process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+    }),
+  });
+}
 const db = admin.firestore();
 
-// ─── Google Calendar Init ─────────────────────────────────────────────────────
-const gcalCredentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT);
-const gcalAuth = new google.auth.GoogleAuth({
-  credentials: gcalCredentials,
-  scopes: ['https://www.googleapis.com/auth/calendar'],
+/* ─────────────────────────────────────────────────────────────────
+   Nodemailer – Gmail App Password
+   Add these two env vars on Render:
+     GMAIL_USER         = vepaautoshop1904@gmail.com
+     GMAIL_APP_PASSWORD = xxxx xxxx xxxx xxxx  (16-char App Password)
+
+   How to generate the App Password:
+     1. Go to myaccount.google.com → Security
+     2. Enable 2-Step Verification if not already on
+     3. Search "App passwords" → create one named "VEPA Booking Server"
+     4. Copy the 16-character password into the Render env var
+───────────────────────────────────────────────────────────────── */
+const mailer = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_APP_PASSWORD,
+  },
 });
-const calendar = google.calendar({ version: 'v3', auth: gcalAuth });
-const CALENDAR_ID = process.env.GOOGLE_CALENDAR_ID; // e.g. abc123@group.calendar.google.com
 
-const EMAIL_HOST = process.env.EMAIL_HOST;
-const EMAIL_PORT = Number(process.env.EMAIL_PORT || 587);
-const EMAIL_USER = process.env.EMAIL_USER;
-const EMAIL_PASS = process.env.EMAIL_PASS;
-const EMAIL_FROM = process.env.EMAIL_FROM || EMAIL_USER;
+/* Verify connection on startup — visible in Render logs */
+mailer.verify((err) => {
+  if (err) {
+    console.error('[MAILER] Gmail SMTP FAILED:', err.message);
+    console.error('[MAILER] → Check GMAIL_USER and GMAIL_APP_PASSWORD env vars on Render');
+  } else {
+    console.log('[MAILER] Gmail SMTP ready ✓');
+  }
+});
 
-const emailTransporter = (EMAIL_HOST && EMAIL_USER && EMAIL_PASS)
-  ? nodemailer.createTransport({
-      host: EMAIL_HOST,
-      port: EMAIL_PORT,
-      secure: EMAIL_PORT === 465,
-      auth: { user: EMAIL_USER, pass: EMAIL_PASS },
-    })
-  : null;
+async function sendEmail({ to, subject, text, html }) {
+  return mailer.sendMail({
+    from:    `"VEPA AutoCare" <${process.env.GMAIL_USER}>`,
+    to,
+    bcc:     process.env.GMAIL_USER, // shop always gets a copy
+    subject,
+    text,
+    html,
+  });
+}
 
-// ─── Constants ────────────────────────────────────────────────────────────────
-const TZ = 'America/New_York';
-
-/**
- * Service definitions.
- * To add a new service, add an entry here. The key becomes the API value.
- */
-const SERVICES = {
-  oil_change:    { name: 'Oil Change',    duration: 30 },
-  tire_rotation: { name: 'Tire Rotation', duration: 90 },
-  inspection:    { name: 'Inspection',    duration: 30 },
-  brake_service: { name: 'Brake Service', duration: 120 },
-  general_repair:{ name: 'General Repair',duration: 120 },
-};
-
-/**
- * Business hours per day-of-week (0 = Sunday … 6 = Saturday).
- * null means closed.
- */
-const BUSINESS_HOURS = {
-  0: null,                              // Sunday  – CLOSED
-  1: { open: '08:00', close: '17:00' },// Monday
-  2: { open: '08:00', close: '17:00' },// Tuesday
-  3: { open: '08:00', close: '17:00' },// Wednesday
-  4: { open: '08:00', close: '17:00' },// Thursday
-  5: { open: '08:00', close: '17:00' },// Friday
-  6: { open: '09:00', close: '16:00' },// Saturday
-};
-
-const SLOT_INTERVAL   = 30; // minutes between slot start times
-const BUFFER_MINUTES  = 0;  // buffer appended after each appointment (set >0 if needed)
-const MAX_ADVANCE_DAYS = 30; // how far in advance users can book
-
-// ─── Express App ─────────────────────────────────────────────────────────────
-const app = express();
-
+/* ─────────────────────────────────────────────────────────────────
+   CORS
+───────────────────────────────────────────────────────────────── */
 app.use(cors({
   origin: [
-    'https://vepaautocare.com',
-    'https://vepa-24b46.web.app',
-    'http://localhost:5501',
     'http://127.0.0.1:5501',
-    'http://localhost:3000',
+    'http://localhost:5500',
+    'https://vepa-24b46.web.app',
+    'https://vepaautocare.com',
   ],
-  methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
+  methods:        ['GET', 'POST', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 app.use(express.json());
 
-// ─── Auth Middleware ──────────────────────────────────────────────────────────
-/**
- * Verifies Firebase ID token sent in "Authorization: Bearer <token>" header.
- * Attaches decoded token to req.user.
- */
-async function verifyToken(req, res, next) {
-  const header = req.headers.authorization;
-  if (!header?.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Unauthorized – missing token' });
-  }
-  try {
-    req.user = await admin.auth().verifyIdToken(header.split('Bearer ')[1]);
-    next();
-  } catch (err) {
-    console.error('Token verification failed:', err.message);
-    return res.status(401).json({ error: 'Unauthorized – invalid token' });
-  }
-}
+/* ─────────────────────────────────────────────────────────────────
+   Google Calendar
+───────────────────────────────────────────────────────────────── */
+const SCOPES      = ['https://www.googleapis.com/auth/calendar'];
+const CALENDAR_ID = process.env.GOOGLE_CALENDAR_ID || 'primary';
+const TZ          = 'America/New_York';
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-/**
- * Fetch busy windows from Google Calendar for a given UTC time range.
- * Returns an array of { start: ISO, end: ISO } objects.
- */
-async function getCalendarBusy(timeMin, timeMax) {
-  const response = await calendar.freebusy.query({
-    requestBody: {
-      timeMin,
-      timeMax,
-      timeZone: TZ,
-      items: [{ id: CALENDAR_ID }],
+function getCalendarClient() {
+  const auth = new google.auth.GoogleAuth({
+    credentials: {
+      client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+      private_key:  process.env.GOOGLE_SERVICE_ACCOUNT_KEY?.replace(/\\n/g, '\n'),
     },
+    scopes: SCOPES,
   });
-  return response.data.calendars[CALENDAR_ID]?.busy ?? [];
+  return google.calendar({ version: 'v3', auth });
 }
 
-/**
- * Generate available time slots for a given date, service duration, and busy list.
- *
- * Strategy:
- *   - Walk from business-hours open to close in SLOT_INTERVAL increments.
- *   - For each candidate start, compute end = start + durationMin.
- *   - Reject if end exceeds close time.
- *   - Reject if the window [start, end] overlaps any busy period (+ buffer).
- *   - Return accepted slots with ISO start/end and display label.
- */
-function generateSlots(date, openTime, closeTime, durationMin, busyPeriods) {
-  const dayOpen  = DateTime.fromISO(`${date}T${openTime}:00`, { zone: TZ });
-  const dayClose = DateTime.fromISO(`${date}T${closeTime}:00`, { zone: TZ });
+/* ─────────────────────────────────────────────────────────────────
+   Business hours & services
+───────────────────────────────────────────────────────────────── */
+const BUSINESS_HOURS = {
+  1: { open: 8,  close: 17 }, // Mon
+  2: { open: 8,  close: 17 }, // Tue
+  3: { open: 8,  close: 17 }, // Wed
+  4: { open: 8,  close: 17 }, // Thu
+  5: { open: 8,  close: 17 }, // Fri
+  6: { open: 9,  close: 16 }, // Sat
+  0: null,                     // Sun closed
+};
 
-  const slots  = [];
-  let cursor   = dayOpen;
+const SERVICES = {
+  oil_change:    { name: 'Oil Change',     duration: 30 },
+  tire_rotation: { name: 'Tire Rotation',  duration: 90 },
+  inspection:    { name: 'NY Inspection',  duration: 30 },
+  brake_service: { name: 'Brake Service',  duration: 120 },
+  general_repair:{ name: 'General Repair', duration: 120 },
+};
 
-  while (cursor < dayClose) {
-    const slotEnd = cursor.plus({ minutes: durationMin });
-    if (slotEnd > dayClose) break;                          // doesn't fit before close
-
-    const busy = busyPeriods.some(b => {
-      const bStart = DateTime.fromISO(b.start);
-      const bEnd   = DateTime.fromISO(b.end).plus({ minutes: BUFFER_MINUTES });
-      // Overlap check: slot starts before busy ends AND slot ends after busy starts
-      return cursor < bEnd && slotEnd > bStart;
-    });
-
-    if (!busy) {
-      slots.push({
-        start:   cursor.toISO(),
-        end:     slotEnd.toISO(),
-        display: cursor.setZone(TZ).toLocaleString(DateTime.TIME_SIMPLE), // "9:30 AM"
-      });
-    }
-
-    cursor = cursor.plus({ minutes: SLOT_INTERVAL });
+/* ─────────────────────────────────────────────────────────────────
+   Auth middleware
+───────────────────────────────────────────────────────────────── */
+async function requireAuth(req, res, next) {
+  const header = req.headers.authorization;
+  if (!header?.startsWith('Bearer ')) return res.status(401).json({ error: 'Unauthorized' });
+  try {
+    req.user = await admin.auth().verifyIdToken(header.slice(7));
+    next();
+  } catch {
+    res.status(401).json({ error: 'Invalid token' });
   }
-
-  return slots;
 }
 
-/**
- * Check whether a [start, end] window has a conflict in our own Firestore bookings.
- * This is the second line of defence against race conditions (first is Google Calendar re-check).
- */
-async function hasFirestoreConflict(date, startISO, endISO) {
-  const snap = await db.collection('appointments')
-    .where('date',   '==', date)
-    .where('status', 'in', ['confirmed', 'pending'])
-    .get();
-
-  const start = DateTime.fromISO(startISO);
-  const end   = DateTime.fromISO(endISO);
-
-  return snap.docs.some(doc => {
-    const d  = doc.data();
-    const ds = DateTime.fromISO(d.start);
-    const de = DateTime.fromISO(d.end);
-    return start < de && end > ds;
+/* ─────────────────────────────────────────────────────────────────
+   Helpers
+───────────────────────────────────────────────────────────────── */
+function formatDisplayDate(isoDate) {
+  const [y, m, d] = isoDate.split('-').map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString('en-US', {
+    weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
   });
 }
 
-// ─── Routes ───────────────────────────────────────────────────────────────────
+function formatDisplayTime(isoString) {
+  return DateTime.fromISO(isoString, { zone: TZ }).toFormat('h:mm a');
+}
 
-/** Health check */
-app.get('/', (_req, res) =>
-  res.json({ status: 'VEPA Booking Server running', version: '1.0.0' })
-);
+function buildConfirmationEmail({ customerName, svcName, displayDate, displayTime, duration, vehicleStr, additionalNotes, bookingId }) {
+  const text = [
+    `Hi ${customerName || 'there'},`,
+    '',
+    'Your appointment at VEPA AutoCare is confirmed.',
+    '',
+    `Service:   ${svcName}`,
+    `Date:      ${displayDate}`,
+    `Time:      ${displayTime}`,
+    `Duration:  ${duration} minutes`,
+    `Vehicle:   ${vehicleStr}`,
+    additionalNotes ? `Notes:     ${additionalNotes}` : null,
+    '',
+    `Booking ID: ${bookingId}`,
+    '',
+    'Address: 1904 Western Ave, Albany, NY 12203',
+    'Phone:   (518) 456-5682',
+    '',
+    'To cancel or reschedule, log in at vepaautocare.com/services',
+    'or call us at least 2 hours before your appointment.',
+    '',
+    '— The VEPA AutoCare Team',
+  ].filter(l => l !== null).join('\n');
 
-/**
- * GET /services
- * Returns the list of available service types.
- */
-app.get('/services', (_req, res) => {
-  const list = Object.entries(SERVICES).map(([key, s]) => ({
-    key,
-    name:     s.name,
-    duration: s.duration,
-  }));
-  res.json({ services: list });
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  body{margin:0;padding:0;background:#f4f1ec;font-family:'Helvetica Neue',Arial,sans-serif;}
+  .wrap{max-width:560px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08);}
+  .hdr{background:#1C1917;padding:28px 36px;}
+  .logo{font-family:Georgia,serif;font-size:2rem;font-weight:900;color:#F7F3EE;letter-spacing:.08em;text-transform:uppercase;}
+  .logo span{color:#C8381A;}
+  .hero{background:#C8381A;padding:22px 36px;}
+  .hero h1{color:#fff;font-size:1.4rem;margin:0;font-weight:700;letter-spacing:.03em;text-transform:uppercase;}
+  .body{padding:32px 36px;}
+  .body p{color:#3D3730;font-size:.93rem;line-height:1.7;margin:0 0 14px;}
+  .box{background:#F7F3EE;border-radius:8px;padding:18px 22px;margin:22px 0;border:1px solid #D0C9BE;}
+  .row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #E8E3DA;font-size:.88rem;}
+  .row:last-child{border-bottom:none;}
+  .lbl{color:#9C9389;font-weight:600;text-transform:uppercase;font-size:.68rem;letter-spacing:.1em;padding-top:2px;flex-shrink:0;}
+  .val{color:#1C1917;font-weight:600;text-align:right;padding-left:12px;}
+  .bid{font-family:monospace;font-size:.78rem;color:#9C9389;background:#EDE9E0;padding:7px 11px;border-radius:6px;margin-top:18px;display:inline-block;}
+  .ftr{background:#1C1917;padding:22px 36px;text-align:center;}
+  .ftr p{color:rgba(247,243,238,.35);font-size:.75rem;margin:0;line-height:1.6;}
+  .ftr a{color:rgba(247,243,238,.55);}
+  @media(max-width:600px){.wrap{margin:0;border-radius:0;}.body,.hdr,.hero,.ftr{padding:20px;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hdr"><div class="logo">VEPA<span>.</span></div></div>
+  <div class="hero"><h1>Appointment Confirmed</h1></div>
+  <div class="body">
+    <p>Hi ${customerName || 'there'},</p>
+    <p>Your appointment at <strong>VEPA AutoCare</strong> is confirmed. We look forward to seeing you!</p>
+    <div class="box">
+      <div class="row"><span class="lbl">Service</span><span class="val">${svcName}</span></div>
+      <div class="row"><span class="lbl">Date</span><span class="val">${displayDate}</span></div>
+      <div class="row"><span class="lbl">Time</span><span class="val">${displayTime} &middot; ${duration} min</span></div>
+      <div class="row"><span class="lbl">Vehicle</span><span class="val">${vehicleStr}</span></div>
+      ${additionalNotes ? `<div class="row"><span class="lbl">Notes</span><span class="val">${additionalNotes}</span></div>` : ''}
+    </div>
+    <p>Need to cancel? Log in at <a href="https://vepaautocare.com/services" style="color:#C8381A;font-weight:600;">vepaautocare.com/services</a> or call us at least 2 hours before your appointment.</p>
+    <p style="font-size:.82rem;color:#9C9389;">1904 Western Ave, Albany, NY 12203 &nbsp;&middot;&nbsp; (518) 456-5682</p>
+    <div class="bid">Booking ID: ${bookingId}</div>
+  </div>
+  <div class="ftr">
+    <p>&copy; 2025 VEPA AutoCare &middot; Albany, NY<br>
+    <a href="https://vepaautocare.com/privacy">Privacy Policy</a></p>
+  </div>
+</div>
+</body>
+</html>`;
+
+  return { text, html };
+}
+
+function buildCancellationEmail({ svcName, displayDate, displayTime }) {
+  const text = [
+    'Hi,',
+    '',
+    'Your VEPA AutoCare appointment has been cancelled.',
+    '',
+    `Service: ${svcName}`,
+    `Date:    ${displayDate}`,
+    `Time:    ${displayTime}`,
+    '',
+    'To rebook, visit vepaautocare.com/services or call (518) 456-5682.',
+    '',
+    '— VEPA AutoCare',
+  ].join('\n');
+
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  body{margin:0;padding:0;background:#f4f1ec;font-family:'Helvetica Neue',Arial,sans-serif;}
+  .wrap{max-width:560px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;}
+  .hdr{background:#1C1917;padding:28px 36px;}
+  .logo{font-family:Georgia,serif;font-size:2rem;font-weight:900;color:#F7F3EE;letter-spacing:.08em;text-transform:uppercase;}
+  .logo span{color:#C8381A;}
+  .hero{background:#3D3730;padding:22px 36px;}
+  .hero h1{color:#fff;font-size:1.4rem;margin:0;font-weight:700;text-transform:uppercase;}
+  .body{padding:32px 36px;}
+  .body p{color:#3D3730;font-size:.93rem;line-height:1.7;margin:0 0 14px;}
+  .box{background:#F7F3EE;border-radius:8px;padding:18px 22px;margin:22px 0;border:1px solid #D0C9BE;}
+  .row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #E8E3DA;font-size:.88rem;}
+  .row:last-child{border-bottom:none;}
+  .lbl{color:#9C9389;font-weight:600;text-transform:uppercase;font-size:.68rem;letter-spacing:.1em;}
+  .val{color:#1C1917;font-weight:600;text-align:right;}
+  .ftr{background:#1C1917;padding:22px 36px;text-align:center;}
+  .ftr p{color:rgba(247,243,238,.35);font-size:.75rem;margin:0;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hdr"><div class="logo">VEPA<span>.</span></div></div>
+  <div class="hero"><h1>Appointment Cancelled</h1></div>
+  <div class="body">
+    <p>Your appointment has been cancelled:</p>
+    <div class="box">
+      <div class="row"><span class="lbl">Service</span><span class="val">${svcName}</span></div>
+      <div class="row"><span class="lbl">Date</span><span class="val">${displayDate}</span></div>
+      <div class="row"><span class="lbl">Time</span><span class="val">${displayTime}</span></div>
+    </div>
+    <p>To rebook, visit <a href="https://vepaautocare.com/services" style="color:#C8381A;font-weight:600;">vepaautocare.com/services</a>.</p>
+    <p style="font-size:.82rem;color:#9C9389;">1904 Western Ave, Albany, NY 12203 &nbsp;&middot;&nbsp; (518) 456-5682</p>
+  </div>
+  <div class="ftr"><p>&copy; 2025 VEPA AutoCare &middot; Albany, NY</p></div>
+</div>
+</body>
+</html>`;
+
+  return { text, html };
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   ROUTES
+───────────────────────────────────────────────────────────────── */
+
+/* GET /services */
+app.get('/services', (req, res) => {
+  res.json({
+    services: Object.entries(SERVICES).map(([key, val]) => ({
+      key,
+      name:     val.name,
+      duration: val.duration,
+    })),
+  });
 });
 
-/**
- * GET /availability?date=YYYY-MM-DD&service=oil_change
- *
- * Returns time slots available for the given date & service.
- * No authentication required – anyone can browse availability.
- */
+/* GET /availability?date=YYYY-MM-DD&service=oil_change */
 app.get('/availability', async (req, res) => {
   const { date, service } = req.query;
+  if (!date || !service) return res.status(400).json({ error: 'date and service required' });
 
-  // ── Input validation ──
-  if (!date || !service)
-    return res.status(400).json({ error: 'Both "date" and "service" query params are required.' });
+  const svc = SERVICES[service];
+  if (!svc) return res.status(400).json({ error: 'Unknown service' });
 
-  const serviceInfo = SERVICES[service];
-  if (!serviceInfo)
-    return res.status(400).json({ error: `Unknown service "${service}". Valid: ${Object.keys(SERVICES).join(', ')}` });
-
-  // Validate date format
-  const parsedDate = DateTime.fromISO(date, { zone: TZ });
-  if (!parsedDate.isValid)
-    return res.status(400).json({ error: 'Invalid date. Use YYYY-MM-DD format.' });
-
-  // Prevent booking in the past or too far in the future
-  const today    = DateTime.now().setZone(TZ).startOf('day');
-  const maxDate  = today.plus({ days: MAX_ADVANCE_DAYS });
-  if (parsedDate < today)
-    return res.status(400).json({ error: 'Cannot book appointments in the past.' });
-  if (parsedDate > maxDate)
-    return res.status(400).json({ error: `Cannot book more than ${MAX_ADVANCE_DAYS} days in advance.` });
-
-  // Check business hours for this day
-  const dayOfWeek = parsedDate.weekday % 7; // Luxon: 1=Mon…7=Sun → convert to 0=Sun…6=Sat
-  const hours = BUSINESS_HOURS[dayOfWeek];
-  if (!hours)
-    return res.json({ slots: [], closed: true, message: 'We are closed on this day.' });
+  const dayNum = DateTime.fromISO(date, { zone: TZ }).weekday % 7;
+  const hours  = BUSINESS_HOURS[dayNum];
+  if (!hours) return res.json({ closed: true, slots: [] });
 
   try {
-    // Fetch busy times for entire day (UTC bookends)
-    const dayStart = DateTime.fromISO(`${date}T00:00:00`, { zone: TZ }).toUTC().toISO();
-    const dayEnd   = DateTime.fromISO(`${date}T23:59:59`, { zone: TZ }).toUTC().toISO();
+    const calendar = getCalendarClient();
+    const dayStart = DateTime.fromISO(date, { zone: TZ }).set({ hour: hours.open,  minute: 0, second: 0 });
+    const dayEnd   = DateTime.fromISO(date, { zone: TZ }).set({ hour: hours.close, minute: 0, second: 0 });
 
-    const busyPeriods = await getCalendarBusy(dayStart, dayEnd);
-    // Generate all possible slots
-    const slots = generateSlots(date, hours.open, hours.close, serviceInfo.duration, busyPeriods);
-
-    // ── 48-hour minimum booking window ──
-    const now = DateTime.now().setZone(TZ);
-    const minBookingTime = now.plus({ hours: 48 });
-
-    console.log('Availability check:', { date, now: now.toISO(), minBookingTime: minBookingTime.toISO() });
-
-    // Filter out slots that are too soon
-    const filteredSlots = slots.filter(slot => {
-      const slotTime = DateTime.fromISO(slot.start).setZone(TZ);
-      const isValid = slotTime >= minBookingTime;
-      if (!isValid) console.log('Filtered out slot:', slot.start, slotTime.toISO());
-      return isValid;
+    const fbResp = await calendar.freebusy.query({
+      requestBody: {
+        timeMin:  dayStart.toISO(),
+        timeMax:  dayEnd.toISO(),
+        timeZone: TZ,
+        items:    [{ id: CALENDAR_ID }],
+      },
     });
 
-    // Optional: message if everything is filtered out
-    let message = null;
-    if (filteredSlots.length === 0) {
-      message = 'No available slots (must book at least 48 hours in advance).';
+    const busyPeriods = fbResp.data.calendars?.[CALENDAR_ID]?.busy || [];
+    const slots = [];
+    let cursor  = dayStart;
+
+    while (cursor.plus({ minutes: svc.duration }) <= dayEnd) {
+      const slotEnd  = cursor.plus({ minutes: svc.duration });
+      const overlaps = busyPeriods.some(b => {
+        const bs = DateTime.fromISO(b.start, { zone: TZ });
+        const be = DateTime.fromISO(b.end,   { zone: TZ });
+        return cursor < be && slotEnd > bs;
+      });
+      if (!overlaps) {
+        slots.push({ start: cursor.toISO(), end: slotEnd.toISO(), display: cursor.toFormat('h:mm a') });
+      }
+      cursor = cursor.plus({ minutes: 30 });
     }
 
-    // Return response
-    return res.json({
-      date,
-      service:  serviceInfo,
-      hours:    hours,
-      slots:    filteredSlots,
-      count:    filteredSlots.length,
-      message,
-    });
-
+    res.json({ closed: false, slots });
   } catch (err) {
-    console.error('Availability error:', err.message);
-    return res.status(500).json({ error: 'Failed to fetch availability. Please try again.' });
+    console.error('Availability error:', err);
+    res.status(500).json({ error: 'Could not fetch availability' });
   }
 });
 
-/**
- * POST /book
- * Body: { date, start, end, service, customerName }
- * Headers: Authorization: Bearer <Firebase ID token>
- *
- * Flow:
- *   1. Verify Firebase token.
- *   2. Re-check Google Calendar – immediate slot availability.
- *   3. Check Firestore for concurrent bookings (race condition guard).
- *   4. Insert event on Google Calendar.
- *   5. Save booking document to Firestore.
- */
-app.post('/book', verifyToken, async (req, res) => {
+/* POST /book */
+app.post('/book', requireAuth, async (req, res) => {
   const { date, start, end, service, customerName, vehicleMakeModel, vehicleYear, additionalNotes } = req.body;
-  const { uid, email } = req.user;
 
-  // ── Input validation ──
-  if (!date || !start || !end || !service)
-    return res.status(400).json({ error: 'Missing required fields: date, start, end, service.' });
-  if (!vehicleMakeModel || !vehicleYear)
-    return res.status(400).json({ error: 'Vehicle make/model and year are required.' });
-  if (!/^[0-9]{4}$/.test(String(vehicleYear)))
-    return res.status(400).json({ error: 'Please provide a valid 4-digit vehicle year.' });
-  const year = Number(vehicleYear);
-  const currentYear = DateTime.now().setZone(TZ).year;
-  if (year < 1900 || year > currentYear + 1)
-    return res.status(400).json({ error: `Please provide a valid vehicle year between 1900 and ${currentYear + 1}.` });
-
-  const serviceInfo = SERVICES[service];
-  if (!serviceInfo)
-    return res.status(400).json({ error: `Unknown service "${service}".` });
-
-  // Validate that start/end match expected duration (prevent tampering)
-  const startDT    = DateTime.fromISO(start).setZone(TZ);
-  const endDT      = DateTime.fromISO(end).setZone(TZ);
-  const now = DateTime.now().setZone(TZ);
-  const minBookingTime = now.plus({ hours: 48 });
-
-  console.log('Booking attempt:', { start, end, now: now.toISO(), minBookingTime: minBookingTime.toISO(), startDT: startDT.toISO() });
-
-  if (startDT < minBookingTime) {
-    console.log('Rejected: too soon');
-    return res.status(400).json({
-      error: 'Appointments must be booked at least 48 hours in advance.'
-    });
+  if (!date || !start || !end || !service) {
+    return res.status(400).json({ error: 'Missing required fields' });
   }
-  const expectedEnd = startDT.plus({ minutes: serviceInfo.duration });
-  if (Math.abs(endDT.diff(expectedEnd, 'minutes').minutes) > 1)
-    return res.status(400).json({ error: 'Slot times do not match service duration.' });
 
-  // Validate start is within business hours
-  const parsedDate = DateTime.fromISO(date, { zone: TZ });
-  const dayOfWeek  = parsedDate.weekday % 7;
-  const hours      = BUSINESS_HOURS[dayOfWeek];
-  if (!hours)
-    return res.status(400).json({ error: 'Cannot book on this day – we are closed.' });
+  const svc = SERVICES[service];
+  if (!svc) return res.status(400).json({ error: 'Unknown service' });
 
-  const dayOpen  = DateTime.fromISO(`${date}T${hours.open}:00`,  { zone: TZ });
-  const dayClose = DateTime.fromISO(`${date}T${hours.close}:00`, { zone: TZ });
-  if (startDT < dayOpen || endDT > dayClose)
-    return res.status(400).json({ error: 'Requested slot is outside business hours.' });
+  const userEmail = req.user.email;
+  let emailSent   = false;
+  let emailError  = null;
 
   try {
-    // ── STEP 1: Re-check Google Calendar (prevents race with external calendar changes) ──
-    const busyPeriods = await getCalendarBusy(start, end);
-    if (busyPeriods.length > 0)
-      return res.status(409).json({ error: 'This slot was just taken. Please choose another time.' });
+    const calendar = getCalendarClient();
 
-    // ── STEP 2: Check Firestore for concurrent bookings ──
-    const conflict = await hasFirestoreConflict(date, start, end);
-    if (conflict)
-      return res.status(409).json({ error: 'This slot was just taken. Please choose another time.' });
+    /* Re-check availability */
+    const fbResp = await calendar.freebusy.query({
+      requestBody: { timeMin: start, timeMax: end, timeZone: TZ, items: [{ id: CALENDAR_ID }] },
+    });
+    if ((fbResp.data.calendars?.[CALENDAR_ID]?.busy || []).length > 0) {
+      return res.status(409).json({ error: 'This slot is no longer available. Please choose another time.' });
+    }
 
-    // ── STEP 3: Write a "pending" record to Firestore BEFORE touching Google Calendar ──
-    // This acts as an optimistic lock. A second simultaneous request will see this
-    // document in the conflict check above and be rejected.
-    const bookingRef = db.collection('appointments').doc();
-    await bookingRef.set({
-      uid,
-      email,
-      name:            customerName || email,
+    /* Optimistic lock */
+    const lockKey    = `${userEmail}_${start}`.replace(/[^a-zA-Z0-9_]/g, '_');
+    const pendingRef = db.collection('bookings_pending').doc(lockKey);
+    if ((await pendingRef.get()).exists) {
+      return res.status(409).json({ error: 'This slot is being booked. Please try again in a moment.' });
+    }
+    await pendingRef.set({ lockedAt: admin.firestore.FieldValue.serverTimestamp() });
+
+    /* Create Calendar event */
+    let calEventId = null;
+    try {
+      const desc = [
+        `Service: ${svc.name}`,
+        `Customer: ${customerName || userEmail}`,
+        `Email: ${userEmail}`,
+        vehicleMakeModel ? `Vehicle: ${vehicleYear ? vehicleYear + ' ' : ''}${vehicleMakeModel}` : '',
+        additionalNotes  ? `Notes: ${additionalNotes}` : '',
+      ].filter(Boolean).join('\n');
+
+      const event = await calendar.events.insert({
+        calendarId:  CALENDAR_ID,
+        requestBody: {
+          summary:     `${svc.name} – ${customerName || userEmail}`,
+          description: desc,
+          start:       { dateTime: start, timeZone: TZ },
+          end:         { dateTime: end,   timeZone: TZ },
+          colorId:     '11',
+        },
+      });
+      calEventId = event.data.id;
+    } catch (calErr) {
+      await pendingRef.delete();
+      throw calErr;
+    }
+
+    /* Save to Firestore */
+    const bookingRef = await db.collection('bookings').add({
+      userId:           req.user.uid,
+      userEmail,
+      customerName:     customerName     || userEmail,
       service,
-      serviceName:     serviceInfo.name,
-      duration:        serviceInfo.duration,
-      vehicleMakeModel: vehicleMakeModel || null,
-      vehicleYear:      vehicleYear || null,
-      additionalNotes:  additionalNotes || null,
+      serviceName:      svc.name,
+      duration:         svc.duration,
       date,
       start,
       end,
-      status:          'pending',          // will be updated to 'confirmed' below
-      googleEventId:   null,
-      createdAt:       admin.firestore.FieldValue.serverTimestamp(),
+      vehicleMakeModel: vehicleMakeModel || '',
+      vehicleYear:      vehicleYear      || '',
+      additionalNotes:  additionalNotes  || '',
+      calEventId,
+      status:           'confirmed',
+      createdAt:        admin.firestore.FieldValue.serverTimestamp(),
     });
 
-    let googleEventId = null;
-    let emailSent = false;
+    await pendingRef.delete();
 
+    /* Send email via Nodemailer */
     try {
-      // ── STEP 4: Create Google Calendar event ──
-      const event = await calendar.events.insert({
-        calendarId: CALENDAR_ID,
-        sendUpdates: 'all', 
-        requestBody: {
-          summary: `${serviceInfo.name} – ${customerName || email}${vehicleMakeModel ? ` – ${vehicleMakeModel} ${vehicleYear || ''}` : ''}`,
-          description: [
-            `Service:  ${serviceInfo.name} (${serviceInfo.duration} min)`,
-            `Customer: ${customerName || 'N/A'}`,
-            vehicleMakeModel ? `Vehicle:  ${vehicleMakeModel}` : null,
-            vehicleYear ? `Year:     ${vehicleYear}` : null,
-            additionalNotes ? `Notes:   ${additionalNotes}` : null,
-            `Email:    ${email}`,
-            `Booking:  ${bookingRef.id}`,
-          ].filter(Boolean).join('\n'),
-          start: { dateTime: start, timeZone: TZ },
-          end:   { dateTime: end,   timeZone: TZ },
-          colorId: '2', // sage green – visually distinct on the calendar
-        },
+      const displayDate = formatDisplayDate(date);
+      const displayTime = formatDisplayTime(start);
+      const vehicleStr  = vehicleMakeModel
+        ? `${vehicleYear ? vehicleYear + ' ' : ''}${vehicleMakeModel}`.trim()
+        : 'Not specified';
+
+      const { text, html } = buildConfirmationEmail({
+        customerName, svcName: svc.name, displayDate, displayTime,
+        duration: svc.duration, vehicleStr, additionalNotes, bookingId: bookingRef.id,
       });
-      googleEventId = event.data.id;
-    } catch (calErr) {
-      // If Google Calendar fails, roll back the Firestore record
-      await bookingRef.delete();
-      console.error('Google Calendar insert failed:', calErr.message);
-      return res.status(500).json({ error: 'Failed to create calendar event. Your slot has NOT been reserved.' });
+
+      await sendEmail({
+        to:      userEmail,
+        subject: `Appointment Confirmed – ${svc.name} on ${displayDate}`,
+        text,
+        html,
+      });
+
+      emailSent = true;
+      console.log(`[EMAIL] Confirmation sent → ${userEmail} (booking: ${bookingRef.id})`);
+
+    } catch (emailErr) {
+      emailError = emailErr.message;
+      console.error('[EMAIL] Confirmation failed:', emailErr.message);
     }
 
-    // ── STEP 5: Update Firestore record to confirmed ──
-    await bookingRef.update({ status: 'confirmed', googleEventId });
-
-    if (emailTransporter) {
-      try {
-        const startTime = DateTime.fromISO(start, { zone: TZ });
-        const appointmentDate = startTime.toLocaleString(DateTime.DATE_FULL);
-        const appointmentTime = startTime.toLocaleString(DateTime.TIME_SIMPLE);
-        await emailTransporter.sendMail({
-          from: EMAIL_FROM,
-          to: email,
-          subject: `VEPA Appointment Confirmed for ${appointmentDate} at ${appointmentTime}`,
-          text: [
-            `Hello ${customerName || email},`,
-            '',
-            `Your appointment has been confirmed. Here are the details:`,
-            `Service: ${serviceInfo.name}`,
-            `Vehicle: ${vehicleMakeModel || 'N/A'}`,
-            `Year: ${vehicleYear || 'N/A'}`,
-            additionalNotes ? `Notes: ${additionalNotes}` : null,
-            `Date: ${appointmentDate}`,
-            `Time: ${appointmentTime}`,
-            `Duration: ${serviceInfo.duration} minutes`,
-            '',
-            `If you need to reschedule, please contact us.`,
-          ].filter(Boolean).join('\n'),
-          html: [
-            `<p>Hello ${customerName || email},</p>`,
-            `<p>Your appointment has been confirmed. Here are the details:</p>`,
-            `<ul>`,
-            `<li><strong>Service:</strong> ${serviceInfo.name}</li>`,
-            `<li><strong>Vehicle:</strong> ${vehicleMakeModel || 'N/A'}</li>`,
-            `<li><strong>Year:</strong> ${vehicleYear || 'N/A'}</li>`,
-            additionalNotes ? `<li><strong>Notes:</strong> ${additionalNotes.replace(/\n/g, '<br>')}</li>` : null,
-            `<li><strong>Date:</strong> ${appointmentDate}</li>`,
-            `<li><strong>Time:</strong> ${appointmentTime}</li>`,
-            `<li><strong>Duration:</strong> ${serviceInfo.duration} minutes</li>`,
-            `</ul>`,
-            `<p>If you need to reschedule, please contact us.</p>`,
-          ].filter(Boolean).join(''),
-        });
-        emailSent = true;
-      } catch (emailErr) {
-        console.error('Confirmation email failed:', emailErr.message);
-      }
-    }
-
-    return res.json({
+    res.json({
       success:   true,
       bookingId: bookingRef.id,
-      eventId:   googleEventId,
-      emailSent: emailSent,
-      message:   `Your ${serviceInfo.name} appointment has been confirmed.`,
+      emailSent,
+      // Expose error detail in non-production so you can debug in Render logs
+      ...(emailError && process.env.NODE_ENV !== 'production' ? { emailError } : {}),
     });
 
   } catch (err) {
-    console.error('Booking error:', err.message);
-    return res.status(500).json({ error: 'Booking failed. Please try again.' });
+    console.error('Booking error:', err);
+    res.status(500).json({ error: err.message || 'Booking failed' });
   }
 });
 
-/**
- * GET /bookings
- * Returns upcoming bookings for the authenticated user.
- */
-app.get('/bookings', verifyToken, async (req, res) => {
+/* GET /bookings */
+app.get('/bookings', requireAuth, async (req, res) => {
   try {
-    const now  = DateTime.now().toISO();
-    const snap = await db.collection('appointments')
-      .where('uid',    '==', req.user.uid)
-      .where('status', 'in', ['confirmed', 'pending'])
+    const snap = await db.collection('bookings')
+      .where('userId', '==', req.user.uid)
+      .where('start',  '>=', new Date().toISOString())
       .orderBy('start', 'asc')
-      .limit(10)
       .get();
-
-    const bookings = snap.docs
-      .map(d => ({ id: d.id, ...d.data(), createdAt: d.data().createdAt?.toDate?.()?.toISOString() }))
-      .filter(b => b.start >= now); // only upcoming
-
-    return res.json({ bookings });
+    res.json({ bookings: snap.docs.map(d => ({ id: d.id, ...d.data() })) });
   } catch (err) {
-    console.println("error:L " + bookings)
-    console.error('Fetch bookings error:', err.message);
-    return res.status(500).json({ error: 'Failed to fetch bookings.' });
+    console.error('Fetch bookings error:', err);
+    res.status(500).json({ error: 'Could not fetch bookings' });
   }
 });
 
-/**
- * DELETE /bookings/:id
- * Cancels a booking (deletes Firestore record + Google Calendar event).
- */
-app.delete('/bookings/:id', verifyToken, async (req, res) => {
-  const { id } = req.params;
+/* DELETE /bookings/:id */
+app.delete('/bookings/:id', requireAuth, async (req, res) => {
   try {
-    const docRef = db.collection('appointments').doc(id);
-    const snap   = await docRef.get();
+    const docRef  = db.collection('bookings').doc(req.params.id);
+    const docSnap = await docRef.get();
 
-    if (!snap.exists) return res.status(404).json({ error: 'Booking not found.' });
-    if (snap.data().uid !== req.user.uid)
-      return res.status(403).json({ error: 'Forbidden.' });
+    if (!docSnap.exists) return res.status(404).json({ error: 'Booking not found' });
+    if (docSnap.data().userId !== req.user.uid) return res.status(403).json({ error: 'Forbidden' });
 
-    // Check cancellation window (e.g. must cancel >2 hours before)
-    const apptStart  = DateTime.fromISO(snap.data().start);
-    const hoursUntil = apptStart.diffNow('hours').hours;
-    if (hoursUntil < 2)
-      return res.status(400).json({ error: 'Appointments must be cancelled at least 2 hours in advance.' });
+    const { start, calEventId, serviceName, date } = docSnap.data();
 
-    // Delete Google Calendar event
-    if (snap.data().googleEventId) {
+    if (new Date(start) - new Date() < 2 * 60 * 60 * 1000) {
+      return res.status(400).json({
+        error: 'Appointments cannot be cancelled within 2 hours. Please call us at (518) 456-5682.',
+      });
+    }
+
+    if (calEventId) {
       try {
-        await calendar.events.delete({
-          calendarId: CALENDAR_ID,
-          eventId:    snap.data().googleEventId,
-        });
+        await getCalendarClient().events.delete({ calendarId: CALENDAR_ID, eventId: calEventId });
       } catch (e) {
-        console.warn('Could not delete Google Calendar event:', e.message);
+        console.error('[CAL] Event delete failed (non-fatal):', e.message);
       }
     }
 
-    // Update Firestore status
-    await docRef.update({ status: 'cancelled', cancelledAt: admin.firestore.FieldValue.serverTimestamp() });
+    await docRef.delete();
 
-    return res.json({ success: true, message: 'Appointment cancelled.' });
+    try {
+      const displayDate = formatDisplayDate(date);
+      const displayTime = formatDisplayTime(start);
+      const { text, html } = buildCancellationEmail({ svcName: serviceName, displayDate, displayTime });
+      await sendEmail({
+        to:      req.user.email,
+        subject: `Appointment Cancelled – ${serviceName} on ${displayDate}`,
+        text,
+        html,
+      });
+      console.log(`[EMAIL] Cancellation sent → ${req.user.email}`);
+    } catch (e) {
+      console.error('[EMAIL] Cancellation email failed (non-fatal):', e.message);
+    }
+
+    res.json({ success: true });
   } catch (err) {
-    console.error('Cancel error:', err.message);
-    return res.status(500).json({ error: 'Failed to cancel appointment.' });
+    console.error('Cancel error:', err);
+    res.status(500).json({ error: err.message || 'Cancel failed' });
   }
 });
 
-// ─── Start ────────────────────────────────────────────────────────────────────
-const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-  console.log(`VEPA Booking Server listening on port ${PORT}`);
-  console.log(`Calendar ID: ${CALENDAR_ID ?? '(NOT SET – set GOOGLE_CALENDAR_ID env var)'}`);
-});
+app.get('/', (req, res) => res.send('VEPA Booking API — running'));
+
+app.listen(PORT, () => console.log(`Booking server on port ${PORT}`));
