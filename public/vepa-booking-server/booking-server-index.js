@@ -83,16 +83,12 @@ const SCOPES      = ['https://www.googleapis.com/auth/calendar'];
 const CALENDAR_ID = process.env.GOOGLE_CALENDAR_ID || 'primary';
 const TZ          = 'America/New_York';
 
-function getCalendarClient() {
-  const auth = new google.auth.GoogleAuth({
-    credentials: {
-      client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-      private_key:  process.env.GOOGLE_SERVICE_ACCOUNT_KEY?.replace(/\\n/g, '\n'),
-    },
-    scopes: SCOPES,
-  });
-  return google.calendar({ version: 'v3', auth });
-}
+const serviceAccount = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT);
+
+const auth = new google.auth.GoogleAuth({
+  credentials: serviceAccount,
+  scopes: ['https://www.googleapis.com/auth/calendar'],
+});
 
 /* ─────────────────────────────────────────────────────────────────
    Business hours & services
@@ -120,6 +116,22 @@ const SERVICES = {
 ───────────────────────────────────────────────────────────────── */
 async function requireAuth(req, res, next) {
   const header = req.headers.authorization;
+  async function requireAuth(req, res, next) {
+  console.log("AUTH HEADER:", req.headers.authorization);
+
+  const header = req.headers.authorization;
+  if (!header?.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  try {
+    req.user = await admin.auth().verifyIdToken(header.slice(7));
+    next();
+  } catch (err) {
+    console.error("AUTH FAILED:", err.message);
+    return res.status(401).json({ error: 'Invalid token' });
+  }
+}
   if (!header?.startsWith('Bearer ')) return res.status(401).json({ error: 'Unauthorized' });
   try {
     req.user = await admin.auth().verifyIdToken(header.slice(7));
