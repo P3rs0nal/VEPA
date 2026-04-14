@@ -5,7 +5,6 @@ const admin        = require('firebase-admin');
 const { DateTime } = require('luxon');
 const { Resend } = require('resend');
 const resend = new Resend(process.env.RESEND_API_KEY);
-const { Resend } = require('resend');
 const app  = express();
 const PORT = process.env.PORT || 3001;
 
@@ -55,8 +54,6 @@ app.use(express.json());
 const SCOPES      = ['https://www.googleapis.com/auth/calendar'];
 const CALENDAR_ID = process.env.GOOGLE_CALENDAR_ID || 'primary';
 const TZ          = 'America/New_York';
-
-const serviceAccount = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT);
 
 function getCalendarClient() {
   const serviceAccount = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT);
@@ -261,6 +258,26 @@ function buildCancellationEmail({ svcName, displayDate, displayTime }) {
 </html>`;
 
   return { text, html };
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   Email sender – Resend
+   Required env var: RESEND_API_KEY
+   The "from" domain (vepaautocare.com) must be verified in your
+   Resend dashboard → Domains before emails will deliver externally.
+   For quick testing set from to 'onboarding@resend.dev' — but
+   that only delivers to your Resend account's own email address.
+───────────────────────────────────────────────────────────────── */
+async function sendEmail({ to, subject, text, html }) {
+  const { data, error } = await resend.emails.send({
+    from:    'VEPA AutoCare <noreply@vepaautocare.com>',
+    to:      [to],
+    subject,
+    text,
+    html,
+  });
+  if (error) throw new Error(`Resend error: ${error.message}`);
+  return data;
 }
 
 /* ─────────────────────────────────────────────────────────────────

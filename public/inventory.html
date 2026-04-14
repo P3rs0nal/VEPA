@@ -473,16 +473,7 @@
     signoutN.style.display = 'inline-flex';
  
 
-    /* ── Cookie banner ── */
-const COOKIE_KEY = 'vepa_cookie_consent';
-const banner     = document.getElementById('cookie-banner');
-if (localStorage.getItem(COOKIE_KEY)) banner.classList.add('hidden');
-document.getElementById('cookie-accept').addEventListener('click',()=>{
-  localStorage.setItem(COOKIE_KEY,'all'); banner.classList.add('hidden');
-});
-document.getElementById('cookie-dismiss').addEventListener('click',()=>{
-  localStorage.setItem(COOKIE_KEY,'essential'); banner.classList.add('hidden');
-});
+
     // Admin check
     try {
       const snap = await getDoc(doc(db, 'users', user.uid));
@@ -511,6 +502,19 @@ document.getElementById('cookie-dismiss').addEventListener('click',()=>{
     renderGrid(allCars);
   }
   fetchCars();
+
+  /* ── Cookie banner ── */
+  const COOKIE_KEY = 'vepa_cookie_consent';
+  const banner     = document.getElementById('cookie-banner');
+  if (banner) {
+    if (localStorage.getItem(COOKIE_KEY)) banner.classList.add('hidden');
+    document.getElementById('cookie-accept').addEventListener('click',()=>{
+      localStorage.setItem(COOKIE_KEY,'all'); banner.classList.add('hidden');
+    });
+    document.getElementById('cookie-dismiss').addEventListener('click',()=>{
+      localStorage.setItem(COOKIE_KEY,'essential'); banner.classList.add('hidden');
+    });
+  }
 
   function populateFilters() {
     const makes = [...new Set(allCars.map(c => c.make).filter(Boolean))].sort();
@@ -686,5 +690,15 @@ document.getElementById('cookie-dismiss').addEventListener('click',()=>{
   document.getElementById('detail-modal').addEventListener('click', e => { if (e.target.id === 'detail-modal') closeModal(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 </script>
+<div id="cookie-banner">
+  <div class="cookie-text">
+    We use cookies to improve your experience.
+    <a href="privacy">Learn more</a>
+  </div>
+  <div class="cookie-btns">
+    <button class="btn-cookie-accept" id="cookie-accept">Accept</button>
+    <button class="btn-cookie-dismiss" id="cookie-dismiss">Dismiss</button>
+  </div>
+</div>
 </body>
 </html>
