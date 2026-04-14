@@ -420,7 +420,7 @@ function staffNotificationEmail(booking) {
         ${fmtService(service)}
       </p>
       <p style="margin:0;font-size:15px;color:${BRAND.muted};">
-        ${fmtDate(start)}  ·  ${fmtTime(start)}  ·  ${duration} min
+        ${fmtDate(start)}  ·  ${fmtTime(start)}  ·  ${duration} min
       </p>
     </td>
   </tr>
@@ -430,22 +430,9 @@ function staffNotificationEmail(booking) {
       <p style="margin:0 0 14px;font-size:12px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:${BRAND.muted};">Customer</p>
       <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
         ${detailRow('Name',     customerName || '—')}
-        ${detailRow('Email',    `<a href="mailto:${customerEmail}" style="color:${BRAND.red};text-decoration:none;">${customerEmail}</a>`)}
+        ${detailRow('Email',    customerEmail)}
         ${vehicle ? detailRow('Vehicle', vehicle) : ''}
         ${additionalNotes ? detailRow('Notes', `<em>${additionalNotes}</em>`) : ''}
-      </table>
-    </td>
-  </tr>
-
-  <tr>
-    <td style="padding:22px 32px 0;">
-      <p style="margin:0 0 14px;font-size:12px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:${BRAND.muted};">Booking</p>
-      <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
-        ${detailRow('Booking ID', `<span style="font-family:Courier New,monospace;">${bookingId}</span>`)}
-        ${detailRow('Service',    fmtService(service))}
-        ${detailRow('Date',       fmtDate(start))}
-        ${detailRow('Time',       `${fmtTime(start)} – ${fmtTime(end)}`)}
-        ${detailRow('Duration',   `${duration} minutes`)}
       </table>
     </td>
   </tr>
@@ -465,23 +452,8 @@ function staffNotificationEmail(booking) {
     </td>
   </tr>`;
 
-  const subject = `[New Booking] ${fmtService(service)} – ${customerName || customerEmail} on ${fmtDate(start)}`;
-
-  const text = `NEW BOOKING — VEPA AutoCare
-
-Service:    ${fmtService(service)}
-Date:       ${fmtDate(start)}
-Time:       ${fmtTime(start)} – ${fmtTime(end)}
-Duration:   ${duration} minutes
-Booking ID: ${bookingId}
-
-CUSTOMER
-Name:   ${customerName || '—'}
-Email:  ${customerEmail}
-${vehicle ? `Vehicle: ${vehicle}` : ''}
-${additionalNotes ? `Notes: ${additionalNotes}` : ''}
-
-Admin: ${SHOP.url}/admin`;
+  const subject = `[New Booking] ${fmtService(service)} – ${customerName || customerEmail}`;
+  const text = `NEW BOOKING: ${fmtService(service)} for ${customerName} on ${fmtDate(start)}. Manage at ${SHOP.url}/admin`;
 
   return { subject, html: wrap(bodyHtml), text };
 }
