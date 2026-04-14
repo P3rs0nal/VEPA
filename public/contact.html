@@ -380,15 +380,7 @@
   /* Preloader */
   window.addEventListener('load', () => setTimeout(() => document.getElementById('preloader').classList.add('done'), 900));
 /* ── Cookie banner ── */
-const COOKIE_KEY = 'vepa_cookie_consent';
-const banner     = document.getElementById('cookie-banner');
-if (localStorage.getItem(COOKIE_KEY)) banner.classList.add('hidden');
-document.getElementById('cookie-accept').addEventListener('click',()=>{
-  localStorage.setItem(COOKIE_KEY,'all'); banner.classList.add('hidden');
-});
-document.getElementById('cookie-dismiss').addEventListener('click',()=>{
-  localStorage.setItem(COOKIE_KEY,'essential'); banner.classList.add('hidden');
-});
+
   /* Nav */
   document.getElementById('menu-toggle').addEventListener('click', () => document.getElementById('nav-links').classList.toggle('open'));
   document.querySelector('.login-toggle').addEventListener('click', () => document.getElementById('login-sidebar').style.transform = 'translateX(0)');
@@ -432,7 +424,15 @@ document.getElementById('cookie-dismiss').addEventListener('click',()=>{
   msgField.addEventListener('input', () => {
     document.getElementById('char-count').textContent = msgField.value.length;
   });
-
+const COOKIE_KEY = 'vepa_cookie_consent';
+const banner     = document.getElementById('cookie-banner');
+if (localStorage.getItem(COOKIE_KEY)) banner.classList.add('hidden');
+document.getElementById('cookie-accept').addEventListener('click',()=>{
+  localStorage.setItem(COOKIE_KEY,'all'); banner.classList.add('hidden');
+});
+document.getElementById('cookie-dismiss').addEventListener('click',()=>{
+  localStorage.setItem(COOKIE_KEY,'essential'); banner.classList.add('hidden');
+});
   /* Form submit */
   const form = document.getElementById('contact-form');
   const statusMsg = document.getElementById('status-msg');
@@ -489,5 +489,15 @@ document.getElementById('cookie-dismiss').addEventListener('click',()=>{
     }
   });
 </script>
+<div id="cookie-banner">
+  <div class="cookie-text">
+    We use cookies to improve your experience.
+    <a href="privacy">Learn more</a>
+  </div>
+  <div class="cookie-btns">
+    <button class="btn-cookie-accept" id="cookie-accept">Accept</button>
+    <button class="btn-cookie-dismiss" id="cookie-dismiss">Dismiss</button>
+  </div>
+</div>
 </body>
 </html>

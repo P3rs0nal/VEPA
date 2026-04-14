@@ -447,5 +447,15 @@ document.getElementById('cookie-dismiss').addEventListener('click',()=>{
 });
   document.getElementById('signout-btn').addEventListener('click', async () => { await signOut(auth); sessionStorage.removeItem('admin-auth'); location.reload(); });
 </script>
+<div id="cookie-banner">
+  <div class="cookie-text">
+    We use cookies to improve your experience.
+    <a href="privacy">Learn more</a>
+  </div>
+  <div class="cookie-btns">
+    <button class="btn-cookie-accept" id="cookie-accept">Accept</button>
+    <button class="btn-cookie-dismiss" id="cookie-dismiss">Dismiss</button>
+  </div>
+</div>
 </body>
 </html>
