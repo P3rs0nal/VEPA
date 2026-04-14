@@ -114,12 +114,12 @@ async function notifyBookingConfirmed(bookingData, userEmail) {
     });
     console.log('[EMAIL] Sending staff notification...', staffEmail);
     await sendEmail({
-      to: 'eneazguro02@gmail.com',
+      to: 'vepaautoshop1904@gmail.com',
       subject: staffEmail.subject,
       text: staffEmail.text,
       html: staffEmail.html,
     });
-    console.log('[EMAIL SENT]', result);
+    
   } catch (emailErr) {
     console.error('[EMAIL ERROR] Confirmation failed:', emailErr.message);
   }
