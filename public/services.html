@@ -1106,10 +1106,18 @@ document.getElementById('btn-confirm').addEventListener('click', async()=>{
     document.getElementById('booking-id-text').textContent=`Booking ID: ${data.bookingId}`;
 
     const noteEl=document.getElementById('email-confirm-note');
-    if(data.emailSent){
-      noteEl.innerHTML=`<span class="email-confirm-note"><ion-icon name="mail-outline"></ion-icon> Confirmation email sent to ${currentUser.email}</span>`;
+    if (data.email?.customerEmailSent) {
+      noteEl.innerHTML = `
+        <span class="email-confirm-note">
+          <ion-icon name="mail-outline"></ion-icon>
+          Confirmation email sent to ${currentUser.email}
+        </span>`;
     } else {
-      noteEl.innerHTML=`<span class="email-confirm-note warn"><ion-icon name="mail-unread-outline"></ion-icon> Your booking is confirmed — we couldn't send the email right now.</span>`;
+      noteEl.innerHTML = `
+        <span class="email-confirm-note warn">
+          <ion-icon name="mail-unread-outline"></ion-icon>
+          Booking confirmed — email failed.
+        </span>`;
     }
 
     document.querySelectorAll('.wizard-panel').forEach(p=>p.classList.remove('active'));

@@ -84,45 +84,52 @@ function getCalendarClient() {
 }
 
 async function sendEmail({ to, subject, text, html }) {
-  const { data, error } = await resend.emails.send({
-    from: 'VEPA AutoCare <noreply@vepaautocare.com>',
-    to: [to],
-    subject,
-    text,
-    html,
-  });
-  if (error) throw new Error(`Resend error: ${error.message}`);
-  return data;
+  try {
+    const { data, error } = await resend.emails.send({
+      from: 'VEPA AutoCare <noreply@vepaautocare.com>',
+      to: [to],
+      subject,
+      text,
+      html,
+    });
+
+    if (error) throw new Error(error.message);
+
+    return { success: true, data };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
 }
 
 // Grouped Email Dispatchers to keep routes clean
 async function notifyBookingConfirmed(bookingData, userEmail) {
-  try {
-    // 1. Send to Customer
-    const customerEmail = confirmationEmail(bookingData);
-    await sendEmail({
-      to: userEmail,
-      subject: customerEmail.subject,
-      text: customerEmail.text,
-      html: customerEmail.html,
-    });
+  let customerResult = await sendEmail({
+    to: userEmail,
+    subject: confirmationEmail(bookingData).subject,
+    text: confirmationEmail(bookingData).text,
+    html: confirmationEmail(bookingData).html,
+  });
 
-    // 2. Send to Staff
-    const staffEmail = staffNotificationEmail({
+  let staffResult = await sendEmail({
+    to: 'vepaautoshop1904@gmail.com',
+    subject: staffNotificationEmail({
       ...bookingData,
       customerEmail: userEmail,
-    });
-    console.log('[EMAIL] Sending staff notification...', staffEmail);
-    await sendEmail({
-      to: 'vepaautoshop1904@gmail.com',
-      subject: staffEmail.subject,
-      text: staffEmail.text,
-      html: staffEmail.html,
-    });
-    
-  } catch (emailErr) {
-    console.error('[EMAIL ERROR] Confirmation failed:', emailErr.message);
-  }
+    }).subject,
+    text: staffNotificationEmail({
+      ...bookingData,
+      customerEmail: userEmail,
+    }).text,
+    html: staffNotificationEmail({
+      ...bookingData,
+      customerEmail: userEmail,
+    }).html,
+  });
+
+  return {
+    customerEmailSent: customerResult.success,
+    staffEmailSent: staffResult.success,
+  };
 }
 
 async function notifyBookingCancelled(bookingData, userEmail) {
@@ -278,7 +285,7 @@ app.post('/book', requireAuth, async (req, res) => {
     await pendingRef.delete();
 
     // Dispatch Emails asynchronously (doesn't block the response)
-    notifyBookingConfirmed({
+    const emailResult = await notifyBookingConfirmed({
       bookingId: bookingRef.id,
       service,
       start,
@@ -290,7 +297,11 @@ app.post('/book', requireAuth, async (req, res) => {
       duration: svc.duration,
     }, userEmail);
 
-    res.json({ success: true, bookingId: bookingRef.id });
+    res.json({
+      success: true,
+      bookingId: bookingRef.id,
+      email: emailResult
+    });
 
   } catch (err) {
     console.error('Booking error:', err);
