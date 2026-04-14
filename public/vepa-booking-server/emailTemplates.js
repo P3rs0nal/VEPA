@@ -1,7 +1,7 @@
 /**
  * VEPA AutoCare — Booking Email Templates
  * Drop this file next to your index.js and import with:
- *   const { confirmationEmail, cancellationEmail, staffNotificationEmail } = require('./emailTemplates');
+ * const { confirmationEmail, cancellationEmail, staffNotificationEmail } = require('./emailTemplates');
  *
  * Each function returns { subject, html, text } ready to pass to Nodemailer / Firebase Extension / etc.
  */
@@ -36,20 +36,14 @@ function wrap(bodyHtml) {
   <meta name="color-scheme" content="light"/>
   <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
   <title>VEPA AutoCare</title>
-  <!--[if mso]>
-  <noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript>
-  <![endif]-->
-</head>
+  </head>
 <body style="margin:0;padding:0;background-color:#F0EDE8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
 
-  <!-- Email wrapper -->
   <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color:#F0EDE8;padding:32px 16px;">
     <tr>
       <td align="center">
-        <!-- Outer card -->
         <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="max-width:560px;background-color:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #D0C9BE;">
 
-          <!-- Header bar -->
           <tr>
             <td style="background-color:${BRAND.dark};padding:24px 32px;">
               <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
@@ -63,10 +57,8 @@ function wrap(bodyHtml) {
             </td>
           </tr>
 
-          <!-- Body -->
           ${bodyHtml}
 
-          <!-- Footer -->
           <tr>
             <td style="background-color:#F7F3EE;padding:24px 32px;border-top:1px solid ${BRAND.border};">
               <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
@@ -75,7 +67,7 @@ function wrap(bodyHtml) {
                     <strong style="display:block;margin-bottom:2px;color:${BRAND.body};">${SHOP.name}</strong>
                     ${SHOP.address}<br/>
                     <a href="tel:${SHOP.phone.replace(/\D/g,'')}" style="color:${BRAND.red};text-decoration:none;">${SHOP.phone}</a>
-                    &nbsp;·&nbsp;
+                     · 
                     <a href="mailto:${SHOP.email}" style="color:${BRAND.red};text-decoration:none;">${SHOP.email}</a>
                   </td>
                   <td align="right" style="vertical-align:bottom;">
@@ -160,9 +152,9 @@ function fmtTime(isoOrString) {
 
 /**
  * @param {object} booking
- *   bookingId, service (key), start (ISO), end (ISO),
- *   customerName, vehicleMakeModel, vehicleYear, additionalNotes,
- *   customerEmail, duration (minutes)
+ * bookingId, service (key), start (ISO), end (ISO),
+ * customerName, vehicleMakeModel, vehicleYear, additionalNotes,
+ * customerEmail, duration (minutes)
  */
 function confirmationEmail(booking) {
   const {
@@ -175,13 +167,11 @@ function confirmationEmail(booking) {
   const vehicle   = [vehicleYear, vehicleMakeModel].filter(Boolean).join(' ');
 
   const bodyHtml = `
-  <!-- Hero strip -->
   <tr>
     <td style="background-color:${BRAND.green};padding:20px 32px;text-align:center;">
       <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
         <tr>
           <td align="center">
-            <!-- Checkmark icon (pure CSS) -->
             <div style="display:inline-block;width:44px;height:44px;border-radius:50%;background-color:rgba(255,255,255,0.25);line-height:44px;text-align:center;font-size:22px;color:#fff;margin-bottom:8px;">✓</div>
             <p style="margin:0;font-size:18px;font-weight:700;color:#ffffff;letter-spacing:0.01em;">Appointment Confirmed</p>
           </td>
@@ -190,7 +180,6 @@ function confirmationEmail(booking) {
     </td>
   </tr>
 
-  <!-- Greeting -->
   <tr>
     <td style="padding:32px 32px 0;">
       <p style="margin:0 0 6px;font-size:22px;font-weight:700;color:${BRAND.dark};">Hi ${firstName},</p>
@@ -200,7 +189,6 @@ function confirmationEmail(booking) {
     </td>
   </tr>
 
-  <!-- Booking ID badge -->
   <tr>
     <td style="padding:20px 32px 0;">
       <table role="presentation" cellpadding="0" cellspacing="0" style="background-color:${BRAND.card};border:1px solid ${BRAND.border};border-radius:8px;padding:12px 18px;">
@@ -214,7 +202,6 @@ function confirmationEmail(booking) {
     </td>
   </tr>
 
-  <!-- Appointment details -->
   <tr>
     <td style="padding:24px 32px 0;">
       <p style="margin:0 0 14px;font-size:12px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:${BRAND.muted};">Appointment Details</p>
@@ -229,7 +216,6 @@ function confirmationEmail(booking) {
     </td>
   </tr>
 
-  <!-- Location card -->
   <tr>
     <td style="padding:24px 32px 0;">
       <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color:${BRAND.dark};border-radius:10px;overflow:hidden;">
@@ -259,7 +245,6 @@ function confirmationEmail(booking) {
     </td>
   </tr>
 
-  <!-- Reminders -->
   <tr>
     <td style="padding:24px 32px 0;">
       <p style="margin:0 0 12px;font-size:12px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:${BRAND.muted};">Before You Arrive</p>
@@ -278,7 +263,6 @@ function confirmationEmail(booking) {
     </td>
   </tr>
 
-  <!-- CTA -->
   <tr>
     <td style="padding:24px 32px 32px;">
       ${primaryButton('View Our Services', SHOP.url + '/services')}
@@ -330,14 +314,12 @@ function cancellationEmail(booking) {
   const vehicle   = [vehicleYear, vehicleMakeModel].filter(Boolean).join(' ');
 
   const bodyHtml = `
-  <!-- Hero strip -->
   <tr>
     <td style="background-color:${BRAND.dark};padding:20px 32px;text-align:center;">
       <p style="margin:0;font-size:18px;font-weight:700;color:#F7F3EE;letter-spacing:0.01em;">Appointment Cancelled</p>
     </td>
   </tr>
 
-  <!-- Greeting -->
   <tr>
     <td style="padding:32px 32px 0;">
       <p style="margin:0 0 6px;font-size:22px;font-weight:700;color:${BRAND.dark};">Hi ${firstName},</p>
@@ -347,7 +329,6 @@ function cancellationEmail(booking) {
     </td>
   </tr>
 
-  <!-- Cancelled details (dimmed) -->
   <tr>
     <td style="padding:24px 32px 0;">
       <p style="margin:0 0 14px;font-size:12px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:${BRAND.muted};">Cancelled Appointment</p>
@@ -362,7 +343,6 @@ function cancellationEmail(booking) {
     </td>
   </tr>
 
-  <!-- Rebook prompt -->
   <tr>
     <td style="padding:24px 32px 0;">
       <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color:${BRAND.card};border:1px solid ${BRAND.border};border-radius:10px;">
@@ -379,7 +359,6 @@ function cancellationEmail(booking) {
     </td>
   </tr>
 
-  <!-- Contact -->
   <tr>
     <td style="padding:24px 32px 32px;">
       <p style="margin:0;font-size:13px;color:${BRAND.muted};line-height:1.7;">
@@ -429,26 +408,23 @@ function staffNotificationEmail(booking) {
   const vehicle = [vehicleYear, vehicleMakeModel].filter(Boolean).join(' ');
 
   const bodyHtml = `
-  <!-- Alert strip -->
   <tr>
     <td style="background-color:${BRAND.red};padding:16px 32px;text-align:center;">
       <p style="margin:0;font-size:13px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:#ffffff;">New Booking Alert</p>
     </td>
   </tr>
 
-  <!-- Summary -->
   <tr>
     <td style="padding:28px 32px 0;">
       <p style="margin:0 0 4px;font-size:21px;font-weight:700;color:${BRAND.dark};">
         ${fmtService(service)}
       </p>
       <p style="margin:0;font-size:15px;color:${BRAND.muted};">
-        ${fmtDate(start)} &nbsp;·&nbsp; ${fmtTime(start)} &nbsp;·&nbsp; ${duration} min
+        ${fmtDate(start)}  ·  ${fmtTime(start)}  ·  ${duration} min
       </p>
     </td>
   </tr>
 
-  <!-- Customer section -->
   <tr>
     <td style="padding:22px 32px 0;">
       <p style="margin:0 0 14px;font-size:12px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:${BRAND.muted};">Customer</p>
@@ -461,7 +437,6 @@ function staffNotificationEmail(booking) {
     </td>
   </tr>
 
-  <!-- Booking section -->
   <tr>
     <td style="padding:22px 32px 0;">
       <p style="margin:0 0 14px;font-size:12px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:${BRAND.muted};">Booking</p>
@@ -475,17 +450,10 @@ function staffNotificationEmail(booking) {
     </td>
   </tr>
 
-  <!-- Action buttons -->
   <tr>
     <td style="padding:24px 32px 32px;">
       <table role="presentation" cellpadding="0" cellspacing="0">
         <tr>
-          <td style="background-color:${BRAND.red};border-radius:6px;padding-right:10px;">
-            <a href="mailto:${customerEmail}?subject=Re: Your VEPA Appointment on ${encodeURIComponent(fmtDate(start))}"
-               style="display:inline-block;padding:11px 22px;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#ffffff;text-decoration:none;">
-              Reply to Customer
-            </a>
-          </td>
           <td style="background-color:${BRAND.dark};border-radius:6px;">
             <a href="${SHOP.url}/admin"
                style="display:inline-block;padding:11px 22px;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#F7F3EE;text-decoration:none;">

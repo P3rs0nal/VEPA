@@ -85,7 +85,7 @@ function getCalendarClient() {
 
 async function sendEmail({ to, subject, text, html }) {
   const { data, error } = await resend.emails.send({
-    from: 'VEPA AutoCare <noreply@vepaautocare.com>',
+    from: 'VEPA AutoCare <contact@vepaautocare.com>',
     to: [to],
     subject,
     text,
