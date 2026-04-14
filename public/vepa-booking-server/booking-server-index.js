@@ -4,6 +4,7 @@ const { google }   = require('googleapis');
 const admin        = require('firebase-admin');
 const { DateTime } = require('luxon');
 const { Resend } = require('resend');
+const {confirmationEmail, cancellationEmail, staffNotificationEmail, } = require('./emailTemplates');
 const resend = new Resend(process.env.RESEND_API_KEY);
 const app  = express();
 const PORT = process.env.PORT || 3001;
@@ -120,145 +121,145 @@ function formatDisplayTime(isoString) {
   return DateTime.fromISO(isoString, { zone: TZ }).toFormat('h:mm a');
 }
 
-function buildConfirmationEmail({ customerName, svcName, displayDate, displayTime, duration, vehicleStr, additionalNotes, bookingId }) {
-  const text = [
-    `Hi ${customerName || 'there'},`,
-    '',
-    'Your appointment at VEPA AutoCare is confirmed.',
-    '',
-    `Service:   ${svcName}`,
-    `Date:      ${displayDate}`,
-    `Time:      ${displayTime}`,
-    `Duration:  ${duration} minutes`,
-    `Vehicle:   ${vehicleStr}`,
-    additionalNotes ? `Notes:     ${additionalNotes}` : null,
-    '',
-    `Booking ID: ${bookingId}`,
-    '',
-    'Address: 1904 Western Ave, Albany, NY 12203',
-    'Phone:   (518) 456-5682',
-    '',
-    'To cancel or reschedule, log in at vepaautocare.com/services',
-    'or call us at least 2 hours before your appointment.',
-    '',
-    '— The VEPA AutoCare Team',
-  ].filter(l => l !== null).join('\n');
+// function buildConfirmationEmail({ customerName, svcName, displayDate, displayTime, duration, vehicleStr, additionalNotes, bookingId }) {
+//   const text = [
+//     `Hi ${customerName || 'there'},`,
+//     '',
+//     'Your appointment at VEPA AutoCare is confirmed.',
+//     '',
+//     `Service:   ${svcName}`,
+//     `Date:      ${displayDate}`,
+//     `Time:      ${displayTime}`,
+//     `Duration:  ${duration} minutes`,
+//     `Vehicle:   ${vehicleStr}`,
+//     additionalNotes ? `Notes:     ${additionalNotes}` : null,
+//     '',
+//     `Booking ID: ${bookingId}`,
+//     '',
+//     'Address: 1904 Western Ave, Albany, NY 12203',
+//     'Phone:   (518) 456-5682',
+//     '',
+//     'To cancel or reschedule, log in at vepaautocare.com/services',
+//     'or call us at least 2 hours before your appointment.',
+//     '',
+//     '— The VEPA AutoCare Team',
+//   ].filter(l => l !== null).join('\n');
 
-  const html = `<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<style>
-  body{margin:0;padding:0;background:#f4f1ec;font-family:'Helvetica Neue',Arial,sans-serif;}
-  .wrap{max-width:560px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08);}
-  .hdr{background:#1C1917;padding:28px 36px;}
-  .logo{font-family:Georgia,serif;font-size:2rem;font-weight:900;color:#F7F3EE;letter-spacing:.08em;text-transform:uppercase;}
-  .logo span{color:#C8381A;}
-  .hero{background:#C8381A;padding:22px 36px;}
-  .hero h1{color:#fff;font-size:1.4rem;margin:0;font-weight:700;letter-spacing:.03em;text-transform:uppercase;}
-  .body{padding:32px 36px;}
-  .body p{color:#3D3730;font-size:.93rem;line-height:1.7;margin:0 0 14px;}
-  .box{background:#F7F3EE;border-radius:8px;padding:18px 22px;margin:22px 0;border:1px solid #D0C9BE;}
-  .row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #E8E3DA;font-size:.88rem;}
-  .row:last-child{border-bottom:none;}
-  .lbl{color:#9C9389;font-weight:600;text-transform:uppercase;font-size:.68rem;letter-spacing:.1em;padding-top:2px;flex-shrink:0;}
-  .val{color:#1C1917;font-weight:600;text-align:right;padding-left:12px;}
-  .bid{font-family:monospace;font-size:.78rem;color:#9C9389;background:#EDE9E0;padding:7px 11px;border-radius:6px;margin-top:18px;display:inline-block;}
-  .ftr{background:#1C1917;padding:22px 36px;text-align:center;}
-  .ftr p{color:rgba(247,243,238,.35);font-size:.75rem;margin:0;line-height:1.6;}
-  .ftr a{color:rgba(247,243,238,.55);}
-  @media(max-width:600px){.wrap{margin:0;border-radius:0;}.body,.hdr,.hero,.ftr{padding:20px;}}
-</style>
-</head>
-<body>
-<div class="wrap">
-  <div class="hdr"><div class="logo">VEPA<span>.</span></div></div>
-  <div class="hero"><h1>Appointment Confirmed</h1></div>
-  <div class="body">
-    <p>Hi ${customerName || 'there'},</p>
-    <p>Your appointment at <strong>VEPA AutoCare</strong> is confirmed. We look forward to seeing you!</p>
-    <div class="box">
-      <div class="row"><span class="lbl">Service</span><span class="val">${svcName}</span></div>
-      <div class="row"><span class="lbl">Date</span><span class="val">${displayDate}</span></div>
-      <div class="row"><span class="lbl">Time</span><span class="val">${displayTime} &middot; ${duration} min</span></div>
-      <div class="row"><span class="lbl">Vehicle</span><span class="val">${vehicleStr}</span></div>
-      ${additionalNotes ? `<div class="row"><span class="lbl">Notes</span><span class="val">${additionalNotes}</span></div>` : ''}
-    </div>
-    <p>Need to cancel? Log in at <a href="https://vepaautocare.com/services" style="color:#C8381A;font-weight:600;">vepaautocare.com/services</a> or call us at least 2 hours before your appointment.</p>
-    <p style="font-size:.82rem;color:#9C9389;">1904 Western Ave, Albany, NY 12203 &nbsp;&middot;&nbsp; (518) 456-5682</p>
-    <div class="bid">Booking ID: ${bookingId}</div>
-  </div>
-  <div class="ftr">
-    <p>&copy; 2025 VEPA AutoCare &middot; Albany, NY<br>
-    <a href="https://vepaautocare.com/privacy">Privacy Policy</a></p>
-  </div>
-</div>
-</body>
-</html>`;
+//   const html = `<!DOCTYPE html>
+// <html>
+// <head>
+// <meta charset="UTF-8">
+// <meta name="viewport" content="width=device-width,initial-scale=1">
+// <style>
+//   body{margin:0;padding:0;background:#f4f1ec;font-family:'Helvetica Neue',Arial,sans-serif;}
+//   .wrap{max-width:560px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08);}
+//   .hdr{background:#1C1917;padding:28px 36px;}
+//   .logo{font-family:Georgia,serif;font-size:2rem;font-weight:900;color:#F7F3EE;letter-spacing:.08em;text-transform:uppercase;}
+//   .logo span{color:#C8381A;}
+//   .hero{background:#C8381A;padding:22px 36px;}
+//   .hero h1{color:#fff;font-size:1.4rem;margin:0;font-weight:700;letter-spacing:.03em;text-transform:uppercase;}
+//   .body{padding:32px 36px;}
+//   .body p{color:#3D3730;font-size:.93rem;line-height:1.7;margin:0 0 14px;}
+//   .box{background:#F7F3EE;border-radius:8px;padding:18px 22px;margin:22px 0;border:1px solid #D0C9BE;}
+//   .row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #E8E3DA;font-size:.88rem;}
+//   .row:last-child{border-bottom:none;}
+//   .lbl{color:#9C9389;font-weight:600;text-transform:uppercase;font-size:.68rem;letter-spacing:.1em;padding-top:2px;flex-shrink:0;}
+//   .val{color:#1C1917;font-weight:600;text-align:right;padding-left:12px;}
+//   .bid{font-family:monospace;font-size:.78rem;color:#9C9389;background:#EDE9E0;padding:7px 11px;border-radius:6px;margin-top:18px;display:inline-block;}
+//   .ftr{background:#1C1917;padding:22px 36px;text-align:center;}
+//   .ftr p{color:rgba(247,243,238,.35);font-size:.75rem;margin:0;line-height:1.6;}
+//   .ftr a{color:rgba(247,243,238,.55);}
+//   @media(max-width:600px){.wrap{margin:0;border-radius:0;}.body,.hdr,.hero,.ftr{padding:20px;}}
+// </style>
+// </head>
+// <body>
+// <div class="wrap">
+//   <div class="hdr"><div class="logo">VEPA<span>.</span></div></div>
+//   <div class="hero"><h1>Appointment Confirmed</h1></div>
+//   <div class="body">
+//     <p>Hi ${customerName || 'there'},</p>
+//     <p>Your appointment at <strong>VEPA AutoCare</strong> is confirmed. We look forward to seeing you!</p>
+//     <div class="box">
+//       <div class="row"><span class="lbl">Service</span><span class="val">${svcName}</span></div>
+//       <div class="row"><span class="lbl">Date</span><span class="val">${displayDate}</span></div>
+//       <div class="row"><span class="lbl">Time</span><span class="val">${displayTime} &middot; ${duration} min</span></div>
+//       <div class="row"><span class="lbl">Vehicle</span><span class="val">${vehicleStr}</span></div>
+//       ${additionalNotes ? `<div class="row"><span class="lbl">Notes</span><span class="val">${additionalNotes}</span></div>` : ''}
+//     </div>
+//     <p>Need to cancel? Log in at <a href="https://vepaautocare.com/services" style="color:#C8381A;font-weight:600;">vepaautocare.com/services</a> or call us at least 2 hours before your appointment.</p>
+//     <p style="font-size:.82rem;color:#9C9389;">1904 Western Ave, Albany, NY 12203 &nbsp;&middot;&nbsp; (518) 456-5682</p>
+//     <div class="bid">Booking ID: ${bookingId}</div>
+//   </div>
+//   <div class="ftr">
+//     <p>&copy; 2025 VEPA AutoCare &middot; Albany, NY<br>
+//     <a href="https://vepaautocare.com/privacy">Privacy Policy</a></p>
+//   </div>
+// </div>
+// </body>
+// </html>`;
 
-  return { text, html };
-}
+//   return { text, html };
+// }
 
-function buildCancellationEmail({ svcName, displayDate, displayTime }) {
-  const text = [
-    'Hi,',
-    '',
-    'Your VEPA AutoCare appointment has been cancelled.',
-    '',
-    `Service: ${svcName}`,
-    `Date:    ${displayDate}`,
-    `Time:    ${displayTime}`,
-    '',
-    'To rebook, visit vepaautocare.com/services or call (518) 456-5682.',
-    '',
-    '— VEPA AutoCare',
-  ].join('\n');
+// function buildCancellationEmail({ svcName, displayDate, displayTime }) {
+//   const text = [
+//     'Hi,',
+//     '',
+//     'Your VEPA AutoCare appointment has been cancelled.',
+//     '',
+//     `Service: ${svcName}`,
+//     `Date:    ${displayDate}`,
+//     `Time:    ${displayTime}`,
+//     '',
+//     'To rebook, visit vepaautocare.com/services or call (518) 456-5682.',
+//     '',
+//     '— VEPA AutoCare',
+//   ].join('\n');
 
-  const html = `<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<style>
-  body{margin:0;padding:0;background:#f4f1ec;font-family:'Helvetica Neue',Arial,sans-serif;}
-  .wrap{max-width:560px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;}
-  .hdr{background:#1C1917;padding:28px 36px;}
-  .logo{font-family:Georgia,serif;font-size:2rem;font-weight:900;color:#F7F3EE;letter-spacing:.08em;text-transform:uppercase;}
-  .logo span{color:#C8381A;}
-  .hero{background:#3D3730;padding:22px 36px;}
-  .hero h1{color:#fff;font-size:1.4rem;margin:0;font-weight:700;text-transform:uppercase;}
-  .body{padding:32px 36px;}
-  .body p{color:#3D3730;font-size:.93rem;line-height:1.7;margin:0 0 14px;}
-  .box{background:#F7F3EE;border-radius:8px;padding:18px 22px;margin:22px 0;border:1px solid #D0C9BE;}
-  .row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #E8E3DA;font-size:.88rem;}
-  .row:last-child{border-bottom:none;}
-  .lbl{color:#9C9389;font-weight:600;text-transform:uppercase;font-size:.68rem;letter-spacing:.1em;}
-  .val{color:#1C1917;font-weight:600;text-align:right;}
-  .ftr{background:#1C1917;padding:22px 36px;text-align:center;}
-  .ftr p{color:rgba(247,243,238,.35);font-size:.75rem;margin:0;}
-</style>
-</head>
-<body>
-<div class="wrap">
-  <div class="hdr"><div class="logo">VEPA<span>.</span></div></div>
-  <div class="hero"><h1>Appointment Cancelled</h1></div>
-  <div class="body">
-    <p>Your appointment has been cancelled:</p>
-    <div class="box">
-      <div class="row"><span class="lbl">Service</span><span class="val">${svcName}</span></div>
-      <div class="row"><span class="lbl">Date</span><span class="val">${displayDate}</span></div>
-      <div class="row"><span class="lbl">Time</span><span class="val">${displayTime}</span></div>
-    </div>
-    <p>To rebook, visit <a href="https://vepaautocare.com/services" style="color:#C8381A;font-weight:600;">vepaautocare.com/services</a>.</p>
-    <p style="font-size:.82rem;color:#9C9389;">1904 Western Ave, Albany, NY 12203 &nbsp;&middot;&nbsp; (518) 456-5682</p>
-  </div>
-  <div class="ftr"><p>&copy; 2025 VEPA AutoCare &middot; Albany, NY</p></div>
-</div>
-</body>
-</html>`;
+//   const html = `<!DOCTYPE html>
+// <html>
+// <head>
+// <meta charset="UTF-8">
+// <style>
+//   body{margin:0;padding:0;background:#f4f1ec;font-family:'Helvetica Neue',Arial,sans-serif;}
+//   .wrap{max-width:560px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;}
+//   .hdr{background:#1C1917;padding:28px 36px;}
+//   .logo{font-family:Georgia,serif;font-size:2rem;font-weight:900;color:#F7F3EE;letter-spacing:.08em;text-transform:uppercase;}
+//   .logo span{color:#C8381A;}
+//   .hero{background:#3D3730;padding:22px 36px;}
+//   .hero h1{color:#fff;font-size:1.4rem;margin:0;font-weight:700;text-transform:uppercase;}
+//   .body{padding:32px 36px;}
+//   .body p{color:#3D3730;font-size:.93rem;line-height:1.7;margin:0 0 14px;}
+//   .box{background:#F7F3EE;border-radius:8px;padding:18px 22px;margin:22px 0;border:1px solid #D0C9BE;}
+//   .row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #E8E3DA;font-size:.88rem;}
+//   .row:last-child{border-bottom:none;}
+//   .lbl{color:#9C9389;font-weight:600;text-transform:uppercase;font-size:.68rem;letter-spacing:.1em;}
+//   .val{color:#1C1917;font-weight:600;text-align:right;}
+//   .ftr{background:#1C1917;padding:22px 36px;text-align:center;}
+//   .ftr p{color:rgba(247,243,238,.35);font-size:.75rem;margin:0;}
+// </style>
+// </head>
+// <body>
+// <div class="wrap">
+//   <div class="hdr"><div class="logo">VEPA<span>.</span></div></div>
+//   <div class="hero"><h1>Appointment Cancelled</h1></div>
+//   <div class="body">
+//     <p>Your appointment has been cancelled:</p>
+//     <div class="box">
+//       <div class="row"><span class="lbl">Service</span><span class="val">${svcName}</span></div>
+//       <div class="row"><span class="lbl">Date</span><span class="val">${displayDate}</span></div>
+//       <div class="row"><span class="lbl">Time</span><span class="val">${displayTime}</span></div>
+//     </div>
+//     <p>To rebook, visit <a href="https://vepaautocare.com/services" style="color:#C8381A;font-weight:600;">vepaautocare.com/services</a>.</p>
+//     <p style="font-size:.82rem;color:#9C9389;">1904 Western Ave, Albany, NY 12203 &nbsp;&middot;&nbsp; (518) 456-5682</p>
+//   </div>
+//   <div class="ftr"><p>&copy; 2025 VEPA AutoCare &middot; Albany, NY</p></div>
+// </div>
+// </body>
+// </html>`;
 
-  return { text, html };
-}
+//   return { text, html };
+// }
 
 /* ─────────────────────────────────────────────────────────────────
    Email sender – Resend
@@ -427,7 +428,7 @@ app.post('/book', requireAuth, async (req, res) => {
 
     await pendingRef.delete();
 
-    /* Send email via Nodemailer */
+   
     try {
       const displayDate = formatDisplayDate(date);
       const displayTime = formatDisplayTime(start);
@@ -435,9 +436,16 @@ app.post('/book', requireAuth, async (req, res) => {
         ? `${vehicleYear ? vehicleYear + ' ' : ''}${vehicleMakeModel}`.trim()
         : 'Not specified';
 
-      const { text, html } = buildConfirmationEmail({
-        customerName, svcName: svc.name, displayDate, displayTime,
-        duration: svc.duration, vehicleStr, additionalNotes, bookingId: bookingRef.id,
+      const email = confirmationEmail({
+        bookingId: bookingRef.id,
+        service,
+        start,
+        end,
+        customerName,
+        vehicleMakeModel,
+        vehicleYear,
+        additionalNotes,
+        duration: svc.duration,
       });
 
       await sendEmail({
@@ -445,6 +453,26 @@ app.post('/book', requireAuth, async (req, res) => {
         subject: `Appointment Confirmed – ${svc.name} on ${displayDate}`,
         text,
         html,
+      });
+
+      const staffEmail = staffNotificationEmail({
+        bookingId: bookingRef.id,
+        service,
+        start,
+        end,
+        customerName,
+        customerEmail: userEmail,
+        vehicleMakeModel,
+        vehicleYear,
+        additionalNotes,
+        duration: svc.duration,
+      });
+
+      await sendEmail({
+        to: 'contact@vepaautocare.com',
+        subject: staffEmail.subject,
+        text: staffEmail.text,
+        html: staffEmail.html,
       });
 
       emailSent = true;
@@ -520,7 +548,15 @@ app.delete('/bookings/:id', requireAuth, async (req, res) => {
     try {
       const displayDate = formatDisplayDate(date);
       const displayTime = formatDisplayTime(start);
-      const { text, html } = buildCancellationEmail({ svcName: serviceName, displayDate, displayTime });
+      const email = cancellationEmail({
+        bookingId: req.params.id,
+        service: docSnap.data().service,
+        start,
+        customerName: docSnap.data().customerName,
+        vehicleMakeModel: docSnap.data().vehicleMakeModel,
+        vehicleYear: docSnap.data().vehicleYear,
+        duration: docSnap.data().duration,
+      });
       await sendEmail({
         to:      req.user.email,
         subject: `Appointment Cancelled – ${serviceName} on ${displayDate}`,
