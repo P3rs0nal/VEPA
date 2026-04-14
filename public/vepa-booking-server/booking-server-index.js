@@ -85,7 +85,7 @@ function getCalendarClient() {
 
 async function sendEmail({ to, subject, text, html }) {
   const { data, error } = await resend.emails.send({
-    from: 'VEPA AutoCare <contact@vepaautocare.com>',
+    from: 'VEPA AutoCare <noreply@vepaautocare.com>',
     to: [to],
     subject,
     text,
@@ -118,6 +118,7 @@ async function notifyBookingConfirmed(bookingData, userEmail) {
       text: staffEmail.text,
       html: staffEmail.html,
     });
+    console.log('[EMAIL SENT]', staffEmail);
   } catch (emailErr) {
     console.error('[EMAIL ERROR] Confirmation failed:', emailErr.message);
   }
