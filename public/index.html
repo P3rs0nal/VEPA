@@ -541,7 +541,12 @@ document.getElementById('cookie-dismiss').addEventListener('click',()=>{
   }, 3500); });
 
   /* Video rotation */
-  const videos = ['backgroundVids/OilPour1.MP4','backgroundVids/mountain.mp4','backgroundVids/LiftGoingDown.MP4','backgroundVids/wideshot.mp4','backgroundVids/OilPour2.MP4','backgroundVids/ReplacingCap.MP4'];
+  const videos = ['https://res.cloudinary.com/dyjfyxrve/video/upload/q_auto/f_auto/v1776457850/OilPour1_stmdy3.mp4',
+                  'https://res.cloudinary.com/dyjfyxrve/video/upload/q_auto/f_auto/v1776458066/mountain_lxef4f.mp4',
+                  'https://res.cloudinary.com/dyjfyxrve/video/upload/q_auto/f_auto/v1776457706/LiftGoingDown_kyvua8.mp4',
+                  'https://res.cloudinary.com/dyjfyxrve/video/upload/q_auto/f_auto/v1776458072/wideshot_gro2qn.mp4',
+                  'https://res.cloudinary.com/dyjfyxrve/video/upload/q_auto/f_auto/v1776457975/OilPour2_qobols.mp4',
+                  'https://res.cloudinary.com/dyjfyxrve/video/upload/q_auto/f_auto/v1776458047/ReplacingCap_uepdf5.mp4'];
   const v1 = document.getElementById('vid1'), v2 = document.getElementById('vid2');
   let vi = 0;
   v1.src = videos[0]; v1.play().catch(()=>{});
