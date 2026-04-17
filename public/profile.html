@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png">
+  <link rel="shortcut icon" href="icons/favicon.ico">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Profile – VEPA AutoCare</title>
+  <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+  <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Nunito+Sans:opsz,wght@6..12,400;6..12,500;6..12,600;6..12,700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:#F7F3EE; --card:#EDE9E0; --border:#D0C9BE; --muted:#9C9389;
+      --body:#3D3730; --dark:#1C1917; --red:#C8381A; --red-dk:#A02E14;
+      --green:#16a34a; --green-lt:rgba(22,163,74,.1);
+      --amber:#d97706; --amber-lt:rgba(217,119,6,.1);
+      --nav-h:68px; --fd:'Barlow Condensed',sans-serif; --fb:'Nunito Sans',sans-serif;
+      --ease:0.25s ease; --r:10px;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    html{scroll-behavior:smooth;}
+    body{font-family:var(--fb);background:var(--bg);color:var(--body);display:flex;flex-direction:column;min-height:100vh;}
+    a{text-decoration:none;color:inherit;}
+    ion-icon{pointer-events:none;}
+
+    /* ── PRELOADER ── */
+    #preloader{position:fixed;inset:0;background:var(--dark);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.25rem;transition:opacity .55s ease,visibility .55s ease;}
+    #preloader.done{opacity:0;visibility:hidden;}
+    .pl-logo{font-family:var(--fd);font-size:clamp(4rem,12vw,7rem);font-weight:800;letter-spacing:.08em;color:var(--bg);animation:pl-pulse 1.4s ease-in-out infinite;}
+    .pl-sub{font-size:.72rem;font-weight:600;letter-spacing:.35em;text-transform:uppercase;color:var(--muted);}
+    .pl-track{width:160px;height:2px;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden;}
+    .pl-fill{height:100%;width:0;background:var(--red);border-radius:2px;animation:pl-fill 1.1s cubic-bezier(.4,0,.2,1) forwards .2s;}
+    @keyframes pl-pulse{0%,100%{opacity:1}50%{opacity:.45}}
+    @keyframes pl-fill{from{width:0}to{width:100%}}
+
+    /* ── HEADER ── */
+    header{position:sticky;top:0;height:var(--nav-h);background:var(--dark);display:flex;align-items:center;justify-content:space-between;padding:0 2.5rem;z-index:100;border-bottom:1px solid rgba(255,255,255,.06);}
+    .logo{font-family:var(--fd);font-size:1.85rem;font-weight:800;letter-spacing:.06em;color:var(--bg);}
+    .logo em{color:var(--red);font-style:normal;}
+    .user-chip{display:none;align-items:center;gap:.45rem;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.11);border-radius:100px;padding:.3rem .85rem .3rem .35rem;cursor:pointer;margin-right:.5rem;transition:background var(--ease);text-decoration:none;}
+    .user-chip:hover{background:rgba(255,255,255,.14);}
+    .user-chip-avatar{width:26px;height:26px;border-radius:50%;background:var(--red);color:#fff;font-size:.7rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;text-transform:uppercase;}
+    .user-chip-email{font-size:.73rem;color:rgba(255,255,255,.75);font-weight:500;max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    nav ul{list-style:none;display:flex;align-items:center;gap:.15rem;}
+    nav ul li a,nav ul li button,.login-toggle{font-family:var(--fb);font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:rgba(255,255,255,.60);background:none;border:none;cursor:pointer;padding:.45rem .8rem;border-radius:6px;transition:color var(--ease),background var(--ease);}
+    nav ul li a:hover,nav ul li button:hover,.login-toggle:hover{color:var(--bg);background:rgba(255,255,255,.08);}
+    .menu-toggle{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:4px;}
+    .menu-toggle span{width:23px;height:2px;background:var(--bg);border-radius:2px;}
+    @media(max-width:768px){
+      .user-chip .user-chip-email{display:none;}
+      nav{display:none;position:absolute;top:var(--nav-h);right:0;background:var(--dark);width:220px;padding:1rem;border-left:1px solid rgba(255,255,255,.07);border-bottom:1px solid rgba(255,255,255,.07);}
+      nav.open{display:block;}
+      nav ul{flex-direction:column;gap:.5rem;}
+      .menu-toggle{display:flex;}
+    }
+
+    /* ── PROFILE HERO ── */
+    .profile-hero{background:var(--dark);padding:2.5rem 6% 0;border-bottom:1px solid rgba(255,255,255,.06);}
+    .hero-inner{display:flex;align-items:center;gap:1.5rem;padding-bottom:2rem;flex-wrap:wrap;}
+    .profile-avatar{width:72px;height:72px;border-radius:50%;background:var(--red);display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-size:2.2rem;font-weight:800;color:#fff;flex-shrink:0;border:3px solid rgba(255,255,255,.1);}
+    .hero-info{flex:1;min-width:0;}
+    .hero-info h1{font-family:var(--fd);font-size:clamp(1.8rem,4vw,2.8rem);font-weight:800;text-transform:uppercase;color:var(--bg);letter-spacing:.02em;line-height:1;margin-bottom:.3rem;}
+    .hero-info p{font-size:.82rem;color:rgba(247,243,238,.4);}
+    .hero-stats{display:flex;gap:2rem;margin-left:auto;}
+    .hero-stat .n{font-family:var(--fd);font-size:2rem;font-weight:800;color:var(--red);line-height:1;}
+    .hero-stat .l{font-size:.65rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-top:.15rem;}
+
+    /* ── TABS ── */
+    .profile-tabs{display:flex;gap:0;padding:0 6%;background:var(--dark);}
+    .tab-btn{font-family:var(--fb);font-size:.76rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.38);padding:.9rem 1.2rem;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;transition:color var(--ease),border-color var(--ease);display:flex;align-items:center;gap:.4rem;white-space:nowrap;}
+    .tab-btn:hover{color:rgba(255,255,255,.7);}
+    .tab-btn.active{color:var(--red);border-bottom-color:var(--red);}
+    .tab-btn ion-icon{font-size:.95rem;}
+
+    /* ── PAGE BODY ── */
+    .profile-body{flex:1;padding:2rem 6%;max-width:1100px;width:100%;margin:0 auto;}
+    .tab-panel{display:none;animation:fade-in .22s ease;}
+    .tab-panel.active{display:block;}
+    @keyframes fade-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+    /* ── GRID LAYOUTS ── */
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;}
+    .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.25rem;}
+    .span-2{grid-column:span 2;}
+    @media(max-width:900px){.grid-2,.grid-3{grid-template-columns:1fr;}.span-2{grid-column:1;}}
+
+    /* ── CARDS ── */
+    .p-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:1.5rem;}
+    .p-card-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;}
+    .p-card-title{font-size:.68rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);}
+    .p-card-action{font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--red);cursor:pointer;display:flex;align-items:center;gap:.3rem;background:none;border:none;padding:0;transition:opacity var(--ease);}
+    .p-card-action:hover{opacity:.75;}
+
+    /* ── STAT PILLS ── */
+    .stat-pills{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.25rem;}
+    .stat-pill{background:var(--dark);border-radius:var(--r);padding:1.1rem 1.25rem;}
+    .stat-pill .n{font-family:var(--fd);font-size:2rem;font-weight:800;color:var(--red);line-height:1;}
+    .stat-pill .l{font-size:.65rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:rgba(247,243,238,.35);margin-top:.2rem;}
+    @media(max-width:600px){.stat-pills{grid-template-columns:1fr 1fr;}}
+
+    /* ── VEHICLE CARDS ── */
+    .vehicle-card{background:white;border:1px solid var(--border);border-radius:var(--r);padding:1rem 1.1rem;display:flex;align-items:center;gap:1rem;margin-bottom:.75rem;transition:box-shadow var(--ease),transform var(--ease);}
+    .vehicle-card:last-child{margin-bottom:0;}
+    .vehicle-card:hover{box-shadow:0 4px 16px rgba(28,25,23,.08);transform:translateY(-2px);}
+    .vehicle-icon{width:44px;height:44px;border-radius:9px;background:var(--dark);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .vehicle-icon ion-icon{font-size:1.3rem;color:rgba(247,243,238,.8);}
+    .vehicle-name{font-family:var(--fd);font-size:1.2rem;font-weight:700;text-transform:uppercase;color:var(--dark);line-height:1;}
+    .vehicle-meta{font-size:.78rem;color:var(--muted);margin-top:.2rem;}
+    .vehicle-badges{display:flex;gap:.4rem;margin-top:.4rem;flex-wrap:wrap;}
+    .vehicle-badge{font-size:.65rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;padding:.2rem .55rem;border-radius:20px;}
+    .badge-primary{background:rgba(200,56,26,.1);color:var(--red);}
+    .badge-service{background:var(--green-lt);color:var(--green);}
+    .badge-overdue{background:var(--amber-lt);color:var(--amber);}
+    .vehicle-actions{margin-left:auto;display:flex;gap:.4rem;flex-shrink:0;}
+    .veh-btn{font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:.3rem .7rem;border-radius:5px;border:none;cursor:pointer;transition:opacity var(--ease);}
+    .veh-btn:hover{opacity:.8;}
+    .veh-edit{background:rgba(22,163,74,.1);color:var(--green);}
+    .veh-delete{background:rgba(220,38,38,.1);color:#dc2626;}
+
+    /* ── SERVICE HISTORY ── */
+    .history-item{display:flex;align-items:center;gap:1rem;padding:1rem 0;border-bottom:1px solid var(--border);}
+    .history-item:last-child{border-bottom:none;padding-bottom:0;}
+    .hist-badge{width:46px;height:46px;background:var(--dark);border-radius:9px;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;}
+    .hist-badge .hm{font-size:.58rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(247,243,238,.4);}
+    .hist-badge .hd{font-family:var(--fd);font-size:1.3rem;font-weight:800;color:var(--bg);line-height:1;}
+    .hist-service{font-weight:700;font-size:.95rem;color:var(--dark);}
+    .hist-meta{font-size:.78rem;color:var(--muted);margin-top:.15rem;display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;}
+    .hist-right{margin-left:auto;text-align:right;flex-shrink:0;}
+    .hist-source{font-size:.68rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;padding:.2rem .55rem;border-radius:20px;}
+    .source-booking{background:rgba(200,56,26,.08);color:var(--red);}
+    .source-clover{background:var(--green-lt);color:var(--green);}
+    .source-pending{background:var(--amber-lt);color:var(--amber);}
+
+    /* ── SAVED CARS ── */
+    .saved-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem;}
+    .saved-card{background:white;border:1px solid var(--border);border-radius:var(--r);overflow:hidden;transition:transform var(--ease),box-shadow var(--ease);}
+    .saved-card:hover{transform:translateY(-4px);box-shadow:0 12px 32px rgba(28,25,23,.1);}
+    .saved-img{width:100%;height:160px;object-fit:cover;background:var(--card);display:flex;align-items:center;justify-content:center;}
+    .saved-img ion-icon{font-size:3rem;color:var(--border);}
+    .saved-body{padding:.9rem 1rem;}
+    .saved-name{font-family:var(--fd);font-size:1.2rem;font-weight:700;text-transform:uppercase;color:var(--dark);}
+    .saved-price{font-size:1.05rem;font-weight:700;color:var(--red);margin-top:.15rem;}
+    .saved-footer{display:flex;align-items:center;justify-content:space-between;padding:.75rem 1rem;border-top:1px solid var(--border);}
+    .btn-view{font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--red);background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:.3rem;}
+    .btn-unsave{font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:.25rem;transition:color var(--ease);}
+    .btn-unsave:hover{color:#dc2626;}
+
+    /* ── CLOVER CARD ── */
+    .clover-header{display:flex;align-items:center;gap:.75rem;margin-bottom:1.25rem;}
+    .clover-logo{width:36px;height:36px;background:#00B259;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:#fff;font-weight:800;font-family:var(--fd);}
+    .clover-title{font-family:var(--fd);font-size:1.2rem;font-weight:700;text-transform:uppercase;color:var(--dark);}
+    .clover-sub{font-size:.75rem;color:var(--muted);}
+    .clover-rows{display:flex;flex-direction:column;gap:0;}
+    .clover-row{display:flex;align-items:center;justify-content:space-between;padding:.75rem 0;border-bottom:1px solid var(--border);font-size:.9rem;}
+    .clover-row:last-child{border-bottom:none;}
+    .clover-label{color:var(--muted);font-size:.82rem;}
+    .clover-val{font-weight:700;color:var(--dark);}
+    .clover-total{font-family:var(--fd);font-size:1.8rem;font-weight:800;color:var(--green);}
+    .clover-setup-note{background:rgba(217,119,6,.06);border:1px solid rgba(217,119,6,.2);border-radius:8px;padding:1rem;font-size:.82rem;color:var(--amber);line-height:1.6;margin-top:1rem;}
+    .clover-setup-note strong{display:block;margin-bottom:.3rem;}
+
+    /* ── UPCOMING APPT CARD ── */
+    .appt-card{background:white;border:1px solid var(--border);border-radius:var(--r);padding:1rem 1.1rem;display:flex;align-items:center;gap:1rem;margin-bottom:.75rem;}
+    .appt-card:last-child{margin-bottom:0;}
+    .appt-date-badge{width:48px;height:48px;border-radius:9px;background:var(--dark);display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;}
+    .appt-date-badge .am{font-size:.58rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(247,243,238,.4);}
+    .appt-date-badge .ad{font-family:var(--fd);font-size:1.3rem;font-weight:800;color:var(--bg);line-height:1;}
+    .appt-service{font-family:var(--fd);font-size:1.1rem;font-weight:700;text-transform:uppercase;color:var(--dark);}
+    .appt-meta{font-size:.78rem;color:var(--muted);margin-top:.15rem;display:flex;align-items:center;gap:.35rem;flex-wrap:wrap;}
+    .appt-status{margin-left:auto;font-size:.68rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;padding:.25rem .65rem;border-radius:20px;flex-shrink:0;}
+    .status-confirmed{background:var(--green-lt);color:var(--green);}
+    .status-pending{background:var(--amber-lt);color:var(--amber);}
+
+    /* ── EMPTY STATES ── */
+    .empty-state{text-align:center;padding:3rem 1rem;}
+    .empty-state ion-icon{font-size:3rem;color:var(--border);display:block;margin:0 auto .75rem;}
+    .empty-state h3{font-family:var(--fd);font-size:1.5rem;font-weight:700;text-transform:uppercase;color:var(--dark);margin-bottom:.4rem;}
+    .empty-state p{font-size:.88rem;color:var(--muted);margin-bottom:1.25rem;}
+
+    /* ── BUTTONS ── */
+    .btn-red{display:inline-flex;align-items:center;gap:.4rem;background:var(--red);color:#fff;border:none;border-radius:6px;padding:.65rem 1.4rem;font-family:var(--fb);font-size:.82rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:background var(--ease),transform var(--ease);}
+    .btn-red:hover{background:var(--red-dk);transform:translateY(-1px);}
+    .btn-ghost{display:inline-flex;align-items:center;gap:.4rem;background:transparent;color:var(--body);border:1.5px solid var(--border);border-radius:6px;padding:.65rem 1.4rem;font-family:var(--fb);font-size:.82rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:border-color var(--ease),background var(--ease);}
+    .btn-ghost:hover{border-color:var(--body);background:rgba(0,0,0,.04);}
+
+    /* ── SKELETON ── */
+    .skel{background:linear-gradient(90deg,var(--border) 25%,var(--card) 50%,var(--border) 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:4px;}
+    @keyframes shimmer{from{background-position:200% 0}to{background-position:-200% 0}}
+
+    /* ── MODAL ── */
+    .modal{display:none;position:fixed;inset:0;background:rgba(28,25,23,.75);backdrop-filter:blur(4px);z-index:500;align-items:flex-start;justify-content:center;padding:2rem 1rem;overflow-y:auto;}
+    .modal.show{display:flex;}
+    .modal-box{background:var(--bg);border-radius:12px;width:100%;max-width:480px;position:relative;box-shadow:0 30px 80px rgba(0,0,0,.3);margin:auto;animation:modal-in .2s ease;}
+    @keyframes modal-in{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+    .modal-header{display:flex;align-items:center;justify-content:space-between;padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);}
+    .modal-header h2{font-family:var(--fd);font-size:1.5rem;font-weight:700;text-transform:uppercase;color:var(--dark);}
+    .modal-close{background:none;border:none;cursor:pointer;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.25rem;color:var(--muted);transition:background var(--ease);}
+    .modal-close:hover{background:var(--card);}
+    .modal-body{padding:1.5rem;}
+    .modal-footer{padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;gap:.6rem;justify-content:flex-end;}
+    .field{display:flex;flex-direction:column;gap:.35rem;margin-bottom:1rem;}
+    .field label{font-size:.68rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);}
+    .field input,.field select{width:100%;padding:.7rem .9rem;border:1.5px solid var(--border);border-radius:7px;font-family:var(--fb);font-size:.92rem;color:var(--body);background:white;transition:border-color var(--ease),box-shadow var(--ease);}
+    .field input:focus,.field select:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(200,56,26,.1);outline:none;}
+    .field-row{display:grid;grid-template-columns:1fr 1fr;gap:.85rem;}
+    .toggle-field{display:flex;align-items:center;justify-content:space-between;padding:.75rem;background:white;border:1.5px solid var(--border);border-radius:7px;cursor:pointer;}
+    .toggle-label{font-size:.88rem;font-weight:600;color:var(--body);}
+    .toggle-sub{font-size:.75rem;color:var(--muted);}
+    .toggle-switch{width:36px;height:20px;background:var(--border);border-radius:10px;position:relative;transition:background var(--ease);}
+    .toggle-switch.on{background:var(--red);}
+    .toggle-switch::after{content:'';position:absolute;width:14px;height:14px;background:#fff;border-radius:50%;top:3px;left:3px;transition:left var(--ease);}
+    .toggle-switch.on::after{left:19px;}
+
+    /* ── TOAST ── */
+    #toast{position:fixed;bottom:2rem;right:2rem;z-index:2000;background:var(--dark);color:var(--bg);padding:.8rem 1.25rem;border-radius:8px;font-size:.85rem;font-weight:600;box-shadow:0 8px 30px rgba(0,0,0,.3);transform:translateY(100px);opacity:0;transition:transform .3s ease,opacity .3s ease;display:flex;align-items:center;gap:.55rem;max-width:320px;}
+    #toast.show{transform:translateY(0);opacity:1;}
+    #toast.success{border-left:3px solid var(--green);}
+    #toast.error{border-left:3px solid #dc2626;}
+
+    /* ── FOOTER ── */
+    footer{background:#111;padding:3.5rem 6% 2rem;margin-top:auto;}
+    .ft-top{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:3rem;margin-bottom:2.5rem;}
+    .ft-brand .logo{font-size:2rem;display:inline-block;margin-bottom:.6rem;}
+    .ft-brand p{font-size:.85rem;color:rgba(255,255,255,.42);line-height:1.65;max-width:240px;}
+    .ft-col h4{font-size:.68rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.7);margin-bottom:1rem;}
+    .ft-col ul{list-style:none;display:flex;flex-direction:column;gap:.5rem;}
+    .ft-col ul li a{font-size:.85rem;color:rgba(255,255,255,.42);transition:color var(--ease);}
+    .ft-col ul li a:hover{color:rgba(255,255,255,.9);}
+    .ft-col p{font-size:.85rem;color:rgba(255,255,255,.42);margin-bottom:.3rem;}
+    .ft-col a{color:rgba(255,255,255,.42);transition:color var(--ease);}
+    .ft-col a:hover{color:var(--bg);}
+    .ft-bot{border-top:1px solid rgba(255,255,255,.07);padding-top:1.4rem;text-align:center;font-size:.78rem;color:rgba(255,255,255,.28);}
+
+    /* ── COOKIE BANNER ── */
+    #cookie-banner{position:fixed;bottom:0;left:0;right:0;z-index:900;background:var(--dark);border-top:1px solid rgba(255,255,255,.08);padding:1rem 2rem;display:flex;align-items:center;gap:1.25rem;flex-wrap:wrap;transition:transform .4s ease;}
+    #cookie-banner.hidden{transform:translateY(110%);}
+    .cookie-text{font-size:.8rem;color:rgba(247,243,238,.65);line-height:1.5;flex:1;min-width:220px;}
+    .cookie-text a{color:rgba(200,56,26,.9);text-decoration:underline;}
+    .cookie-btns{display:flex;gap:.6rem;flex-shrink:0;}
+    .btn-cookie-accept{background:var(--red);color:#fff;border:none;padding:.5rem 1.25rem;border-radius:6px;font-family:var(--fb);font-size:.78rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:background var(--ease);}
+    .btn-cookie-accept:hover{background:var(--red-dk);}
+    .btn-cookie-dismiss{background:transparent;color:rgba(255,255,255,.45);border:1px solid rgba(255,255,255,.15);padding:.5rem 1rem;border-radius:6px;font-family:var(--fb);font-size:.78rem;font-weight:600;cursor:pointer;transition:all var(--ease);}
+    .btn-cookie-dismiss:hover{color:rgba(255,255,255,.75);border-color:rgba(255,255,255,.3);}
+
+    @media(max-width:768px){
+      .ft-top{grid-template-columns:1fr;gap:2rem;}
+      .profile-body{padding:1.5rem 5%;}
+      .profile-hero{padding:2rem 5% 0;}
+      .profile-tabs{padding:0 5%;overflow-x:auto;}
+      .hero-stats{gap:1.25rem;}
+    }
+  </style>
+</head>
+<body>
+
+<!-- PRELOADER -->
+<div id="preloader">
+  <div class="pl-logo">VEPA</div>
+  <div class="pl-sub">AutoCare · Albany, NY</div>
+  <div class="pl-track"><div class="pl-fill"></div></div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"><span id="toast-msg"></span></div>
+
+<!-- HEADER -->
+<header>
+  <a href="/" class="logo">VEPA<em>.</em></a>
+  <a href="profile" class="user-chip" id="user-chip">
+    <div class="user-chip-avatar" id="user-avatar-letter">U</div>
+    <span class="user-chip-email" id="user-chip-email">user@email.com</span>
+  </a>
+  <div class="menu-toggle" id="menu-toggle"><span></span><span></span><span></span></div>
+  <nav id="nav-links">
+    <ul>
+      <li><a href="/">Home</a></li>
+      <li><a href="inventory">Inventory</a></li>
+      <li><a href="services">Services</a></li>
+      <li><a href="about">About</a></li>
+      <li id="admin-link" style="display:none"><a href="admin">Admin</a></li>
+      <li><a href="contact">Contact</a></li>
+      <li id="signout-nav" style="display:none"><button id="signout-btn">Sign Out</button></li>
+    </ul>
+  </nav>
+</header>
+
+<!-- PROFILE HERO -->
+<div class="profile-hero">
+  <div class="hero-inner">
+    <div class="profile-avatar" id="profile-avatar">?</div>
+    <div class="hero-info">
+      <h1 id="hero-name">Loading…</h1>
+      <p id="hero-sub">Loading your profile</p>
+    </div>
+    <div class="hero-stats" id="hero-stats">
+      <div class="hero-stat"><div class="n" id="stat-visits">—</div><div class="l">Visits</div></div>
+      <div class="hero-stat"><div class="n" id="stat-vehicles">—</div><div class="l">Vehicles</div></div>
+      <div class="hero-stat"><div class="n" id="stat-saved">—</div><div class="l">Saved</div></div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="profile-tabs">
+    <button class="tab-btn active" data-tab="overview">
+      <ion-icon name="grid-outline"></ion-icon> Overview
+    </button>
+    <button class="tab-btn" data-tab="garage">
+      <ion-icon name="car-sport-outline"></ion-icon> My Garage
+    </button>
+    <button class="tab-btn" data-tab="history">
+      <ion-icon name="time-outline"></ion-icon> Service History
+    </button>
+    <button class="tab-btn" data-tab="saved">
+      <ion-icon name="heart-outline"></ion-icon> Saved Cars
+    </button>
+  </div>
+</div>
+
+<!-- PROFILE BODY -->
+<div class="profile-body">
+
+  <!-- ══ OVERVIEW TAB ══ -->
+  <div class="tab-panel active" id="tab-overview">
+    <div class="stat-pills" id="overview-stats">
+      <div class="stat-pill"><div class="n" id="ov-visits">—</div><div class="l">Total Visits</div></div>
+      <div class="stat-pill"><div class="n" id="ov-spend">—</div><div class="l">Lifetime Spend</div></div>
+      <div class="stat-pill"><div class="n" id="ov-vehicles">—</div><div class="l">Vehicles</div></div>
+      <div class="stat-pill"><div class="n" id="ov-upcoming">—</div><div class="l">Upcoming</div></div>
+    </div>
+
+    <div class="grid-2">
+      <!-- Upcoming appointments -->
+      <div class="p-card">
+        <div class="p-card-hd">
+          <div class="p-card-title">Upcoming Appointments</div>
+          <a href="services#booking" class="p-card-action"><ion-icon name="add-outline"></ion-icon> Book</a>
+        </div>
+        <div id="overview-appts-list"></div>
+      </div>
+
+      <!-- Recent history -->
+      <div class="p-card">
+        <div class="p-card-hd">
+          <div class="p-card-title">Recent Service History</div>
+          <button class="p-card-action" onclick="switchTab('history')">View All <ion-icon name="arrow-forward-outline"></ion-icon></button>
+        </div>
+        <div id="overview-history-list"></div>
+      </div>
+
+      <!-- My garage summary -->
+      <div class="p-card">
+        <div class="p-card-hd">
+          <div class="p-card-title">My Garage</div>
+          <button class="p-card-action" onclick="openVehicleModal()"><ion-icon name="add-outline"></ion-icon> Add</button>
+        </div>
+        <div id="overview-garage-list"></div>
+      </div>
+
+      <!-- Clover POS -->
+      <div class="p-card">
+        <div class="clover-header">
+          <div class="clover-logo">C</div>
+          <div>
+            <div class="clover-title">Clover Account</div>
+            <div class="clover-sub">Linked to your POS history</div>
+          </div>
+        </div>
+        <div class="clover-rows" id="clover-rows"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ GARAGE TAB ══ -->
+  <div class="tab-panel" id="tab-garage">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;">
+      <div>
+        <div style="font-size:.72rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--red);margin-bottom:.3rem;">My Vehicles</div>
+        <div style="font-family:var(--fd);font-size:2rem;font-weight:700;text-transform:uppercase;color:var(--dark);">My Garage</div>
+      </div>
+      <button class="btn-red" onclick="openVehicleModal()"><ion-icon name="add-outline"></ion-icon> Add Vehicle</button>
+    </div>
+    <div id="garage-list"></div>
+  </div>
+
+  <!-- ══ HISTORY TAB ══ -->
+  <div class="tab-panel" id="tab-history">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;">
+      <div>
+        <div style="font-size:.72rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--red);margin-bottom:.3rem;">Your Records</div>
+        <div style="font-family:var(--fd);font-size:2rem;font-weight:700;text-transform:uppercase;color:var(--dark);">Service History</div>
+      </div>
+    </div>
+    <div class="p-card">
+      <div id="full-history-list"></div>
+    </div>
+  </div>
+
+  <!-- ══ SAVED CARS TAB ══ -->
+  <div class="tab-panel" id="tab-saved">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;">
+      <div>
+        <div style="font-size:.72rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--red);margin-bottom:.3rem;">Wishlist</div>
+        <div style="font-family:var(--fd);font-size:2rem;font-weight:700;text-transform:uppercase;color:var(--dark);">Saved Cars</div>
+      </div>
+      <a href="inventory" class="btn-ghost"><ion-icon name="car-outline"></ion-icon> Browse Inventory</a>
+    </div>
+    <div class="saved-grid" id="saved-cars-grid"></div>
+  </div>
+
+</div><!-- /profile-body -->
+
+<!-- FOOTER -->
+<footer>
+  <div class="ft-top">
+    <div class="ft-brand">
+      <span class="logo">VEPA<em style="color:var(--red)">.</em></span>
+      <p>Albany's trusted family-owned auto shop for quality vehicles and reliable repairs.</p>
+    </div>
+    <div class="ft-col">
+      <h4>Navigate</h4>
+      <ul>
+        <li><a href="/">Home</a></li>
+        <li><a href="inventory">Inventory</a></li>
+        <li><a href="services">Services</a></li>
+        <li><a href="about">About</a></li>
+        <li><a href="contact">Contact</a></li>
+      </ul>
+    </div>
+    <div class="ft-col">
+      <h4>Contact</h4>
+      <p>1904 Western Ave<br>Albany, NY 12203</p>
+      <p><a href="tel:5184565682">(518) 456-5682</a></p>
+      <p><a href="mailto:contact@vepaautocare.com">contact@vepaautocare.com</a></p>
+    </div>
+  </div>
+  <div class="ft-bot">© 2025 VEPA AutoCare. All Rights Reserved. &nbsp;·&nbsp; <a href="privacy" style="color:rgba(255,255,255,.38);text-decoration:underline;">Privacy Policy</a></div>
+</footer>
+
+<!-- COOKIE BANNER -->
+<div id="cookie-banner">
+  <div class="cookie-text">We use cookies to improve your experience. <a href="privacy">Learn more</a></div>
+  <div class="cookie-btns">
+    <button class="btn-cookie-accept" id="cookie-accept">Accept</button>
+    <button class="btn-cookie-dismiss" id="cookie-dismiss">Dismiss</button>
+  </div>
+</div>
+
+<!-- ADD / EDIT VEHICLE MODAL -->
+<div class="modal" id="vehicle-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2 id="vehicle-modal-title">Add Vehicle</h2>
+      <button class="modal-close" onclick="closeVehicleModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="field-row">
+        <div class="field">
+          <label>Year</label>
+          <select id="vm-year"></select>
+        </div>
+        <div class="field">
+          <label>Make</label>
+          <select id="vm-make">
+            <option value="">Select make</option>
+            <option>Acura</option><option>Audi</option><option>BMW</option><option>Buick</option>
+            <option>Cadillac</option><option>Chevrolet</option><option>Chrysler</option><option>Dodge</option>
+            <option>Ford</option><option>GMC</option><option>Honda</option><option>Hyundai</option>
+            <option>Infiniti</option><option>Jeep</option><option>Kia</option><option>Lexus</option>
+            <option>Lincoln</option><option>Mazda</option><option>Mercedes</option><option>Mitsubishi</option>
+            <option>Nissan</option><option>Porsche</option><option>Ram</option><option>Subaru</option>
+            <option>Tesla</option><option>Toyota</option><option>Volkswagen</option><option>Volvo</option>
+            <option>Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Model</label>
+        <input type="text" id="vm-model" placeholder="e.g. Camry, Civic, F-150">
+      </div>
+      <div class="field">
+        <label>Nickname <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
+        <input type="text" id="vm-nickname" placeholder="e.g. Daily Driver, Work Truck">
+      </div>
+      <div class="toggle-field" id="vm-primary-toggle" onclick="togglePrimary()">
+        <div>
+          <div class="toggle-label">Set as primary vehicle</div>
+          <div class="toggle-sub">Auto-fills the booking form</div>
+        </div>
+        <div class="toggle-switch" id="vm-primary-switch"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="closeVehicleModal()">Cancel</button>
+      <button class="btn-red" id="vehicle-save-btn" onclick="saveVehicle()">Save Vehicle</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE VEHICLE CONFIRM MODAL -->
+<div class="modal" id="confirm-modal">
+  <div class="modal-box" style="max-width:400px;">
+    <div class="modal-header">
+      <h2 id="confirm-title">Confirm</h2>
+      <button class="modal-close" onclick="closeConfirm()">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:.95rem;color:var(--body);line-height:1.6;" id="confirm-msg"></p>
+      <p style="font-size:.82rem;color:var(--muted);margin-top:.35rem;" id="confirm-sub"></p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="closeConfirm()">Cancel</button>
+      <button class="btn-red" style="background:#dc2626;" id="confirm-ok-btn">Delete</button>
+    </div>
+  </div>
+</div>
+
+
+<script type="module">
+import { initializeApp }   from 'https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js';
+import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/11.5.0/firebase-auth.js';
+import {
+  getFirestore, doc, getDoc, updateDoc, setDoc, deleteDoc,
+  collection, getDocs, addDoc, query, where, orderBy, serverTimestamp, limit
+} from 'https://www.gstatic.com/firebasejs/11.5.0/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey:'AIzaSyBcKnjZm5LYqj5jx5VEqx9ywspgZyxNfsA',
+  authDomain:'vepa-24b46.firebaseapp.com',
+  projectId:'vepa-24b46',
+  storageBucket:'vepa-24b46.firebasestorage.app',
+  messagingSenderId:'170936495301',
+  appId:'1:170936495301:web:6f15b8fa08deeb01d5d4ac',
+  measurementId:'G-F8NFZ6SRKR',
+};
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+
+const BOOKING_API = 'https://vepa-calendar.onrender.com/';
+
+/* ── State ── */
+let currentUser = null;
+let editVehicleId = null;
+let vmIsPrimary = false;
+let confirmCallback = null;
+
+/* ── Preloader ── */
+window.addEventListener('load', () => setTimeout(() => document.getElementById('preloader').classList.add('done'), 900));
+
+/* ── Cookie banner ── */
+const COOKIE_KEY = 'vepa_cookie_consent';
+const banner = document.getElementById('cookie-banner');
+if (localStorage.getItem(COOKIE_KEY)) banner.classList.add('hidden');
+document.getElementById('cookie-accept').addEventListener('click', () => { localStorage.setItem(COOKIE_KEY,'all'); banner.classList.add('hidden'); });
+document.getElementById('cookie-dismiss').addEventListener('click', () => { localStorage.setItem(COOKIE_KEY,'essential'); banner.classList.add('hidden'); });
+
+/* ── Nav ── */
+document.getElementById('menu-toggle').addEventListener('click', () => document.getElementById('nav-links').classList.toggle('open'));
+document.getElementById('signout-btn').addEventListener('click', async () => { await signOut(auth); sessionStorage.removeItem('admin-auth'); window.location.href = '/'; });
+
+/* ── Year select ── */
+const yearSel = document.getElementById('vm-year');
+const cy = new Date().getFullYear();
+yearSel.innerHTML = '<option value="">Year</option>';
+for (let y = cy + 1; y >= 1980; y--) yearSel.innerHTML += `<option value="${y}">${y}</option>`;
+
+/* ── Toast ── */
+let toastTimer;
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  t.className = `show ${type}`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.className = '', 3200);
+}
+window.showToast = showToast;
+
+/* ── Auth ── */
+onAuthStateChanged(auth, async user => {
+  if (!user) { window.location.href = 'login'; return; }
+  currentUser = user;
+
+  const chip = document.getElementById('user-chip');
+  document.getElementById('user-avatar-letter').textContent = user.email.charAt(0).toUpperCase();
+  document.getElementById('user-chip-email').textContent = user.email;
+  chip.style.display = 'flex';
+
+  /* Admin check */
+  try {
+    const snap = await getDoc(doc(db, 'users', user.uid));
+    if (snap.exists() && snap.data().isAdmin) {
+      sessionStorage.setItem('admin-auth', 'true');
+      document.getElementById('admin-link').style.display = 'inline-flex';
+    }
+  } catch {}
+  document.getElementById('signout-nav').style.display = 'inline-flex';
+
+  initProfile();
+});
+
+/* ── Tabs ── */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+});
+
+window.switchTab = function(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === `tab-${tab}`));
+  if (tab === 'garage') loadGarage();
+  if (tab === 'history') loadFullHistory();
+  if (tab === 'saved') loadSavedCars();
+};
+
+/* ══════════════════════════════════════════
+   INIT PROFILE
+═══════════════════════════════════════════ */
+async function initProfile() {
+  const email = currentUser.email;
+  const name  = email.split('@')[0].replace(/[._]/g, ' ');
+  const initials = email.charAt(0).toUpperCase();
+
+  document.getElementById('profile-avatar').textContent = initials;
+  document.getElementById('hero-name').textContent = name.charAt(0).toUpperCase() + name.slice(1);
+  document.getElementById('hero-sub').textContent = `${email} · Member since ${new Date(currentUser.metadata.creationTime).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`;
+
+  await Promise.all([loadOverview()]);
+}
+
+/* ══════════════════════════════════════════
+   OVERVIEW
+═══════════════════════════════════════════ */
+async function loadOverview() {
+  await Promise.all([
+    loadOverviewAppointments(),
+    loadOverviewHistory(),
+    loadOverviewGarage(),
+    loadCloverData(),
+    loadStats(),
+  ]);
+}
+
+async function loadStats() {
+  try {
+    const [vSnap, sSnap] = await Promise.all([
+      getDocs(collection(db, 'users', currentUser.uid, 'vehicles')),
+      getDocs(collection(db, 'users', currentUser.uid, 'savedCars')),
+    ]);
+    const vCount = vSnap.size;
+    const sCount = sSnap.size;
+
+    document.getElementById('stat-vehicles').textContent = vCount;
+    document.getElementById('stat-saved').textContent = sCount;
+    document.getElementById('ov-vehicles').textContent = vCount;
+
+    /* Also get booking count from API */
+    try {
+      const idToken = await currentUser.getIdToken();
+      const res = await fetch(`${BOOKING_API}bookings`, { headers: { 'Authorization': `Bearer ${idToken}` } });
+      const data = await res.json();
+      const bookings = data.bookings || [];
+      const pastCount = bookings.filter(b => new Date(b.start) < new Date()).length;
+      const upcomingCount = bookings.filter(b => new Date(b.start) >= new Date()).length;
+      document.getElementById('stat-visits').textContent = pastCount;
+      document.getElementById('ov-visits').textContent = pastCount;
+      document.getElementById('ov-upcoming').textContent = upcomingCount;
+    } catch { document.getElementById('stat-visits').textContent = '—'; }
+
+  } catch (e) { console.error(e); }
+}
+
+async function loadOverviewAppointments() {
+  const el = document.getElementById('overview-appts-list');
+  el.innerHTML = skeletonRows(2);
+  try {
+    const idToken = await currentUser.getIdToken();
+    const res = await fetch(`${BOOKING_API}bookings`, { headers: { 'Authorization': `Bearer ${idToken}` } });
+    const data = await res.json();
+    const upcoming = (data.bookings || [])
+      .filter(b => new Date(b.start) >= new Date())
+      .slice(0, 3);
+
+    if (!upcoming.length) {
+      el.innerHTML = `<div style="text-align:center;padding:1.5rem 0;color:var(--muted);font-size:.88rem;">
+        No upcoming appointments.<br>
+        <a href="services#booking" style="color:var(--red);font-weight:600;">Book one →</a>
+      </div>`;
+      return;
+    }
+    el.innerHTML = upcoming.map(b => apptCardHTML(b)).join('');
+  } catch { el.innerHTML = errorHTML('Could not load appointments.'); }
+}
+
+async function loadOverviewHistory() {
+  const el = document.getElementById('overview-history-list');
+  el.innerHTML = skeletonRows(3);
+  try {
+    const idToken = await currentUser.getIdToken();
+    const res = await fetch(`${BOOKING_API}bookings`, { headers: { 'Authorization': `Bearer ${idToken}` } });
+    const data = await res.json();
+    const past = (data.bookings || [])
+      .filter(b => new Date(b.start) < new Date())
+      .sort((a, b) => new Date(b.start) - new Date(a.start))
+      .slice(0, 3);
+
+    if (!past.length) {
+      el.innerHTML = `<div style="text-align:center;padding:1.5rem 0;color:var(--muted);font-size:.88rem;">No service history yet.</div>`;
+      return;
+    }
+    el.innerHTML = past.map(b => historyItemHTML(b)).join('');
+  } catch { el.innerHTML = errorHTML('Could not load history.'); }
+}
+
+async function loadOverviewGarage() {
+  const el = document.getElementById('overview-garage-list');
+  el.innerHTML = skeletonRows(2);
+  try {
+    const snap = await getDocs(collection(db, 'users', currentUser.uid, 'vehicles'));
+    const vehicles = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (!vehicles.length) {
+      el.innerHTML = `<div style="text-align:center;padding:1.5rem 0;color:var(--muted);font-size:.88rem;">
+        No vehicles added yet.<br>
+        <button onclick="openVehicleModal()" style="background:none;border:none;color:var(--red);font-weight:600;cursor:pointer;font-size:.88rem;">Add your first vehicle →</button>
+      </div>`;
+      return;
+    }
+    el.innerHTML = vehicles.slice(0, 2).map(v => vehicleCardHTML(v, false)).join('');
+  } catch { el.innerHTML = errorHTML('Could not load garage.'); }
+}
+
+async function loadCloverData() {
+  const el = document.getElementById('clover-rows');
+  try {
+    const snap = await getDoc(doc(db, 'users', currentUser.uid));
+    const clover = snap.data()?.clover;
+
+    if (!clover) {
+      el.innerHTML = `<div class="clover-setup-note">
+        <strong>Not yet connected</strong>
+        Once your Clover POS account is linked to this email, your payment history and visit count will appear here automatically. Ask us to link your account at your next visit.
+      </div>`;
+      return;
+    }
+
+    el.innerHTML = `
+      <div class="clover-row"><span class="clover-label">Total visits</span><span class="clover-val">${clover.totalVisits || 0}</span></div>
+      <div class="clover-row"><span class="clover-label">Last invoice</span><span class="clover-val">${clover.lastInvoice ? '$' + clover.lastInvoice.toFixed(2) + ' · ' + new Date(clover.lastInvoiceDate).toLocaleDateString('en-US', {month:'short', day:'numeric'}) : '—'}</span></div>
+      <div class="clover-row"><span class="clover-label">Lifetime spend</span><span class="clover-total">$${(clover.totalSpend || 0).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}</span></div>
+    `;
+    document.getElementById('ov-spend').textContent = '$' + (clover.totalSpend || 0).toLocaleString();
+  } catch {
+    el.innerHTML = `<div class="clover-setup-note"><strong>Not yet connected</strong>Ask us to link your Clover account at your next visit.</div>`;
+  }
+}
+
+/* ══════════════════════════════════════════
+   GARAGE
+═══════════════════════════════════════════ */
+async function loadGarage() {
+  const el = document.getElementById('garage-list');
+  el.innerHTML = skeletonRows(3);
+  try {
+    const snap = await getDocs(collection(db, 'users', currentUser.uid, 'vehicles'));
+    const vehicles = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    if (!vehicles.length) {
+      el.innerHTML = `<div class="empty-state">
+        <ion-icon name="car-sport-outline"></ion-icon>
+        <h3>No Vehicles Yet</h3>
+        <p>Add your vehicles to auto-fill the booking form and track service history by car.</p>
+        <button class="btn-red" onclick="openVehicleModal()"><ion-icon name="add-outline"></ion-icon> Add Your First Vehicle</button>
+      </div>`;
+      return;
+    }
+
+    /* Primary first */
+    vehicles.sort((a, b) => (b.isPrimary ? 1 : 0) - (a.isPrimary ? 1 : 0));
+    el.innerHTML = vehicles.map(v => vehicleCardHTML(v, true)).join('');
+  } catch (e) { el.innerHTML = errorHTML('Could not load your garage.'); }
+}
+
+window.openVehicleModal = function(vehicleId) {
+  editVehicleId = vehicleId || null;
+  vmIsPrimary = false;
+
+  document.getElementById('vehicle-modal-title').textContent = vehicleId ? 'Edit Vehicle' : 'Add Vehicle';
+  document.getElementById('vehicle-save-btn').textContent = vehicleId ? 'Save Changes' : 'Add Vehicle';
+
+  if (vehicleId) {
+    getDoc(doc(db, 'users', currentUser.uid, 'vehicles', vehicleId)).then(snap => {
+      const v = snap.data();
+      document.getElementById('vm-year').value  = v.year || '';
+      document.getElementById('vm-make').value  = v.make || '';
+      document.getElementById('vm-model').value = v.model || '';
+      document.getElementById('vm-nickname').value = v.nickname || '';
+      vmIsPrimary = v.isPrimary || false;
+      document.getElementById('vm-primary-switch').classList.toggle('on', vmIsPrimary);
+    });
+  } else {
+    document.getElementById('vm-year').value = '';
+    document.getElementById('vm-make').value = '';
+    document.getElementById('vm-model').value = '';
+    document.getElementById('vm-nickname').value = '';
+    vmIsPrimary = false;
+    document.getElementById('vm-primary-switch').classList.remove('on');
+  }
+  document.getElementById('vehicle-modal').classList.add('show');
+};
+window.closeVehicleModal = () => document.getElementById('vehicle-modal').classList.remove('show');
+
+window.togglePrimary = function() {
+  vmIsPrimary = !vmIsPrimary;
+  document.getElementById('vm-primary-switch').classList.toggle('on', vmIsPrimary);
+};
+
+window.saveVehicle = async function() {
+  const year  = document.getElementById('vm-year').value;
+  const make  = document.getElementById('vm-make').value;
+  const model = document.getElementById('vm-model').value.trim();
+  const nickname = document.getElementById('vm-nickname').value.trim();
+
+  if (!year || !make || !model) { showToast('Year, Make, and Model are required.', 'error'); return; }
+
+  const btn = document.getElementById('vehicle-save-btn');
+  btn.disabled = true; btn.textContent = 'Saving…';
+
+  try {
+    /* If setting as primary, unset all others first */
+    if (vmIsPrimary) {
+      const snap = await getDocs(collection(db, 'users', currentUser.uid, 'vehicles'));
+      for (const d of snap.docs) {
+        if (d.id !== editVehicleId && d.data().isPrimary) {
+          await updateDoc(doc(db, 'users', currentUser.uid, 'vehicles', d.id), { isPrimary: false });
+        }
+      }
+    }
+
+    const vehicleData = { year: Number(year), make, model, nickname, isPrimary: vmIsPrimary };
+
+    if (editVehicleId) {
+      await updateDoc(doc(db, 'users', currentUser.uid, 'vehicles', editVehicleId), vehicleData);
+      showToast('Vehicle updated!', 'success');
+    } else {
+      vehicleData.addedAt = serverTimestamp();
+      await addDoc(collection(db, 'users', currentUser.uid, 'vehicles'), vehicleData);
+      showToast('Vehicle added!', 'success');
+    }
+
+    closeVehicleModal();
+    await Promise.all([loadGarage(), loadOverviewGarage(), loadStats()]);
+  } catch (e) {
+    showToast('Failed to save vehicle.', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = editVehicleId ? 'Save Changes' : 'Add Vehicle';
+  }
+};
+
+window.confirmDeleteVehicle = function(id, name) {
+  showConfirm(
+    'Remove Vehicle',
+    `Remove "${name}" from your garage?`,
+    'Your service history will be preserved.',
+    'Remove',
+    async () => {
+      try {
+        await deleteDoc(doc(db, 'users', currentUser.uid, 'vehicles', id));
+        showToast('Vehicle removed.', 'success');
+        await Promise.all([loadGarage(), loadOverviewGarage(), loadStats()]);
+      } catch { showToast('Failed to remove vehicle.', 'error'); }
+    }
+  );
+};
+
+/* ══════════════════════════════════════════
+   SERVICE HISTORY
+═══════════════════════════════════════════ */
+async function loadFullHistory() {
+  const el = document.getElementById('full-history-list');
+  el.innerHTML = skeletonRows(5);
+  try {
+    const idToken = await currentUser.getIdToken();
+    const res = await fetch(`${BOOKING_API}bookings`, { headers: { 'Authorization': `Bearer ${idToken}` } });
+    const data = await res.json();
+    const all = (data.bookings || []).sort((a, b) => new Date(b.start) - new Date(a.start));
+
+    /* Also try to load Clover transactions */
+    let cloverTxns = [];
+    try {
+      const snap = await getDoc(doc(db, 'users', currentUser.uid));
+      cloverTxns = snap.data()?.cloverTransactions || [];
+    } catch {}
+
+    /* Merge and sort */
+    const combined = [
+      ...all.map(b => ({ ...b, _source: 'booking' })),
+      ...cloverTxns.map(t => ({ ...t, _source: 'clover' })),
+    ].sort((a, b) => new Date(b.start || b.date) - new Date(a.start || a.date));
+
+    if (!combined.length) {
+      el.innerHTML = `<div class="empty-state" style="padding:2rem;">
+        <ion-icon name="time-outline"></ion-icon>
+        <h3>No History Yet</h3>
+        <p>Your service history will appear here after your first appointment.</p>
+        <a href="services#booking" class="btn-red"><ion-icon name="calendar-outline"></ion-icon> Book a Service</a>
+      </div>`;
+      return;
+    }
+    el.innerHTML = combined.map(item => historyItemHTML(item)).join('');
+  } catch { el.innerHTML = errorHTML('Could not load service history.'); }
+}
+
+/* ══════════════════════════════════════════
+   SAVED CARS
+═══════════════════════════════════════════ */
+async function loadSavedCars() {
+  const el = document.getElementById('saved-cars-grid');
+  el.innerHTML = `<div class="skel" style="height:220px;border-radius:10px;"></div><div class="skel" style="height:220px;border-radius:10px;"></div><div class="skel" style="height:220px;border-radius:10px;"></div>`;
+
+  try {
+    const savedSnap = await getDocs(collection(db, 'users', currentUser.uid, 'savedCars'));
+    if (savedSnap.empty) {
+      el.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">
+        <ion-icon name="heart-outline"></ion-icon>
+        <h3>No Saved Cars</h3>
+        <p>Browse inventory and tap the heart icon to save vehicles you're interested in.</p>
+        <a href="inventory" class="btn-red"><ion-icon name="car-outline"></ion-icon> Browse Inventory</a>
+      </div>`;
+      return;
+    }
+
+    const carIds = savedSnap.docs.map(d => d.id);
+    const carDocs = await Promise.all(carIds.map(id => getDoc(doc(db, 'cars', id))));
+
+    const cards = carDocs.map((snap, i) => {
+      if (!snap.exists()) return '';
+      const car = { id: snap.id, ...snap.data() };
+      const img = car.images?.[0]?.url;
+      return `<div class="saved-card">
+        ${img
+          ? `<img src="${img}" alt="${car.year} ${car.make} ${car.model}" style="width:100%;height:160px;object-fit:cover;">`
+          : `<div class="saved-img"><ion-icon name="car-outline"></ion-icon></div>`
+        }
+        <div class="saved-body">
+          <div class="saved-name">${car.year} ${car.make} ${car.model}</div>
+          <div class="saved-price">$${Number(car.price).toLocaleString()}</div>
+          ${car.mileage ? `<div style="font-size:.78rem;color:var(--muted);margin-top:.3rem;">${Number(car.mileage).toLocaleString()} mi${car.color ? ' · ' + car.color : ''}</div>` : ''}
+        </div>
+        <div class="saved-footer">
+          <a href="inventory" class="btn-view"><ion-icon name="eye-outline"></ion-icon> View</a>
+          <button class="btn-unsave" onclick="unsaveCar('${car.id}')"><ion-icon name="heart-dislike-outline"></ion-icon> Remove</button>
+        </div>
+      </div>`;
+    }).filter(Boolean);
+
+    el.innerHTML = cards.length ? cards.join('') : `<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:2rem;">All saved cars are no longer in inventory.</div>`;
+  } catch { el.innerHTML = errorHTML('Could not load saved cars.'); }
+}
+
+window.unsaveCar = async function(carId) {
+  try {
+    await deleteDoc(doc(db, 'users', currentUser.uid, 'savedCars', carId));
+    showToast('Removed from saved cars.', 'success');
+    await Promise.all([loadSavedCars(), loadStats()]);
+  } catch { showToast('Failed to remove.', 'error'); }
+};
+
+/* Global save/unsave used by inventory page */
+window.toggleSaveCar = async function(carId, currentlySaved) {
+  if (!currentUser) { window.location.href = 'login'; return; }
+  try {
+    const ref = doc(db, 'users', currentUser.uid, 'savedCars', carId);
+    if (currentlySaved) {
+      await deleteDoc(ref);
+      showToast('Removed from saved cars.', 'success');
+    } else {
+      await setDoc(ref, { savedAt: serverTimestamp() });
+      showToast('Saved to your profile!', 'success');
+    }
+  } catch { showToast('Failed to update.', 'error'); }
+};
+
+/* ══════════════════════════════════════════
+   CONFIRM DIALOG
+═══════════════════════════════════════════ */
+function showConfirm(title, msg, sub, btnLabel, cb) {
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-msg').textContent = msg;
+  document.getElementById('confirm-sub').textContent = sub || '';
+  document.getElementById('confirm-ok-btn').textContent = btnLabel || 'Confirm';
+  confirmCallback = cb;
+  document.getElementById('confirm-modal').classList.add('show');
+}
+window.closeConfirm = () => { document.getElementById('confirm-modal').classList.remove('show'); confirmCallback = null; };
+document.getElementById('confirm-ok-btn').addEventListener('click', () => { closeConfirm(); if (confirmCallback) confirmCallback(); });
+
+/* Close modals on backdrop */
+['vehicle-modal','confirm-modal'].forEach(id => {
+  document.getElementById(id).addEventListener('click', e => { if (e.target.id === id) { if (id === 'vehicle-modal') closeVehicleModal(); else closeConfirm(); } });
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeVehicleModal(); closeConfirm(); } });
+
+/* ══════════════════════════════════════════
+   HTML HELPERS
+═══════════════════════════════════════════ */
+function apptCardHTML(b) {
+  const dt = new Date(b.start);
+  const month = dt.toLocaleDateString('en-US', { month:'short', timeZone:'America/New_York' });
+  const day   = dt.toLocaleDateString('en-US', { day:'numeric', timeZone:'America/New_York' });
+  const time  = dt.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit', hour12:true, timeZone:'America/New_York' });
+  const statusClass = b.status === 'confirmed' ? 'status-confirmed' : 'status-pending';
+  return `<div class="appt-card">
+    <div class="appt-date-badge"><div class="am">${month}</div><div class="ad">${day}</div></div>
+    <div>
+      <div class="appt-service">${b.serviceName || b.service}</div>
+      <div class="appt-meta"><ion-icon name="time-outline"></ion-icon>${time}${b.vehicleMakeModel ? ` &nbsp;·&nbsp; <ion-icon name="car-outline"></ion-icon>${b.vehicleYear ? b.vehicleYear + ' ' : ''}${b.vehicleMakeModel}` : ''}</div>
+    </div>
+    <span class="appt-status ${statusClass}">${b.status || 'confirmed'}</span>
+  </div>`;
+}
+
+function historyItemHTML(b) {
+  const dt = new Date(b.start || b.date);
+  const month = dt.toLocaleDateString('en-US', { month:'short', timeZone:'America/New_York' });
+  const day   = dt.toLocaleDateString('en-US', { day:'numeric', timeZone:'America/New_York' });
+  const isUpcoming = dt >= new Date();
+  const source = b._source === 'clover' ? 'source-clover' : isUpcoming ? 'source-pending' : 'source-booking';
+  const sourceLabel = b._source === 'clover' ? 'Clover POS' : isUpcoming ? 'Upcoming' : 'Booked';
+  return `<div class="history-item">
+    <div class="hist-badge"><div class="hm">${month}</div><div class="hd">${day}</div></div>
+    <div>
+      <div class="hist-service">${b.serviceName || b.service || 'Service'}</div>
+      <div class="hist-meta">
+        ${b.vehicleMakeModel ? `<ion-icon name="car-outline"></ion-icon>${b.vehicleYear ? b.vehicleYear + ' ' : ''}${b.vehicleMakeModel}` : ''}
+        ${b.duration ? `&nbsp;·&nbsp; ${b.duration} min` : ''}
+      </div>
+    </div>
+    <div class="hist-right">
+      ${b.amount ? `<div style="font-weight:700;font-size:.95rem;margin-bottom:.25rem;">$${Number(b.amount).toFixed(2)}</div>` : ''}
+      <span class="hist-source ${source}">${sourceLabel}</span>
+    </div>
+  </div>`;
+}
+
+function vehicleCardHTML(v, showActions) {
+  const serviceLabel = v.lastService
+    ? `Last: ${v.lastService}${v.lastServiceDate ? ' · ' + new Date(v.lastServiceDate.toDate()).toLocaleDateString('en-US',{month:'short',year:'numeric'}) : ''}`
+    : 'No service history yet';
+  return `<div class="vehicle-card">
+    <div class="vehicle-icon"><ion-icon name="car-sport-outline"></ion-icon></div>
+    <div style="flex:1;min-width:0;">
+      <div class="vehicle-name">${v.year} ${v.make} ${v.model}${v.nickname ? ' — ' + v.nickname : ''}</div>
+      <div class="vehicle-meta">${serviceLabel}</div>
+      <div class="vehicle-badges">
+        ${v.isPrimary ? '<span class="vehicle-badge badge-primary">Primary</span>' : ''}
+      </div>
+    </div>
+    ${showActions ? `<div class="vehicle-actions">
+      <button class="veh-btn veh-edit" onclick="openVehicleModal('${v.id}')">Edit</button>
+      <button class="veh-btn veh-delete" onclick="confirmDeleteVehicle('${v.id}', '${v.year} ${v.make} ${v.model}')">Remove</button>
+    </div>` : ''}
+  </div>`;
+}
+
+function skeletonRows(n) {
+  return Array.from({length:n}, () => `<div style="display:flex;gap:.75rem;align-items:center;padding:.75rem 0;border-bottom:1px solid var(--border);">
+    <div class="skel" style="width:42px;height:42px;border-radius:8px;flex-shrink:0;"></div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:.4rem;">
+      <div class="skel" style="height:.8rem;width:55%;"></div>
+      <div class="skel" style="height:.7rem;width:35%;"></div>
+    </div>
+  </div>`).join('');
+}
+
+function errorHTML(msg) {
+  return `<p style="font-size:.85rem;color:var(--muted);padding:1rem 0;">${msg}</p>`;
+}
+
+</script>
+</body>
+</html>
