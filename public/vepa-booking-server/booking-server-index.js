@@ -7,6 +7,9 @@ const { google } = require('googleapis');
 const admin = require('firebase-admin');
 const { DateTime } = require('luxon');
 const { Resend } = require('resend');
+const CLOVER_MID   = process.env.CLOVER_MERCHANT_ID;
+const CLOVER_TOKEN = process.env.CLOVER_API_TOKEN;
+const CLOVER_BASE  = process.env.CLOVER_BASE_URL || 'https://api.clover.com';
 
 // Email Templates
 const { confirmationEmail, cancellationEmail, staffNotificationEmail } = require('./emailTemplates');
@@ -25,6 +28,18 @@ if (!admin.apps.length) {
   });
 }
 const db = admin.firestore();
+
+async function cloverGet(path) {
+  const url = `${CLOVER_BASE}${path}`;
+  const res  = await fetch(url, {
+    headers: { Authorization: `Bearer ${CLOVER_TOKEN}` }
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Clover API ${res.status}: ${err}`);
+  }
+  return res.json();
+}
 
 /* ─── CONSTANTS ───────────────────────────────────────────── */
 const BUSINESS_HOURS = {
@@ -464,6 +479,94 @@ app.get('/clover/sync', requireAuth, async (req, res) => {
   } catch (err) {
     console.error('Clover sync error:', err);
     res.status(500).json({ error: 'Clover sync failed' });
+  }
+});
+
+app.get('/clover/customer-stats', verifyToken, async (req, res) => {
+  if (!CLOVER_MID || !CLOVER_TOKEN) {
+    return res.status(503).json({ error: 'Clover not configured on this server.' });
+  }
+ 
+  try {
+    const uid   = req.user.uid;
+    const email = req.user.email;
+ 
+    // Get phone from Firestore profile (already have db from your existing setup)
+    let phone = '';
+    try {
+      const userSnap = await db.collection('users').doc(uid).get();
+      if (userSnap.exists) phone = userSnap.data().phone || '';
+      // Normalize phone to digits only for Clover search
+      phone = phone.replace(/\D/g, '');
+    } catch (_) {}
+ 
+    // ── Search Clover by email first ──────────────────────────────
+    let cloverCustomer = null;
+    try {
+      const emailSearch = await cloverGet(
+        `/v3/merchants/${CLOVER_MID}/customers?filter=emailAddresses.emailAddress%3D${encodeURIComponent(email)}&expand=emailAddresses,phoneNumbers`
+      );
+      if (emailSearch.elements?.length) {
+        cloverCustomer = emailSearch.elements[0];
+      }
+    } catch (_) {}
+ 
+    // ── Fallback: search by phone ─────────────────────────────────
+    if (!cloverCustomer && phone) {
+      try {
+        const phoneSearch = await cloverGet(
+          `/v3/merchants/${CLOVER_MID}/customers?filter=phoneNumbers.phoneNumber%3D${encodeURIComponent(phone)}&expand=emailAddresses,phoneNumbers`
+        );
+        if (phoneSearch.elements?.length) {
+          cloverCustomer = phoneSearch.elements[0];
+        }
+      } catch (_) {}
+    }
+ 
+    if (!cloverCustomer) {
+      return res.json({ notFound: true });
+    }
+ 
+    // ── Fetch this customer's orders ──────────────────────────────
+    const cid = cloverCustomer.id;
+    let orders = [];
+    try {
+      // Clover orders are paginated; fetch up to 100 most recent
+      const orderData = await cloverGet(
+        `/v3/merchants/${CLOVER_MID}/orders?filter=customers.id%3D${cid}&orderBy=createdTime+DESC&limit=100&expand=lineItems`
+      );
+      orders = orderData.elements || [];
+    } catch (_) {}
+ 
+    // ── Compute stats ─────────────────────────────────────────────
+    // Clover stores totals in cents
+    const paidOrders = orders.filter(o => o.paymentState === 'PAID' || o.total > 0);
+    const totalCents = paidOrders.reduce((sum, o) => sum + (o.total || 0), 0);
+    const orderCount = paidOrders.length;
+    const avgCents   = orderCount ? Math.round(totalCents / orderCount) : 0;
+    const lastVisit  = paidOrders[0]?.createdTime || null;   // already DESC sorted
+ 
+    // Build recent orders list (last 4, human-readable)
+    const recentOrders = paidOrders.slice(0, 4).map(o => ({
+      id:          o.id,
+      createdTime: o.createdTime,
+      total:       o.total,             // cents
+      itemCount:   o.lineItems?.elements?.length || 0,
+      title:       o.lineItems?.elements?.[0]?.name || 'Service Visit',
+    }));
+ 
+    return res.json({
+      cloverCustomerId: cid,
+      totalSpent:       totalCents / 100,       // dollars
+      orderCount,
+      avgOrderValue:    avgCents / 100,          // dollars
+      lastVisit,
+      recentOrders,
+    });
+ 
+  } catch (err) {
+    console.error('Clover stats error:', err);
+    return res.status(500).json({ error: 'Failed to load Clover data.' });
   }
 });
 

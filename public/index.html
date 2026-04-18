@@ -64,33 +64,53 @@
     }
     .logo { font-family: var(--fd); font-size: 1.85rem; font-weight: 800; letter-spacing: 0.06em; color: var(--bg); }
     .logo em { color: var(--red); font-style: normal; }
-    .user-chip {
-  display: none; /* shown via JS */
-  align-items: center;
-  gap: .45rem;
-  background: rgba(255,255,255,.07);
-  border: 1px solid rgba(255,255,255,.11);
-  border-radius: 100px;
-  padding: .3rem .85rem .3rem .35rem;
-  cursor: default;
-  margin-right: .5rem;
-  transition: background .25s ease;
+   /* ── USER CHIP WITH DROPDOWN ── */
+.user-chip{
+  display:none;align-items:center;gap:.45rem;
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.11);
+  border-radius:100px;padding:.3rem .85rem .3rem .35rem;
+  cursor:pointer;margin-right:.5rem;
+  transition:background .25s ease;
+  position:relative;
 }
-.user-chip:hover { background: rgba(255,255,255,.11); }
-.user-chip-avatar {
-  width: 26px; height: 26px; border-radius: 50%;
-  background: #C8381A; color: #fff;
-  font-size: .7rem; font-weight: 700; text-transform: uppercase;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
+.user-chip:hover{background:rgba(255,255,255,.13);}
+.user-chip-avatar{
+  width:26px;height:26px;border-radius:50%;
+  background:#C8381A;color:#fff;
+  font-size:.7rem;font-weight:700;text-transform:uppercase;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
 }
-.user-chip-email {
-  font-size: .73rem; color: rgba(255,255,255,.75); font-weight: 500;
-  max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+.user-chip-email{
+  font-size:.73rem;color:rgba(255,255,255,.75);font-weight:500;
+  max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
 }
-@media(max-width:768px){
-  .user-chip .user-chip-email { display: none; } /* avatar-only on mobile */
+.chip-caret{font-size:.65rem;color:rgba(255,255,255,.4);margin-left:.1rem;transition:transform .25s ease;}
+.user-chip.open .chip-caret{transform:rotate(180deg);}
+.chip-dropdown{
+  display:none;position:absolute;top:calc(100% + 10px);right:0;
+  background:#1C1917;border:1px solid rgba(255,255,255,.1);
+  border-radius:10px;min-width:175px;
+  box-shadow:0 12px 36px rgba(0,0,0,.4);overflow:hidden;z-index:500;
+  animation:dd-in .15s ease;
 }
+.chip-dropdown.open{display:block;}
+@keyframes dd-in{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.chip-dd-header{padding:.75rem 1.1rem .5rem;border-bottom:1px solid rgba(255,255,255,.07);}
+.chip-dd-email{font-size:.72rem;color:rgba(255,255,255,.35);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.chip-dd-item{
+  display:flex;align-items:center;gap:.65rem;
+  padding:.7rem 1.1rem;font-size:.82rem;font-weight:600;
+  color:rgba(255,255,255,.7);text-decoration:none;
+  transition:background .25s ease,color .25s ease;
+  border:none;background:none;width:100%;cursor:pointer;
+  font-family:'Nunito Sans',sans-serif;text-align:left;
+}
+.chip-dd-item:hover{background:rgba(255,255,255,.08);color:#fff;}
+.chip-dd-divider{height:1px;background:rgba(255,255,255,.07);}
+.chip-dd-item.danger{color:rgba(252,165,165,.75);}
+.chip-dd-item.danger:hover{background:rgba(200,56,26,.15);color:#fca5a5;}
+@media(max-width:768px){.user-chip .user-chip-email,.user-chip .chip-caret{display:none;}}
+
     nav ul { list-style: none; display: flex; align-items: center; gap: 0.15rem; }
     nav ul li a, nav ul li button, .login-toggle {
       font-family: var(--fb); font-size: 0.78rem; font-weight: 600; text-transform: uppercase;
@@ -288,9 +308,26 @@
 <header>
   <div class="logo">VEPA<em>.</em></div>
    <div class="user-chip" id="user-chip">
-  <div class="user-chip-avatar" id="user-avatar-letter">U</div>
-  <span class="user-chip-email" id="user-chip-email">user@email.com</span>
-</div>
+    <div class="user-chip-avatar" id="user-avatar-letter">U</div>
+    <span class="user-chip-email" id="user-chip-email">user@email.com</span>
+    <span class="chip-caret">▾</span>
+    <div class="chip-dropdown" id="chip-dropdown">
+      <div class="chip-dd-header">
+        <div class="chip-dd-email" id="chip-dd-email-display"></div>
+      </div>
+      <a href="profile" class="chip-dd-item">
+        <span>👤</span> My Profile
+      </a>
+      <a href="services" data-scroll="booking" class="chip-dd-item">
+        <span>📅</span> Book Service
+      </a>
+      <div class="chip-dd-divider"></div>
+      <button class="chip-dd-item danger" id="chip-signout">
+        <span>↩</span> Sign Out
+      </button>
+    </div>
+  </div>
+
   <div class="menu-toggle" id="menu-toggle"><span></span><span></span><span></span></div>
   <nav id="nav-links">
     <ul>
@@ -300,9 +337,7 @@
       <li><a href="about">About</a></li>
       <li id="admin-link" style="display:none"><a href="admin">Admin</a></li>
       <li><a href="contact">Contact</a></li>
-      <li><a href="profile">Profile</a></li>
-      <li><span class="login-toggle">Login</span></li>
-      <li id="signout-nav" style="display:none"><button id="signout-btn">Sign Out</button></li>
+      <li id="nav-login-li"><a href="login">Login</a></li>
     </ul>
   </nav>
 </header>
@@ -468,42 +503,53 @@ document.getElementById('cookie-dismiss').addEventListener('click',()=>{
     document.getElementById('nav-links').classList.toggle('open');
   });
 
-  /* Login sidebar */
-  document.querySelector('.login-toggle').addEventListener('click', () => document.getElementById('login-sidebar').classList.add('open'));
-  document.getElementById('close-login').addEventListener('click', () => document.getElementById('login-sidebar').classList.remove('open'));
-
   /* Auth */
-  onAuthStateChanged(auth, async user => {
+  /* ── Chip dropdown ── */
+const chip     = document.getElementById('user-chip');
+const dropdown = document.getElementById('chip-dropdown');
+chip.addEventListener('click', e => {
+  e.stopPropagation();
+  chip.classList.toggle('open');
+  dropdown.classList.toggle('open');
+});
+document.addEventListener('click', () => {
+  chip.classList.remove('open');
+  dropdown.classList.remove('open');
+});
+dropdown.addEventListener('click', e => e.stopPropagation());
+
+document.getElementById('chip-signout').addEventListener('click', async () => {
+  await signOut(auth);
+  sessionStorage.removeItem('admin-auth');
+  location.reload();
+});
+
+/* ── Auth state ── */
+onAuthStateChanged(auth, async user => {
   const chip     = document.getElementById('user-chip');
-  const loginLi  = document.querySelector('.login-toggle')?.closest('li') || document.querySelector('.login-toggle');
-  const signoutN = document.getElementById('signout-nav');
-  const al       = document.getElementById('admin-link');
- 
+  const loginLi  = document.getElementById('nav-login-li');
+  const adminLnk = document.getElementById('admin-link');
+
   if (user) {
-    // Populate chip
     document.getElementById('user-avatar-letter').textContent = user.email.charAt(0).toUpperCase();
     document.getElementById('user-chip-email').textContent    = user.email;
-    chip.style.display    = 'flex';
-    if (loginLi) loginLi.style.display = 'none';
-    signoutN.style.display = 'inline-flex';
- 
-    // Admin check
+    document.getElementById('chip-dd-email-display').textContent = user.email;
+    chip.style.display   = 'flex';
+    loginLi.style.display = 'none';
+
     try {
       const snap = await getDoc(doc(db, 'users', user.uid));
       if (snap.exists() && snap.data().isAdmin) {
         sessionStorage.setItem('admin-auth', 'true');
-        if (al) al.style.display = 'inline-flex';
+        if (adminLnk) adminLnk.style.display = 'inline-flex';
       }
     } catch(e) {}
- 
   } else {
     chip.style.display    = 'none';
-    if (loginLi) loginLi.style.display = 'inline-flex';
-    signoutN.style.display = 'none';
-    if (al) al.style.display = 'none';
+    loginLi.style.display = 'inline-flex';
+    if (adminLnk) adminLnk.style.display = 'none';
   }
 });
-  document.getElementById('signout-btn').addEventListener('click', async () => { await signOut(auth); sessionStorage.removeItem('admin-auth'); location.reload(); });
 
   /* Inventory rail */
   const rail = document.getElementById('inv-rail');
@@ -540,6 +586,23 @@ document.getElementById('cookie-dismiss').addEventListener('click',()=>{
     rail.scrollBy({ left: 300, behavior:'smooth' });
     if (rail.scrollLeft + rail.clientWidth >= rail.scrollWidth - 10) rail.scrollTo({ left: 0, behavior:'smooth' });
   }, 3500); });
+
+  document.querySelectorAll('[data-scroll]').forEach(link => {
+  link.addEventListener('click', function(e) {
+    e.preventDefault();
+
+    const targetId = this.getAttribute('data-scroll');
+    const target = document.getElementById(targetId);
+
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth' });
+      history.replaceState(null, '', window.location.pathname);
+    } else {
+      window.location.href = this.getAttribute('href');
+      sessionStorage.setItem('scrollTarget', targetId);
+    }
+  });
+});
 
   /* Video rotation */
   const videos = ['https://res.cloudinary.com/dyjfyxrve/video/upload/q_auto/f_auto/v1776457850/OilPour1_stmdy3.mp4',
