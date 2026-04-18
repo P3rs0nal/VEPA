@@ -482,93 +482,93 @@ app.get('/clover/sync', requireAuth, async (req, res) => {
   }
 });
 
-app.get('/clover/customer-stats', verifyToken, async (req, res) => {
-  if (!CLOVER_MID || !CLOVER_TOKEN) {
-    return res.status(503).json({ error: 'Clover not configured on this server.' });
-  }
+// app.get('/clover/customer-stats', verifyToken, async (req, res) => {
+//   if (!CLOVER_MID || !CLOVER_TOKEN) {
+//     return res.status(503).json({ error: 'Clover not configured on this server.' });
+//   }
  
-  try {
-    const uid   = req.user.uid;
-    const email = req.user.email;
+//   try {
+//     const uid   = req.user.uid;
+//     const email = req.user.email;
  
-    // Get phone from Firestore profile (already have db from your existing setup)
-    let phone = '';
-    try {
-      const userSnap = await db.collection('users').doc(uid).get();
-      if (userSnap.exists) phone = userSnap.data().phone || '';
-      // Normalize phone to digits only for Clover search
-      phone = phone.replace(/\D/g, '');
-    } catch (_) {}
+//     // Get phone from Firestore profile (already have db from your existing setup)
+//     let phone = '';
+//     try {
+//       const userSnap = await db.collection('users').doc(uid).get();
+//       if (userSnap.exists) phone = userSnap.data().phone || '';
+//       // Normalize phone to digits only for Clover search
+//       phone = phone.replace(/\D/g, '');
+//     } catch (_) {}
  
-    // ── Search Clover by email first ──────────────────────────────
-    let cloverCustomer = null;
-    try {
-      const emailSearch = await cloverGet(
-        `/v3/merchants/${CLOVER_MID}/customers?filter=emailAddresses.emailAddress%3D${encodeURIComponent(email)}&expand=emailAddresses,phoneNumbers`
-      );
-      if (emailSearch.elements?.length) {
-        cloverCustomer = emailSearch.elements[0];
-      }
-    } catch (_) {}
+//     // ── Search Clover by email first ──────────────────────────────
+//     let cloverCustomer = null;
+//     try {
+//       const emailSearch = await cloverGet(
+//         `/v3/merchants/${CLOVER_MID}/customers?filter=emailAddresses.emailAddress%3D${encodeURIComponent(email)}&expand=emailAddresses,phoneNumbers`
+//       );
+//       if (emailSearch.elements?.length) {
+//         cloverCustomer = emailSearch.elements[0];
+//       }
+//     } catch (_) {}
  
-    // ── Fallback: search by phone ─────────────────────────────────
-    if (!cloverCustomer && phone) {
-      try {
-        const phoneSearch = await cloverGet(
-          `/v3/merchants/${CLOVER_MID}/customers?filter=phoneNumbers.phoneNumber%3D${encodeURIComponent(phone)}&expand=emailAddresses,phoneNumbers`
-        );
-        if (phoneSearch.elements?.length) {
-          cloverCustomer = phoneSearch.elements[0];
-        }
-      } catch (_) {}
-    }
+//     // ── Fallback: search by phone ─────────────────────────────────
+//     if (!cloverCustomer && phone) {
+//       try {
+//         const phoneSearch = await cloverGet(
+//           `/v3/merchants/${CLOVER_MID}/customers?filter=phoneNumbers.phoneNumber%3D${encodeURIComponent(phone)}&expand=emailAddresses,phoneNumbers`
+//         );
+//         if (phoneSearch.elements?.length) {
+//           cloverCustomer = phoneSearch.elements[0];
+//         }
+//       } catch (_) {}
+//     }
  
-    if (!cloverCustomer) {
-      return res.json({ notFound: true });
-    }
+//     if (!cloverCustomer) {
+//       return res.json({ notFound: true });
+//     }
  
-    // ── Fetch this customer's orders ──────────────────────────────
-    const cid = cloverCustomer.id;
-    let orders = [];
-    try {
-      // Clover orders are paginated; fetch up to 100 most recent
-      const orderData = await cloverGet(
-        `/v3/merchants/${CLOVER_MID}/orders?filter=customers.id%3D${cid}&orderBy=createdTime+DESC&limit=100&expand=lineItems`
-      );
-      orders = orderData.elements || [];
-    } catch (_) {}
+//     // ── Fetch this customer's orders ──────────────────────────────
+//     const cid = cloverCustomer.id;
+//     let orders = [];
+//     try {
+//       // Clover orders are paginated; fetch up to 100 most recent
+//       const orderData = await cloverGet(
+//         `/v3/merchants/${CLOVER_MID}/orders?filter=customers.id%3D${cid}&orderBy=createdTime+DESC&limit=100&expand=lineItems`
+//       );
+//       orders = orderData.elements || [];
+//     } catch (_) {}
  
-    // ── Compute stats ─────────────────────────────────────────────
-    // Clover stores totals in cents
-    const paidOrders = orders.filter(o => o.paymentState === 'PAID' || o.total > 0);
-    const totalCents = paidOrders.reduce((sum, o) => sum + (o.total || 0), 0);
-    const orderCount = paidOrders.length;
-    const avgCents   = orderCount ? Math.round(totalCents / orderCount) : 0;
-    const lastVisit  = paidOrders[0]?.createdTime || null;   // already DESC sorted
+//     // ── Compute stats ─────────────────────────────────────────────
+//     // Clover stores totals in cents
+//     const paidOrders = orders.filter(o => o.paymentState === 'PAID' || o.total > 0);
+//     const totalCents = paidOrders.reduce((sum, o) => sum + (o.total || 0), 0);
+//     const orderCount = paidOrders.length;
+//     const avgCents   = orderCount ? Math.round(totalCents / orderCount) : 0;
+//     const lastVisit  = paidOrders[0]?.createdTime || null;   // already DESC sorted
  
-    // Build recent orders list (last 4, human-readable)
-    const recentOrders = paidOrders.slice(0, 4).map(o => ({
-      id:          o.id,
-      createdTime: o.createdTime,
-      total:       o.total,             // cents
-      itemCount:   o.lineItems?.elements?.length || 0,
-      title:       o.lineItems?.elements?.[0]?.name || 'Service Visit',
-    }));
+//     // Build recent orders list (last 4, human-readable)
+//     const recentOrders = paidOrders.slice(0, 4).map(o => ({
+//       id:          o.id,
+//       createdTime: o.createdTime,
+//       total:       o.total,             // cents
+//       itemCount:   o.lineItems?.elements?.length || 0,
+//       title:       o.lineItems?.elements?.[0]?.name || 'Service Visit',
+//     }));
  
-    return res.json({
-      cloverCustomerId: cid,
-      totalSpent:       totalCents / 100,       // dollars
-      orderCount,
-      avgOrderValue:    avgCents / 100,          // dollars
-      lastVisit,
-      recentOrders,
-    });
+//     return res.json({
+//       cloverCustomerId: cid,
+//       totalSpent:       totalCents / 100,       // dollars
+//       orderCount,
+//       avgOrderValue:    avgCents / 100,          // dollars
+//       lastVisit,
+//       recentOrders,
+//     });
  
-  } catch (err) {
-    console.error('Clover stats error:', err);
-    return res.status(500).json({ error: 'Failed to load Clover data.' });
-  }
-});
+//   } catch (err) {
+//     console.error('Clover stats error:', err);
+//     return res.status(500).json({ error: 'Failed to load Clover data.' });
+//   }
+// });
 
 /* ─── START SERVER ────────────────────────────────────────── */
 app.listen(PORT, () => console.log(`Booking server running on port ${PORT}`));
