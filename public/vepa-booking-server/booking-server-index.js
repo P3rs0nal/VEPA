@@ -375,5 +375,97 @@ app.delete('/bookings/:id', requireAuth, async (req, res) => {
   }
 });
 
+/* ─── CLOVER ROUTES ──────────────────────────── */
+
+app.get('/clover/sync', requireAuth, async (req, res) => {
+  try {
+    const email = req.user.email;
+    const userRef = db.collection('users').doc(req.user.uid);
+    const userSnap = await userRef.get();
+    const userData = userSnap.data();
+
+    let customerId = userData?.cloverCustomerId;
+
+    // Find customer (only once)
+    if (!customerId) {
+      const customerRes = await fetch(
+        `https://api.clover.com/v3/merchants/${process.env.CLOVER_MERCHANT_ID}/customers?filter=email=${email}`,
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.CLOVER_TOKEN}`
+          }
+        }
+      );
+
+      const customerData = await customerRes.json();
+      const customer = customerData.elements?.[0];
+
+      if (!customer) {
+        return res.json({ transactions: [] });
+      }
+
+      customerId = customer.id;
+
+      await userRef.update({ cloverCustomerId: customerId });
+    }
+
+    // Get orders
+    const ordersRes = await fetch(
+      `https://api.clover.com/v3/merchants/${process.env.CLOVER_MERCHANT_ID}/orders?filter=customer.id=${customerId}&expand=lineItems`,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.CLOVER_TOKEN}`
+        }
+      }
+    );
+
+    const ordersData = await ordersRes.json();
+    const orders = ordersData.elements || [];
+
+    // Map data
+    const mappedTransactions = orders.map(order => {
+      const items = order.lineItems?.elements || [];
+
+      return {
+        id: order.id,
+        amount: (order.total || 0) / 100,
+        date: order.createdTime,
+        service: items[0]?.name || 'Purchase',
+        items: items.map(i => ({
+          name: i.name,
+          price: (i.price || 0) / 100
+        }))
+      };
+    });
+
+    // Summary
+    const totalSpend = mappedTransactions.reduce((sum, t) => sum + t.amount, 0);
+
+    const cloverSummary = {
+      totalSpend,
+      totalVisits: mappedTransactions.length,
+      lastInvoice: mappedTransactions[0]?.amount || 0,
+      lastInvoiceDate: mappedTransactions[0]?.date || null
+    };
+
+    // Save
+    await userRef.update({
+      clover: cloverSummary,
+      cloverTransactions: mappedTransactions,
+      cloverUpdatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    res.json({
+      success: true,
+      clover: cloverSummary,
+      transactions: mappedTransactions
+    });
+
+  } catch (err) {
+    console.error('Clover sync error:', err);
+    res.status(500).json({ error: 'Clover sync failed' });
+  }
+});
+
 /* ─── START SERVER ────────────────────────────────────────── */
 app.listen(PORT, () => console.log(`Booking server running on port ${PORT}`));
