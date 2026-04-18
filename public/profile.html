@@ -838,7 +838,15 @@ window.saveVehicle = async function() {
       }
     }
 
-    const vehicleData = { year: Number(year), make, model, nickname, isPrimary: vmIsPrimary };
+    const vehicleData = {
+      year: Number(year),
+      make,
+      model,
+      makeModel: `${make} ${model}`,
+      nickname,
+      isPrimary: vmIsPrimary,
+      addedAt: serverTimestamp()
+    };
 
     if (editVehicleId) {
       await updateDoc(doc(db, 'users', currentUser.uid, 'vehicles', editVehicleId), vehicleData);
