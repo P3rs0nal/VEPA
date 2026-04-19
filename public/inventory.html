@@ -550,6 +550,7 @@ onAuthStateChanged(auth, async user => {
   const adminLnk = document.getElementById('admin-link');
 
   if (user) {
+    currentUserLocal = user;
     document.getElementById('user-avatar-letter').textContent = user.email.charAt(0).toUpperCase();
     document.getElementById('user-chip-email').textContent    = user.email;
     document.getElementById('chip-dd-email-display').textContent = user.email;
@@ -564,6 +565,7 @@ onAuthStateChanged(auth, async user => {
       }
     } catch(e) {}
   } else {
+    currentUserLocal = null;
     chip.style.display    = 'none';
     loginLi.style.display = 'inline-flex';
     if (adminLnk) adminLnk.style.display = 'none';
