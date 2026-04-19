@@ -902,13 +902,25 @@ onAuthStateChanged(auth, async user => {
   const chip     = document.getElementById('user-chip');
   const loginLi  = document.getElementById('nav-login-li');
   const adminLnk = document.getElementById('admin-link');
+  const loginPrompt = document.getElementById('booking-login-prompt');
+  const wizard      = document.getElementById('booking-wizard');
+  const myAppts     = document.getElementById('my-appointments');
 
   if (user) {
+    currentUser = user;
+
     document.getElementById('user-avatar-letter').textContent = user.email.charAt(0).toUpperCase();
     document.getElementById('user-chip-email').textContent    = user.email;
     document.getElementById('chip-dd-email-display').textContent = user.email;
     chip.style.display   = 'flex';
     loginLi.style.display = 'none';
+
+    loginPrompt.style.display = 'none';
+    wizard.style.display      = 'block';
+    myAppts.style.display     = 'block';
+
+    initWizard();
+    loadUserBookings();
 
     try {
       const snap = await getDoc(doc(db, 'users', user.uid));
@@ -921,6 +933,10 @@ onAuthStateChanged(auth, async user => {
     chip.style.display    = 'none';
     loginLi.style.display = 'inline-flex';
     if (adminLnk) adminLnk.style.display = 'none';
+
+    loginPrompt.style.display = 'block';
+    wizard.style.display      = 'none';
+    myAppts.style.display     = 'none';
   }
 });
 
