@@ -177,6 +177,14 @@
     .act-btn:hover{opacity:.85;transform:translateY(-1px);}
     .act-edit{background:rgba(22,163,74,.12);color:var(--green);}
     .act-delete{background:rgba(220,38,38,.1);color:#dc2626;}
+    .act-sold {
+        background: rgba(250, 204, 21, 0.15);
+        color: #ca8a04;
+      }
+
+      .act-sold:hover {
+        background: rgba(250, 204, 21, 0.25);
+      }
 
     /* empty state */
     .empty-row td{text-align:center;padding:4rem;color:var(--muted);}
@@ -711,6 +719,9 @@ function renderTable(cars) {
         <div class="row-actions">
           <button class="act-btn act-edit" onclick="openEditModal('${car.id}')">Edit</button>
           <button class="act-btn act-delete" onclick="confirmDeleteCar('${car.id}')">Delete</button>
+          <button class="act-btn act-sold" data-id="${car.id}">
+            ${car.sold ? 'Mark Available' : 'Mark Sold'}
+          </button>
         </div>
       </td>
     </tr>`;
@@ -915,6 +926,28 @@ async function finishSave() {
   applyFilters();
   hideLoading();
 }
+
+document.addEventListener('click', async (e) => {
+  if (e.target.classList.contains('act-sold')) {
+    const carId = e.target.dataset.id;
+
+    try {
+      const carRef = doc(db, 'cars', carId);
+
+      await updateDoc(carRef, {
+        sold: e.target.textContent.includes('Sold')
+      });
+
+      e.target.textContent = e.target.textContent.includes('Sold')
+        ? 'Mark as Available'
+        : 'Mark as Sold';
+
+    } catch (err) {
+      console.error(err);
+      alert('Failed to update status');
+    }
+  }
+});
 
 /* ── REMOVE EXISTING IMG (in edit modal) ── */
 window.removeExistingImg = async function(carId, idx) {
