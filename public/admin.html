@@ -984,6 +984,8 @@ window.removeExistingImg = async function(carId, idx) {
 /* ── DELETE CAR ── */
 window.confirmDeleteCar = function(id) {
   const car = allCars.find(c => c.id === id);
+  console.log("found ID: ", id)
+  console.log("car:", car)
   confirmAction(
     'Delete Vehicle',
     `Delete ${car?.year || ''} ${car?.make || ''} ${car?.model || ''}?`,
@@ -994,20 +996,42 @@ window.confirmDeleteCar = function(id) {
 };
 
 async function deleteCar(id) {
+  console.log("DELETE START", id);
   showLoading('Deleting vehicle…');
+
   try {
     const docRef = doc(db, 'cars', id);
     const snap = await getDoc(docRef);
-    for (const img of (snap.data()?.images || [])) {
-      if (img.path) { try { await deleteObject(ref(storage, img.path)); } catch(e) {} }
+
+    if (!snap.exists()) {
+      throw new Error("Document does not exist");
     }
+
+    for (const img of (snap.data().images || [])) {
+      if (img.path) {
+        try {
+          await deleteObject(ref(storage, img.path));
+        } catch (e) {
+          console.warn("Storage delete failed:", e);
+        }
+      }
+    }
+
     await deleteDoc(docRef);
+
+    console.log("DELETE SUCCESS");
+
     allCars = allCars.filter(c => c.id !== id);
     updateStats(allCars);
     applyFilters();
     showToast('Vehicle deleted', 'info');
-  } catch(e) { showToast('Failed to delete vehicle', 'error'); }
-  finally { hideLoading(); }
+
+  } catch(e) {
+    console.error("DELETE ERROR:", e); // 👈 THIS is what we need
+    showToast(e.message || 'Failed to delete vehicle', 'error');
+  } finally {
+    hideLoading();
+  }
 }
 
 /* ── DELETE ALL ── */
@@ -1142,9 +1166,61 @@ window.closeConfirm = function() {
   confirmCallback = null;
 };
 document.getElementById('confirm-ok-btn').addEventListener('click', () => {
+  const cb = confirmCallback;
   closeConfirm();
-  if (confirmCallback) confirmCallback();
+  if (cb) cb();
 });
+
+import { listAll } from 'https://www.gstatic.com/firebasejs/11.5.0/firebase-storage.js';
+
+async function relinkAllImages() {
+  showLoading("Relinking images...");
+
+  try {
+    const cars = await fetchCars();
+
+    for (const car of cars) {
+      if (!car.vin) continue;
+
+      const folderRef = ref(storage, `cars/${car.vin}`);
+
+      let files;
+      try {
+        files = await listAll(folderRef);
+      } catch (e) {
+        console.warn("No folder for:", car.vin);
+        continue;
+      }
+
+      const images = [];
+
+      for (const item of files.items) {
+        const url = await getDownloadURL(item);
+        images.push({
+          url,
+          path: item.fullPath
+        });
+      }
+
+      await updateDoc(doc(db, 'cars', car.id), { images });
+
+      console.log(`Relinked ${images.length} images for ${car.vin}`);
+    }
+
+    showToast("Images relinked!", "success");
+
+    allCars = await fetchCars();
+    applyFilters();
+
+  } catch (e) {
+    console.error(e);
+    showToast("Relink failed", "error");
+  } finally {
+    hideLoading();
+  }
+}
+
+window.relinkAllImages = relinkAllImages;
 
 /* Close modals on backdrop click */
 ['car-modal','img-modal','confirm-modal'].forEach(id => {
