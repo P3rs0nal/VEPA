@@ -5,6 +5,8 @@
   <link rel="shortcut icon" href="icons/favicon.ico">
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>About VEPA AutoCare – Albany, NY</title>
+  <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+  <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=Nunito+Sans:opsz,wght@6..12,400;6..12,500;6..12,600;6..12,700&display=swap" rel="stylesheet">
@@ -233,20 +235,20 @@
    <div class="user-chip" id="user-chip">
     <div class="user-chip-avatar" id="user-avatar-letter">U</div>
     <span class="user-chip-email" id="user-chip-email">user@email.com</span>
-    <span class="chip-caret">▾</span>
+    <span class="chip-caret"><ion-icon name="chevron-down-outline"></ion-icon></span>
     <div class="chip-dropdown" id="chip-dropdown">
       <div class="chip-dd-header">
         <div class="chip-dd-email" id="chip-dd-email-display"></div>
       </div>
       <a href="profile" class="chip-dd-item">
-        <span>👤</span> My Profile
+        <ion-icon name="person-outline"></ion-icon> My Profile
       </a>
       <a href="services" data-scroll="booking" class="chip-dd-item">
-        <span>📅</span> Book Service
+        <ion-icon name="calendar-clear-outline"></ion-icon> Book Service
       </a>
       <div class="chip-dd-divider"></div>
       <button class="chip-dd-item danger" id="chip-signout">
-        <span>↩</span> Sign Out
+        <ion-icon name="return-down-back-outline"></ion-icon> Sign Out
       </button>
     </div>
   </div>
