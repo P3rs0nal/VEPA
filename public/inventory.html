@@ -598,6 +598,13 @@ onAuthStateChanged(auth, async user => {
     allCars = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     populateFilters();
     renderGrid(allCars);
+
+    const params = new URLSearchParams(window.location.search);
+    const carId = params.get('car');
+    if (carId) {
+      const car = allCars.find(c => c.id === carId);
+      if (car && !car.sold) openModal(car);
+    }
   }
   fetchCars();
 
@@ -722,6 +729,11 @@ onAuthStateChanged(auth, async user => {
 }
 window.handleSaveClick = handleSaveClick;
 
+window.addEventListener('popstate', () => {
+  const params = new URLSearchParams(window.location.search);
+  if (!params.get('car')) closeModal();
+});
+
   /* Filters */
   document.getElementById('apply-filters').addEventListener('click', applyFilters);
   document.getElementById('reset-filters').addEventListener('click', () => {
@@ -815,6 +827,7 @@ window.handleSaveClick = handleSaveClick;
 
     document.getElementById('detail-modal').classList.add('show');
     document.body.style.overflow = 'hidden';
+    history.replaceState({ carId: car.id }, '', `?car=${car.id}`);
   }
 
   function buildCarousel() {
@@ -850,6 +863,7 @@ window.handleSaveClick = handleSaveClick;
   function closeModal() {
     document.getElementById('detail-modal').classList.remove('show');
     document.body.style.overflow = '';
+    history.replaceState(null, '', window.location.pathname);
   }
 
   document.getElementById('modal-close').addEventListener('click', closeModal);
