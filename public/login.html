@@ -172,7 +172,7 @@
 
 <!-- LEFT BRAND PANEL -->
 <div class="brand-panel">
-  <video class="brand-bg-video" autoplay muted loop playsinline>
+  <video preload="metadata" class="brand-bg-video" autoplay muted loop playsinline>
     <source src="backgroundVids/wideshot.mp4" type="video/mp4">
   </video>
   <div class="brand-shade"></div>
@@ -242,6 +242,14 @@
   const auth = getAuth(app);
   const db = getFirestore(app);
 
+  const params = new URLSearchParams(window.location.search);
+  const requestedReturnTo = params.get('returnTo') || '/';
+  const safeReturnTo = requestedReturnTo.startsWith('/') && !requestedReturnTo.startsWith('//') ? requestedReturnTo : '/';
+  const returnParam = `?returnTo=${encodeURIComponent(safeReturnTo)}`;
+  document.querySelectorAll('a[href="signup"]').forEach(a => a.href = `signup${returnParam}`);
+  document.querySelectorAll('a[href="login"]').forEach(a => a.href = `login${returnParam}`);
+
+
   /* Preloader */
   window.addEventListener('load', () => setTimeout(() => document.getElementById('preloader').classList.add('done'), 700));
 
@@ -274,7 +282,7 @@
       if (snap.exists() && snap.data().isAdmin) sessionStorage.setItem("admin-auth", "true");
       else sessionStorage.removeItem("admin-auth");
       sucEl.classList.add('show');
-      setTimeout(() => window.location.href = "index.html", 900);
+      setTimeout(() => window.location.href = safeReturnTo, 900);
     } catch (err) {
       btn.disabled = false; btn.textContent = 'Sign In';
       const msgs = {
@@ -292,5 +300,6 @@
   btn.addEventListener('click', doLogin);
   document.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
 </script>
+  <script type="module" src="site-session.js"></script>
 </body>
 </html>

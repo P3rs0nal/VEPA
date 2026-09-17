@@ -52,13 +52,35 @@ const BUSINESS_HOURS = {
   0: null,                   // Sun closed
 };
 
+const moneyFromEnv = (name) => {
+  const value = Number(process.env[name]);
+  return Number.isFinite(value) && value > 0 ? value : null;
+};
+
 const SERVICES = {
-  oil_change:     { name: 'Oil Change',     duration: 30 },
+  // Oil pricing varies by oil type / capacity. Configure the public estimate in Render:
+  // OIL_CHANGE_PRICE_MIN and OIL_CHANGE_PRICE_MAX (for example, your real shop range).
+  oil_change: {
+    name: 'Oil Change',
+    duration: 30,
+    priceMin: moneyFromEnv('OIL_CHANGE_PRICE_MIN'),
+    priceMax: moneyFromEnv('OIL_CHANGE_PRICE_MAX'),
+    estimateLabel: 'depending on oil type, capacity, and vehicle',
+  },
   tire_rotation:  { name: 'Tire Rotation',  duration: 90 },
-  inspection:     { name: 'NY Inspection',  duration: 30 },
+  // Albany is outside the NYMA emissions area. This is the typical light passenger vehicle fee.
+  inspection: {
+    name: 'NY Inspection',
+    duration: 30,
+    priceMin: 21,
+    priceMax: 21,
+    estimateLabel: 'typical passenger vehicle; exceptions may apply',
+  },
   brake_service:  { name: 'Brake Service',  duration: 120 },
   general_repair: { name: 'General Repair', duration: 120 },
 };
+
+const ESTIMATE_DISCLAIMER = 'Estimate only; final price can vary by vehicle, oil type/capacity, parts, condition, and required repairs.';
 
 /* ─── MIDDLEWARE ──────────────────────────────────────────── */
 app.use(cors({
@@ -98,7 +120,92 @@ function getCalendarClient() {
   return google.calendar({ version: 'v3', auth });
 }
 
-async function sendEmail({ to, subject, text, html }) {
+
+function normalizeServiceKeys(input) {
+  let raw = input;
+  if (typeof raw === 'string') raw = raw.split(',');
+  if (!Array.isArray(raw)) raw = raw ? [raw] : [];
+  return [...new Set(raw.map(v => String(v).trim()).filter(Boolean))];
+}
+
+function getServiceBundle(input) {
+  const keys = normalizeServiceKeys(input);
+  if (!keys.length) return { error: 'At least one service is required' };
+  if (keys.length > 5) return { error: 'A maximum of 5 services can be booked at once' };
+
+  const unknown = keys.filter(key => !SERVICES[key]);
+  if (unknown.length) return { error: `Unknown service: ${unknown.join(', ')}` };
+
+  const items = keys.map(key => ({ key, ...SERVICES[key] }));
+  const duration = items.reduce((sum, item) => sum + item.duration, 0);
+  const allEstimated = items.every(item => Number.isFinite(item.priceMin) && Number.isFinite(item.priceMax));
+  const estimateMin = allEstimated ? Number(items.reduce((sum, item) => sum + item.priceMin, 0).toFixed(2)) : null;
+  const estimateMax = allEstimated ? Number(items.reduce((sum, item) => sum + item.priceMax, 0).toFixed(2)) : null;
+
+  return {
+    keys,
+    items,
+    names: items.map(item => item.name),
+    duration,
+    estimateMin,
+    estimateMax,
+    estimateDisclaimer: ESTIMATE_DISCLAIMER,
+  };
+}
+
+function servicePublicShape(key, svc) {
+  return {
+    key,
+    name: svc.name,
+    duration: svc.duration,
+    priceMin: Number.isFinite(svc.priceMin) ? svc.priceMin : null,
+    priceMax: Number.isFinite(svc.priceMax) ? svc.priceMax : null,
+    estimateLabel: svc.estimateLabel || '',
+  };
+}
+
+
+function buildSlotLockRefs(startDt, endDt) {
+  const refs = [];
+  let cursor = startDt;
+  while (cursor < endDt) {
+    const key = `slot_${cursor.toISO()}`.replace(/[^a-zA-Z0-9_]/g, '_');
+    refs.push(db.collection('bookings_pending').doc(key));
+    cursor = cursor.plus({ minutes: 30 });
+  }
+  return refs;
+}
+
+async function acquireSlotLocks(startDt, endDt, userId) {
+  const refs = buildSlotLockRefs(startDt, endDt);
+  await db.runTransaction(async tx => {
+    const snaps = [];
+    for (const ref of refs) snaps.push(await tx.get(ref));
+    const now = Date.now();
+    for (const snap of snaps) {
+      if (!snap.exists) continue;
+      const lockedAt = snap.data()?.lockedAt?.toMillis?.() || 0;
+      if (now - lockedAt < 5 * 60 * 1000) {
+        const err = new Error('Slot is being booked');
+        err.code = 'SLOT_LOCKED';
+        throw err;
+      }
+    }
+    for (const ref of refs) {
+      tx.set(ref, {
+        userId,
+        lockedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    }
+  });
+  return refs;
+}
+
+async function releaseSlotLocks(refs) {
+  await Promise.allSettled((refs || []).map(ref => ref.delete()));
+}
+
+async function sendEmail({ to, subject, text, html, replyTo }) {
   try {
     const { data, error } = await resend.emails.send({
       from: 'VEPA AutoCare <noreply@vepaautocare.com>',
@@ -106,6 +213,7 @@ async function sendEmail({ to, subject, text, html }) {
       subject,
       text,
       html,
+      ...(replyTo ? { replyTo } : {}),
     });
 
     if (error) throw new Error(error.message);
@@ -116,29 +224,33 @@ async function sendEmail({ to, subject, text, html }) {
   }
 }
 
+
+function escapeHtml(value = '') {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 // Grouped Email Dispatchers to keep routes clean
 async function notifyBookingConfirmed(bookingData, userEmail) {
-  let customerResult = await sendEmail({
+  const customerTemplate = confirmationEmail(bookingData);
+  const staffTemplate = staffNotificationEmail({ ...bookingData, customerEmail: userEmail });
+
+  const customerResult = await sendEmail({
     to: userEmail,
-    subject: confirmationEmail(bookingData).subject,
-    text: confirmationEmail(bookingData).text,
-    html: confirmationEmail(bookingData).html,
+    subject: customerTemplate.subject,
+    text: customerTemplate.text,
+    html: customerTemplate.html,
   });
 
-  let staffResult = await sendEmail({
+  const staffResult = await sendEmail({
     to: 'vepaautoshop1904@gmail.com',
-    subject: staffNotificationEmail({
-      ...bookingData,
-      customerEmail: userEmail,
-    }).subject,
-    text: staffNotificationEmail({
-      ...bookingData,
-      customerEmail: userEmail,
-    }).text,
-    html: staffNotificationEmail({
-      ...bookingData,
-      customerEmail: userEmail,
-    }).html,
+    subject: staffTemplate.subject,
+    text: staffTemplate.text,
+    html: staffTemplate.html,
   });
 
   return {
@@ -166,31 +278,103 @@ async function notifyBookingCancelled(bookingData, userEmail) {
 
 app.get('/', (req, res) => res.send('VEPA Booking API — running'));
 
+app.post('/contact', requireAuth, async (req, res) => {
+  const name = String(req.body?.name || '').replace(/[\r\n]+/g, ' ').trim();
+  const phone = String(req.body?.phone || '').replace(/[\r\n]+/g, ' ').trim();
+  const subjectKey = String(req.body?.subject || 'general').trim();
+  const message = String(req.body?.message || '').trim();
+  const userEmail = req.user.email;
+
+  if (!name || !phone || !message || !userEmail) {
+    return res.status(400).json({ error: 'Name, phone, email, and message are required' });
+  }
+  if (name.length > 120 || phone.length > 40 || message.length > 1000 || subjectKey.length > 40) {
+    return res.status(400).json({ error: 'One or more fields are too long' });
+  }
+
+  const subjectNames = {
+    vehicle: 'Vehicle',
+    service: 'Service',
+    pricing: 'Pricing',
+    other: 'Other',
+    general: 'General',
+  };
+  const subjectLabel = subjectNames[subjectKey] || 'General';
+
+  try {
+    const inquiryRef = await db.collection('web_inquiries').add({
+      source: 'web',
+      type: subjectKey || 'general',
+      userId: req.user.uid,
+      authenticated: true,
+      user: { uid: req.user.uid, name, phone, email: userEmail },
+      message,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    const safeName = escapeHtml(name);
+    const safePhone = escapeHtml(phone);
+    const safeEmail = escapeHtml(userEmail);
+    const safeSubject = escapeHtml(subjectLabel);
+    const safeMessage = escapeHtml(message).replace(/\n/g, '<br>');
+
+    const emailResult = await sendEmail({
+      to: 'vepaautoshop1904@gmail.com',
+      subject: `[VEPA Website] ${subjectLabel} Inquiry – ${name}`,
+      text: `New inquiry from VEPA website:\n\nName: ${name}\nPhone: ${phone}\nEmail: ${userEmail}\nSubject: ${subjectLabel}\n\nMessage:\n${message}`,
+      html: `<h2>New Inquiry — ${safeSubject}</h2><p><b>Name:</b> ${safeName}<br><b>Phone:</b> ${safePhone}<br><b>Email:</b> ${safeEmail}<br><b>Subject:</b> ${safeSubject}</p><h3>Message</h3><p>${safeMessage}</p><hr><small>VEPA Website Contact Form · Authenticated user ${escapeHtml(req.user.uid)}</small>`,
+      replyTo: userEmail,
+    });
+
+    if (!emailResult.success) {
+      console.error('[CONTACT] Staff email failed:', emailResult.error);
+      return res.json({ success: true, inquiryId: inquiryRef.id, notificationSent: false, warning: 'Message saved, but the email notification failed. Please call us if your request is urgent.' });
+    }
+
+    res.json({ success: true, inquiryId: inquiryRef.id, notificationSent: true });
+  } catch (err) {
+    console.error('Contact error:', err);
+    res.status(500).json({ error: 'Could not send your message' });
+  }
+});
+
 app.get('/services', (req, res) => {
   res.json({
-    services: Object.entries(SERVICES).map(([key, val]) => ({
-      key,
-      name: val.name,
-      duration: val.duration,
-    })),
+    services: Object.entries(SERVICES).map(([key, val]) => servicePublicShape(key, val)),
+    estimateDisclaimer: ESTIMATE_DISCLAIMER,
   });
 });
 
 app.get('/availability', async (req, res) => {
-  const { date, service } = req.query;
-  if (!date || !service) return res.status(400).json({ error: 'date and service required' });
+  const { date } = req.query;
+  const serviceInput = req.query.services || req.query.service; // keep legacy single-service URLs working
+  if (!date || !serviceInput) return res.status(400).json({ error: 'date and service(s) required' });
 
-  const svc = SERVICES[service];
-  if (!svc) return res.status(400).json({ error: 'Unknown service' });
+  const bundle = getServiceBundle(serviceInput);
+  if (bundle.error) return res.status(400).json({ error: bundle.error });
 
-  const dayNum = DateTime.fromISO(date, { zone: TZ }).weekday % 7;
+  const requestedDate = DateTime.fromISO(date, { zone: TZ });
+  if (!requestedDate.isValid) return res.status(400).json({ error: 'Invalid date' });
+
+  const dayNum = requestedDate.weekday % 7;
   const hours = BUSINESS_HOURS[dayNum];
-  if (!hours) return res.json({ closed: true, slots: [] });
+  if (!hours) {
+    return res.json({
+      closed: true,
+      slots: [],
+      services: bundle.keys,
+      serviceNames: bundle.names,
+      duration: bundle.duration,
+      estimateMin: bundle.estimateMin,
+      estimateMax: bundle.estimateMax,
+      estimateDisclaimer: bundle.estimateDisclaimer,
+    });
+  }
 
   try {
     const calendar = getCalendarClient();
-    const dayStart = DateTime.fromISO(date, { zone: TZ }).set({ hour: hours.open, minute: 0, second: 0 });
-    const dayEnd   = DateTime.fromISO(date, { zone: TZ }).set({ hour: hours.close, minute: 0, second: 0 });
+    const dayStart = requestedDate.set({ hour: hours.open, minute: 0, second: 0, millisecond: 0 });
+    const dayEnd   = requestedDate.set({ hour: hours.close, minute: 0, second: 0, millisecond: 0 });
 
     const fbResp = await calendar.freebusy.query({
       requestBody: {
@@ -203,22 +387,37 @@ app.get('/availability', async (req, res) => {
 
     const busyPeriods = fbResp.data.calendars?.[CALENDAR_ID]?.busy || [];
     const slots = [];
-    let cursor  = dayStart;
+    let cursor = dayStart;
 
-    while (cursor.plus({ minutes: svc.duration }) <= dayEnd) {
-      const slotEnd  = cursor.plus({ minutes: svc.duration });
+    while (cursor.plus({ minutes: bundle.duration }) <= dayEnd) {
+      const slotEnd = cursor.plus({ minutes: bundle.duration });
       const overlaps = busyPeriods.some(b => {
         const bs = DateTime.fromISO(b.start, { zone: TZ });
         const be = DateTime.fromISO(b.end,   { zone: TZ });
         return cursor < be && slotEnd > bs;
       });
+
       if (!overlaps) {
-        slots.push({ start: cursor.toISO(), end: slotEnd.toISO(), display: cursor.toFormat('h:mm a') });
+        slots.push({
+          start: cursor.toISO(),
+          end: slotEnd.toISO(),
+          display: cursor.toFormat('h:mm a'),
+          duration: bundle.duration,
+        });
       }
       cursor = cursor.plus({ minutes: 30 });
     }
 
-    res.json({ closed: false, slots });
+    res.json({
+      closed: false,
+      services: bundle.keys,
+      serviceNames: bundle.names,
+      duration: bundle.duration,
+      estimateMin: bundle.estimateMin,
+      estimateMax: bundle.estimateMax,
+      estimateDisclaimer: bundle.estimateDisclaimer,
+      slots,
+    });
   } catch (err) {
     console.error('Availability error:', err);
     res.status(500).json({ error: 'Could not fetch availability' });
@@ -226,68 +425,135 @@ app.get('/availability', async (req, res) => {
 });
 
 app.post('/book', requireAuth, async (req, res) => {
-  const { date, start, end, service, customerName, vehicleMakeModel, vehicleYear, additionalNotes } = req.body;
+  const {
+    date,
+    start,
+    services,
+    service, // legacy client fallback
+    customerName,
+    vehicleMakeModel,
+    vehicleYear,
+    additionalNotes,
+  } = req.body;
 
-  if (!date || !start || !end || !service) {
+  if (!date || !start || (!services && !service)) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
-  const svc = SERVICES[service];
-  if (!svc) return res.status(400).json({ error: 'Unknown service' });
+  const bundle = getServiceBundle(services || service);
+  if (bundle.error) return res.status(400).json({ error: bundle.error });
 
+  const startDt = DateTime.fromISO(start, { zone: TZ });
+  const requestedDate = DateTime.fromISO(date, { zone: TZ });
+  if (!startDt.isValid || !requestedDate.isValid) return res.status(400).json({ error: 'Invalid booking date/time' });
+  if (startDt.toISODate() !== requestedDate.toISODate()) return res.status(400).json({ error: 'Start time does not match booking date' });
+
+  if (![0, 30].includes(startDt.minute) || startDt.second !== 0) {
+    return res.status(400).json({ error: 'Appointments must start on a 30-minute interval' });
+  }
+
+  const dayNum = requestedDate.weekday % 7;
+  const hours = BUSINESS_HOURS[dayNum];
+  if (!hours) return res.status(400).json({ error: 'The shop is closed on this date' });
+
+  const dayStart = requestedDate.set({ hour: hours.open, minute: 0, second: 0, millisecond: 0 });
+  const dayEnd = requestedDate.set({ hour: hours.close, minute: 0, second: 0, millisecond: 0 });
+  const serverEndDt = startDt.plus({ minutes: bundle.duration });
+  if (startDt < dayStart || serverEndDt > dayEnd) {
+    return res.status(400).json({ error: 'Selected services do not fit within business hours' });
+  }
+
+  // Never trust a client-provided end time. The server calculates the complete block.
+  const serverStart = startDt.toISO();
+  const serverEnd = serverEndDt.toISO();
   const userEmail = req.user.email;
+  const primaryService = bundle.keys[0];
+  const primaryServiceName = bundle.names[0];
+  const servicesLabel = bundle.names.join(' + ');
 
+  let pendingRefs = [];
   try {
     const calendar = getCalendarClient();
 
-    // Re-check availability
+    // Re-check the entire server-calculated block immediately before inserting.
     const fbResp = await calendar.freebusy.query({
-      requestBody: { timeMin: start, timeMax: end, timeZone: TZ, items: [{ id: CALENDAR_ID }] },
+      requestBody: {
+        timeMin: serverStart,
+        timeMax: serverEnd,
+        timeZone: TZ,
+        items: [{ id: CALENDAR_ID }],
+      },
     });
 
     if ((fbResp.data.calendars?.[CALENDAR_ID]?.busy || []).length > 0) {
       return res.status(409).json({ error: 'Slot no longer available' });
     }
 
-    // Lock mechanism
-    const lockKey = `${userEmail}_${start}`.replace(/[^a-zA-Z0-9_]/g, '_');
-    const pendingRef = db.collection('bookings_pending').doc(lockKey);
-
-    if ((await pendingRef.get()).exists) {
-      return res.status(409).json({ error: 'Slot is being booked' });
+    // Lock every 30-minute bucket in the requested block so overlapping concurrent bookings cannot race.
+    try {
+      pendingRefs = await acquireSlotLocks(startDt, serverEndDt, req.user.uid);
+    } catch (lockErr) {
+      if (lockErr.code === 'SLOT_LOCKED') {
+        return res.status(409).json({ error: 'Slot is being booked' });
+      }
+      throw lockErr;
     }
 
-    await pendingRef.set({ lockedAt: admin.firestore.FieldValue.serverTimestamp() });
+    // Check again after acquiring the lock in case another process inserted a calendar event just before the lock.
+    const lockedFbResp = await calendar.freebusy.query({
+      requestBody: {
+        timeMin: serverStart,
+        timeMax: serverEnd,
+        timeZone: TZ,
+        items: [{ id: CALENDAR_ID }],
+      },
+    });
+    if ((lockedFbResp.data.calendars?.[CALENDAR_ID]?.busy || []).length > 0) {
+      return res.status(409).json({ error: 'Slot no longer available' });
+    }
 
-    // Create Calendar event
+    // One Google Calendar event reserves the full combined duration.
     const event = await calendar.events.insert({
       calendarId: CALENDAR_ID,
       requestBody: {
-        summary: `${svc.name} – ${customerName || userEmail}`,
+        summary: `${servicesLabel} – ${customerName || userEmail}`,
         description: [
-          `Service: ${svc.name}`,
+          `Services: ${servicesLabel}`,
+          `Total duration: ${bundle.duration} minutes`,
+          bundle.estimateMin != null
+            ? `Estimated total: ${bundle.estimateMin === bundle.estimateMax ? `$${bundle.estimateMin.toFixed(2)}` : `$${bundle.estimateMin.toFixed(2)}–$${bundle.estimateMax.toFixed(2)}`}`
+            : '',
           `Customer: ${customerName || userEmail}`,
           `Email: ${userEmail}`,
           vehicleMakeModel ? `Vehicle: ${vehicleYear || ''} ${vehicleMakeModel}` : '',
           additionalNotes ? `Notes: ${additionalNotes}` : '',
         ].filter(Boolean).join('\n'),
-        start: { dateTime: start, timeZone: TZ },
-        end: { dateTime: end, timeZone: TZ },
+        start: { dateTime: serverStart, timeZone: TZ },
+        end: { dateTime: serverEnd, timeZone: TZ },
         colorId: '11',
       },
     });
 
-    // Save booking to Firestore
     const bookingRef = await db.collection('bookings').add({
       userId: req.user.uid,
       userEmail,
       customerName: customerName || userEmail,
-      service,
-      serviceName: svc.name,
-      duration: svc.duration,
+
+      // New multi-service fields
+      services: bundle.keys,
+      serviceNames: bundle.names,
+
+      // Legacy fields retained so old UI/admin code keeps working during rollout
+      service: primaryService,
+      serviceName: bundle.names.length > 1 ? servicesLabel : primaryServiceName,
+
+      duration: bundle.duration,
+      estimateMin: bundle.estimateMin,
+      estimateMax: bundle.estimateMax,
+      estimateDisclaimer: bundle.estimateDisclaimer,
       date,
-      start,
-      end,
+      start: serverStart,
+      end: serverEnd,
       vehicleMakeModel: vehicleMakeModel || '',
       vehicleYear: vehicleYear || '',
       additionalNotes: additionalNotes || '',
@@ -296,31 +562,41 @@ app.post('/book', requireAuth, async (req, res) => {
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
-    // Clear lock
-    await pendingRef.delete();
-
-    // Dispatch Emails asynchronously (doesn't block the response)
     const emailResult = await notifyBookingConfirmed({
       bookingId: bookingRef.id,
-      service,
-      start,
-      end,
+      service: primaryService,
+      services: bundle.keys,
+      serviceNames: bundle.names,
+      start: serverStart,
+      end: serverEnd,
       customerName,
       vehicleMakeModel,
       vehicleYear,
       additionalNotes,
-      duration: svc.duration,
+      duration: bundle.duration,
+      estimateMin: bundle.estimateMin,
+      estimateMax: bundle.estimateMax,
+      estimateDisclaimer: bundle.estimateDisclaimer,
     }, userEmail);
 
     res.json({
       success: true,
       bookingId: bookingRef.id,
-      email: emailResult
+      services: bundle.keys,
+      serviceNames: bundle.names,
+      duration: bundle.duration,
+      start: serverStart,
+      end: serverEnd,
+      estimateMin: bundle.estimateMin,
+      estimateMax: bundle.estimateMax,
+      estimateDisclaimer: bundle.estimateDisclaimer,
+      email: emailResult,
     });
-
   } catch (err) {
     console.error('Booking error:', err);
     res.status(500).json({ error: 'Booking failed' });
+  } finally {
+    try { await releaseSlotLocks(pendingRefs); } catch (e) { console.error('[LOCK] Cleanup failed:', e.message); }
   }
 });
 
@@ -376,11 +652,15 @@ app.delete('/bookings/:id', requireAuth, async (req, res) => {
     notifyBookingCancelled({
       bookingId: req.params.id,
       service: bookingData.service,
+      services: bookingData.services,
+      serviceNames: bookingData.serviceNames,
       start: bookingData.start,
       customerName: bookingData.customerName,
       vehicleMakeModel: bookingData.vehicleMakeModel,
       vehicleYear: bookingData.vehicleYear,
       duration: bookingData.duration,
+      estimateMin: bookingData.estimateMin,
+      estimateMax: bookingData.estimateMax,
     }, req.user.email);
 
     res.json({ success: true });

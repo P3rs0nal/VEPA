@@ -347,8 +347,8 @@
 <!-- HERO -->
 <section class="hero">
   <div class="vbg-wrap">
-    <video id="vid1" class="vbg on" muted playsinline></video>
-    <video id="vid2" class="vbg" muted playsinline></video>
+    <video preload="metadata" id="vid1" class="vbg on" muted playsinline></video>
+    <video preload="metadata" id="vid2" class="vbg" muted playsinline></video>
   </div>
   <div class="vbg-shade"></div>
   <div class="hero-body">
@@ -634,5 +634,6 @@ onAuthStateChanged(auth, async user => {
     <button class="btn-cookie-dismiss" id="cookie-dismiss">Dismiss</button>
   </div>
 </div>
+  <script type="module" src="site-session.js"></script>
 </body>
 </html>

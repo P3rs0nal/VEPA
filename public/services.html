@@ -205,18 +205,24 @@
     .service-options{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:.85rem;}
     .service-option{
       border:2px solid var(--border);border-radius:var(--r);
-      padding:1.1rem .85rem;text-align:center;cursor:pointer;
+      padding:1.1rem .85rem;text-align:center;cursor:pointer;position:relative;
       transition:border-color var(--ease),background var(--ease),transform var(--ease);
       background:white;
     }
     .service-option:hover{border-color:#aaa;transform:translateY(-2px);}
     .service-option.selected{border-color:var(--green);background:var(--green-lt);color:var(--dark);}
+    .service-option.selected::after{content:'✓';position:absolute;top:.45rem;right:.55rem;width:21px;height:21px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--green);color:#fff;font-size:.72rem;font-weight:800;}
     .service-option.selected:hover{transform:none;}
     .opt-icon{font-size:1.5rem;display:flex;width: 100%;margin-bottom:.5rem;align-items: center;
   justify-content: center;}
     
     .opt-name{font-family:var(--fd);font-size:1rem;font-weight:700;text-transform:uppercase;color:var(--dark);}
     .opt-dur{font-size:.75rem;color:var(--muted);margin-top:.2rem;}
+    .opt-price{font-size:.74rem;font-weight:700;color:var(--green);margin-top:.3rem;}
+    .service-select-help{font-size:.82rem;color:var(--muted);margin:-.9rem 0 1.1rem;line-height:1.55;}
+    .service-selection-summary{display:none;margin-top:1rem;padding:.9rem 1rem;background:var(--card);border:1px solid var(--border);border-radius:8px;font-size:.82rem;line-height:1.6;color:var(--body);}
+    .service-selection-summary.show{display:block;}
+    .service-selection-summary strong{color:var(--dark);}
 
     /* Step 2: date */
     .date-section{display:flex;flex-direction:column;gap:.5rem;max-width:280px;}
@@ -523,8 +529,8 @@
 <!-- PAGE HERO -->
 <section class="page-hero">
   <div class="ph-vbg-wrap">
-    <video id="vid1" class="ph-vbg on" autoplay muted loop playsinline></video>
-    <video id="vid2" class="ph-vbg" autoplay muted loop playsinline></video>
+    <video preload="metadata" id="vid1" class="ph-vbg on" autoplay muted loop playsinline></video>
+    <video preload="metadata" id="vid2" class="ph-vbg" autoplay muted loop playsinline></video>
   </div>
   <div class="ph-shade"></div>
   <div class="ph-content">
@@ -617,7 +623,7 @@
 <section class="booking-sec" id="booking">
   <div class="sec-label">Schedule</div>
   <div class="sec-title">Book an Appointment</div>
-  <p>Choose a service, pick a date, and select an available time. It takes under a minute.</p>
+  <p>Choose one or more services, pick a date, and select an available time. It takes under a minute.</p>
 
   <div id="booking-login-prompt">
     <span class="lock-icon"><ion-icon name="lock-closed-outline"></ion-icon></span>
@@ -639,8 +645,10 @@
 
       <!-- Step 1 -->
       <div class="wizard-panel active" id="panel-1">
-        <div class="wizard-panel-title">What service do you need?</div>
+        <div class="wizard-panel-title">What services do you need?</div>
+        <p class="service-select-help">Select every service you want handled during this visit. Availability is calculated using the combined appointment time.</p>
         <div class="service-options" id="service-options"></div>
+        <div class="service-selection-summary" id="service-selection-summary"></div>
       </div>
 
       <!-- Step 2 -->
@@ -671,6 +679,7 @@
           <div class="summary-row"><span class="label">Date</span><span class="value" id="sum-date">—</span></div>
           <div class="summary-row"><span class="label">Time</span><span class="value" id="sum-time">—</span></div>
           <div class="summary-row"><span class="label">Duration</span><span class="value" id="sum-duration">—</span></div>
+          <div class="summary-row"><span class="label">Estimate</span><span class="value" id="sum-estimate">—</span></div>
         </div>
         <div class="vehicle-grid">
           <div class="field-group">
@@ -824,6 +833,67 @@ const SERVICE_ICONS = {
   general_repair:'build-outline',
 };
 
+
+const SERVICE_ESTIMATES = {
+  // Albany is outside NYMA. A typical light passenger vehicle is $10 safety + $11 OBD-II emissions.
+  inspection: { min: 21, max: 21, label: 'typical passenger vehicle' },
+  // Set this to VEPA's actual standard range before showing an oil-change estimate publicly.
+  // Example shape: oil_change: { min: 69.99, max: 89.99, label: 'depending on oil/vehicle' },
+};
+
+function getServiceEstimate(svc) {
+  // Prefer prices returned by your booking API so pricing stays centralized on the server.
+  const hasMoney=v=>v!==null&&v!==undefined&&v!==''&&Number.isFinite(Number(v));
+  if (hasMoney(svc.estimate)) return { min:Number(svc.estimate), max:Number(svc.estimate), label:svc.estimateLabel||'' };
+  if (hasMoney(svc.price)) return { min:Number(svc.price), max:Number(svc.price), label:svc.estimateLabel||'' };
+  if (hasMoney(svc.priceMin) || hasMoney(svc.priceMax)) {
+    return { min:Number(hasMoney(svc.priceMin)?svc.priceMin:svc.priceMax), max:Number(hasMoney(svc.priceMax)?svc.priceMax:svc.priceMin), label:svc.estimateLabel||'' };
+  }
+  return SERVICE_ESTIMATES[svc.key] || null;
+}
+
+function formatEstimate(svc) {
+  const e=getServiceEstimate(svc);
+  if(!e) return '';
+  const money=n=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(n);
+  const amount=e.min===e.max ? money(e.min) : `${money(e.min)}–${money(e.max)}`;
+  return `${amount} est.${e.label?` · ${e.label}`:''}`;
+}
+
+
+function getSelectedDuration(){
+  return selectedServices.reduce((sum,svc)=>sum+(Number(svc.duration)||0),0);
+}
+
+function getSelectedEstimate(){
+  if(!selectedServices.length) return null;
+  const estimates=selectedServices.map(getServiceEstimate);
+  if(estimates.some(e=>!e)) return null;
+  return {
+    min:estimates.reduce((sum,e)=>sum+e.min,0),
+    max:estimates.reduce((sum,e)=>sum+e.max,0),
+  };
+}
+
+function money(n){
+  return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(n);
+}
+
+function formatCombinedEstimate(min,max){
+  if(min===null||min===undefined||max===null||max===undefined) return '';
+  return Number(min)===Number(max) ? money(Number(min)) : `${money(Number(min))}–${money(Number(max))}`;
+}
+
+function updateServiceSelectionSummary(){
+  const el=document.getElementById('service-selection-summary');
+  if(!el) return;
+  if(!selectedServices.length){el.classList.remove('show');el.innerHTML='';return;}
+  const estimate=getSelectedEstimate();
+  const estimateText=estimate?` · <strong>${formatCombinedEstimate(estimate.min,estimate.max)} est.</strong>`:' · final price varies by service/vehicle';
+  el.innerHTML=`<strong>${selectedServices.length} service${selectedServices.length===1?'':'s'} selected:</strong> ${selectedServices.map(s=>s.name).join(' + ')}<br>${getSelectedDuration()} min total${estimateText}`;
+  el.classList.add('show');
+}
+
 const VEHICLE_OPTIONS = {
   Acura:['ILX','TLX','RDX','MDX','NSX'],Audi:['A3','A4','A5','A6','A7','A8','Q3','Q5','Q7','Q8','TT','R8'],
   BMW:['1 Series','2 Series','3 Series','4 Series','5 Series','6 Series','7 Series','8 Series','X1','X2','X3','X4','X5','X6','X7','Z4','i3','i8'],
@@ -857,7 +927,7 @@ const VEHICLE_OPTIONS = {
 
 /* ── State ── */
 let currentUser=null, currentStep=1;
-let selectedService=null, selectedDate=null, selectedSlot=null;
+let selectedServices=[], selectedDate=null, selectedSlot=null, selectedBundleMeta=null;
 
 /* ── Preloader ── */
 window.addEventListener('load',()=>setTimeout(()=>document.getElementById('preloader').classList.add('done'),900));
@@ -978,13 +1048,24 @@ function renderServiceOptions(services) {
   services.forEach(svc=>{
     const d = document.createElement('div');
     d.className='service-option'; d.dataset.key=svc.key;
+    const estimateText = formatEstimate(svc);
     d.innerHTML=`<ion-icon name="${SERVICE_ICONS[svc.key]||'build-outline'}" class="opt-icon"></ion-icon>
       <div class="opt-name">${svc.name}</div>
-      <div class="opt-dur">${svc.duration} min</div>`;
+      <div class="opt-dur">${svc.duration} min</div>
+      ${estimateText?`<div class="opt-price">${estimateText}</div>`:''}`;
     d.addEventListener('click',()=>{
-      document.querySelectorAll('.service-option').forEach(el=>el.classList.remove('selected'));
-      d.classList.add('selected');
-      selectedService=svc; checkNextEnabled();
+      const idx=selectedServices.findIndex(item=>item.key===svc.key);
+      if(idx>=0){
+        selectedServices.splice(idx,1);
+        d.classList.remove('selected');
+      } else {
+        selectedServices.push(svc);
+        d.classList.add('selected');
+      }
+      selectedSlot=null;
+      selectedBundleMeta=null;
+      updateServiceSelectionSummary();
+      checkNextEnabled();
     });
     c.appendChild(d);
   });
@@ -1058,7 +1139,7 @@ document.querySelectorAll('[data-scroll]').forEach(link => {
 function checkNextEnabled() {
   const btnN=document.getElementById('btn-next');
   if(btnN){
-    const map={1:()=>!!selectedService,2:()=>!!selectedDate,3:()=>!!selectedSlot,4:()=>true};
+    const map={1:()=>selectedServices.length>0,2:()=>!!selectedDate,3:()=>!!selectedSlot,4:()=>true};
     const fn=map[currentStep];
     btnN.disabled=fn?!fn():true;
   }
@@ -1082,21 +1163,24 @@ async function fetchSlots() {
   c.innerHTML='<div class="slots-loading"><div class="spinner-sm"></div> Checking availability…</div>';
   selectedSlot=null; checkNextEnabled();
   try {
-    const res=await fetch(`${BOOKING_API}availability?date=${selectedDate}&service=${selectedService.key}`);
+    const serviceKeys=selectedServices.map(s=>s.key).join(',');
+    const res=await fetch(`${BOOKING_API}availability?date=${encodeURIComponent(selectedDate)}&services=${encodeURIComponent(serviceKeys)}`);
     const data=await res.json();
+    if(!res.ok) throw new Error(data.error||'Could not load availability');
+    selectedBundleMeta=data;
     if(data.closed){
       c.innerHTML=`<div class="slots-empty"><ion-icon name="ban-outline" class="empty-icon" style="font-size:2rem;"></ion-icon>We're closed on ${formatDateDisplay(selectedDate)}. Please pick another day.</div>`;
       return;
     }
     const slots=data.slots||[];
     if(!slots.length){
-      c.innerHTML=`<div class="slots-empty"><ion-icon name="sad-outline" class="empty-icon" style="font-size:2rem;"></ion-icon>No available times on ${formatDateDisplay(selectedDate)} for a ${selectedService.name}.<br><a href="#" id="try-date-link" style="color:var(--body);font-weight:700;text-decoration:underline;">Try another date</a></div>`;
+      c.innerHTML=`<div class="slots-empty"><ion-icon name="sad-outline" class="empty-icon" style="font-size:2rem;"></ion-icon>No available times on ${formatDateDisplay(selectedDate)} for ${selectedServices.map(s=>s.name).join(' + ')}.<br><a href="#" id="try-date-link" style="color:var(--body);font-weight:700;text-decoration:underline;">Try another date</a></div>`;
       document.getElementById('try-date-link')?.addEventListener('click',e=>{e.preventDefault();goToStep(2);});
       return;
     }
     renderSlots(slots);
-  } catch {
-    c.innerHTML='<div class="slots-empty"><ion-icon name="warning-outline" class="empty-icon"></ion-icon>Could not load times. Check your connection.</div>';
+  } catch(err) {
+    c.innerHTML=`<div class="slots-empty"><ion-icon name="warning-outline" class="empty-icon"></ion-icon>${err.message||'Could not load times. Check your connection.'}</div>`;
   }
 }
 
@@ -1159,10 +1243,16 @@ function getVehicleString(){
   return make&&model?`${year?year+' ':''}${make} ${model}`:'';
 }
 function populateConfirmSummary(){
-  document.getElementById('sum-service').textContent=selectedService?.name??'—';
+  const names=selectedBundleMeta?.serviceNames?.length?selectedBundleMeta.serviceNames:selectedServices.map(s=>s.name);
+  const duration=selectedBundleMeta?.duration??getSelectedDuration();
+  const localEstimate=getSelectedEstimate();
+  const estimateMin=selectedBundleMeta?.estimateMin??localEstimate?.min??null;
+  const estimateMax=selectedBundleMeta?.estimateMax??localEstimate?.max??null;
+  document.getElementById('sum-service').textContent=names.length?names.join(' + '):'—';
   document.getElementById('sum-date').textContent=formatDateDisplay(selectedDate);
   document.getElementById('sum-time').textContent=selectedSlot?.display??'—';
-  document.getElementById('sum-duration').textContent=`${selectedService?.duration} minutes`;
+  document.getElementById('sum-duration').textContent=`${duration} minutes`;
+  document.getElementById('sum-estimate').textContent=estimateMin!==null&&estimateMax!==null?`${formatCombinedEstimate(estimateMin,estimateMax)} est.`:'Varies by vehicle / service';
   document.getElementById('booking-error').classList.remove('show');
 }
 
@@ -1183,7 +1273,7 @@ document.getElementById('btn-confirm').addEventListener('click', async()=>{
     const res=await fetch(`${BOOKING_API}book`,{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':`Bearer ${idToken}`},
-      body:JSON.stringify({date:selectedDate,start:selectedSlot.start,end:selectedSlot.end,service:selectedService.key,customerName:name,vehicleMakeModel,vehicleYear,additionalNotes}),
+      body:JSON.stringify({date:selectedDate,start:selectedSlot.start,services:selectedServices.map(s=>s.key),customerName:name,vehicleMakeModel,vehicleYear,additionalNotes}),
     });
     const data=await res.json();
     if(!res.ok) throw new Error(data.error||'Booking failed');
@@ -1222,8 +1312,9 @@ document.getElementById('btn-confirm').addEventListener('click', async()=>{
 
 /* ── Reset wizard ── */
 function resetWizard(){
-  selectedService=null; selectedDate=null; selectedSlot=null; currentStep=1;
+  selectedServices=[]; selectedDate=null; selectedSlot=null; selectedBundleMeta=null; currentStep=1;
   document.querySelectorAll('.service-option').forEach(el=>el.classList.remove('selected'));
+  updateServiceSelectionSummary();
   ['customer-name','additional-notes'].forEach(id=>document.getElementById(id).value='');
   ['vehicle-make','vehicle-model','vehicle-year'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('vehicle-model').disabled=true;
@@ -1286,7 +1377,7 @@ async function loadUserBookings(){
             <span class="appt-day">${day}</span>
           </div>
           <div class="appt-info">
-            <div class="appt-service">${b.serviceName}</div>
+            <div class="appt-service">${b.serviceNames?.length?b.serviceNames.join(' + '):(b.serviceName||'Service')}</div>
             <div class="appt-meta">
               <ion-icon name="time-outline"></ion-icon>${timeStr}
               &nbsp;·&nbsp;
@@ -1375,5 +1466,6 @@ setInterval(()=>{
 },5000);
 
 </script>
+  <script type="module" src="site-session.js"></script>
 </body>
 </html>

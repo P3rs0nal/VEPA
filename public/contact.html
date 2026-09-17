@@ -219,6 +219,16 @@
 .btn-cookie-accept:hover{background:var(--red-dk);}
 .btn-cookie-dismiss{background:transparent;color:rgba(255,255,255,.45);border:1px solid rgba(255,255,255,.15);padding:.5rem 1rem;border-radius:6px;font-family:var(--fb);font-size:.78rem;font-weight:600;cursor:pointer;transition:all .25s ease;}
 .btn-cookie-dismiss:hover{color:rgba(255,255,255,.75);border-color:rgba(255,255,255,.3);}
+  
+    /* Auth-gated contact form */
+    .contact-auth-prompt{display:none;border:1px solid var(--border);background:var(--card);border-radius:var(--r);padding:1.35rem;margin-bottom:1.25rem;text-align:center;}
+    .contact-auth-prompt.show{display:block;}
+    .contact-auth-prompt ion-icon{font-size:1.8rem;color:var(--red);margin-bottom:.45rem;}
+    .contact-auth-prompt h3{font-family:var(--fd);font-size:1.3rem;text-transform:uppercase;color:var(--dark);margin-bottom:.35rem;}
+    .contact-auth-prompt p{font-size:.86rem;color:var(--muted);line-height:1.55;margin-bottom:.9rem;}
+    .contact-auth-prompt a{display:inline-flex;background:var(--red);color:#fff;padding:.68rem 1rem;border-radius:7px;font-size:.82rem;font-weight:700;}
+    #contact-form.auth-locked{display:none;}
+    #contact-email[readonly]{background:#f0ece5;color:#6f675f;cursor:not-allowed;}
   </style>
 </head>
 <body>
@@ -314,7 +324,15 @@
       <p>Fill out the form and we'll get back to you as soon as possible.</p>
     </div>
 
-    <form id="contact-form" novalidate>
+
+    <div class="contact-auth-prompt" id="contact-auth-prompt">
+      <ion-icon name="lock-closed-outline"></ion-icon>
+      <h3>Sign in to contact VEPA</h3>
+      <p>To reduce spam and keep your messages tied to your account, please log in or create a free account before sending a message.</p>
+      <a href="login?returnTo=%2Fcontact">Login / Create Account</a>
+    </div>
+
+    <form id="contact-form" class="auth-locked" novalidate>
       <div class="field-row">
         <div class="field">
           <label for="contact-name">Full Name</label>
@@ -399,7 +417,7 @@
 
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js';
-  import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc } from 'https://www.gstatic.com/firebasejs/11.5.0/firebase-firestore.js';
+  import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/11.5.0/firebase-firestore.js';
   import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/11.5.0/firebase-auth.js';
 
   const firebaseConfig = {
@@ -414,6 +432,8 @@
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
   const auth = getAuth(app);
+  const BOOKING_API = 'https://vepa-calendar.onrender.com/';
+  let currentUser = null;
 
   /* Preloader */
   window.addEventListener('load', () => setTimeout(() => document.getElementById('preloader').classList.add('done'), 900));
@@ -449,24 +469,44 @@ onAuthStateChanged(auth, async user => {
   const loginLi  = document.getElementById('nav-login-li');
   const adminLnk = document.getElementById('admin-link');
 
+  const form = document.getElementById('contact-form');
+  const authPrompt = document.getElementById('contact-auth-prompt');
+
   if (user) {
+    currentUser = user;
     document.getElementById('user-avatar-letter').textContent = user.email.charAt(0).toUpperCase();
     document.getElementById('user-chip-email').textContent    = user.email;
     document.getElementById('chip-dd-email-display').textContent = user.email;
     chip.style.display   = 'flex';
     loginLi.style.display = 'none';
+    form.classList.remove('auth-locked');
+    authPrompt.classList.remove('show');
+
+    // Account email is authoritative for logged-in contact requests.
+    const emailEl = document.getElementById('contact-email');
+    emailEl.value = user.email || '';
+    emailEl.readOnly = true;
 
     try {
       const snap = await getDoc(doc(db, 'users', user.uid));
-      if (snap.exists() && snap.data().isAdmin) {
-        sessionStorage.setItem('admin-auth', 'true');
-        if (adminLnk) adminLnk.style.display = 'inline-flex';
+      if (snap.exists()) {
+        const data = snap.data();
+        const fullName = [data.firstName, data.lastName].filter(Boolean).join(' ').trim();
+        if (fullName && !document.getElementById('contact-name').value) document.getElementById('contact-name').value = fullName;
+        if (data.phone && !document.getElementById('contact-phone').value) document.getElementById('contact-phone').value = data.phone;
+        if (data.isAdmin) {
+          sessionStorage.setItem('admin-auth', 'true');
+          if (adminLnk) adminLnk.style.display = 'inline-flex';
+        }
       }
     } catch(e) {}
   } else {
+    currentUser = null;
     chip.style.display    = 'none';
     loginLi.style.display = 'inline-flex';
     if (adminLnk) adminLnk.style.display = 'none';
+    form.classList.add('auth-locked');
+    authPrompt.classList.add('show');
   }
 });
   /* Char counter */
@@ -484,7 +524,6 @@ document.getElementById('cookie-dismiss').addEventListener('click',()=>{
   localStorage.setItem(COOKIE_KEY,'essential'); banner.classList.add('hidden');
 });
   /* Form submit */
-  const form = document.getElementById('contact-form');
   const statusMsg = document.getElementById('status-msg');
   const submitBtn = document.getElementById('submit-btn');
 
@@ -492,9 +531,16 @@ document.getElementById('cookie-dismiss').addEventListener('click',()=>{
     e.preventDefault();
     statusMsg.className = ''; statusMsg.classList.remove('show');
 
+    if (!currentUser) {
+      statusMsg.textContent = 'Please sign in before sending a message.';
+      statusMsg.className = 'error show';
+      window.location.href = 'login?returnTo=%2Fcontact';
+      return;
+    }
+
     const name = document.getElementById('contact-name').value.trim();
     const phone = document.getElementById('contact-phone').value.trim();
-    const email = document.getElementById('contact-email').value.trim();
+    const email = currentUser.email || document.getElementById('contact-email').value.trim();
     const subject = document.getElementById('contact-subject').value;
     const message = document.getElementById('contact-message').value.trim();
 
@@ -507,31 +553,26 @@ document.getElementById('cookie-dismiss').addEventListener('click',()=>{
     submitBtn.innerHTML = '<span>Sending…</span>';
 
     try {
-      await addDoc(collection(db, 'web_inquiries'), {
-        source: 'web', type: subject || 'general',
-        user: { name, phone, email }, message,
-        createdAt: serverTimestamp()
+      const idToken = await currentUser.getIdToken();
+      const response = await fetch(`${BOOKING_API}contact`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({ name, phone, subject: subject || 'general', message }),
       });
-
-      await addDoc(collection(db, 'mail'), {
-        to: ['vepaautoshop1904@gmail.com'],
-        replyTo: email,
-        message: {
-          subject: `[VEPA Website] ${subject ? subject.charAt(0).toUpperCase() + subject.slice(1) : 'General'} Inquiry – ${name}`,
-          text: `New inquiry from VEPA website:\n\nName: ${name}\nPhone: ${phone}\nEmail: ${email}\nSubject: ${subject || 'General'}\n\nMessage:\n${message}`,
-          html: `<h2>New Inquiry — ${subject || 'General'}</h2>
-<p><b>Name:</b> ${name}<br><b>Phone:</b> ${phone}<br><b>Email:</b> ${email}<br><b>Subject:</b> ${subject || 'General'}</p>
-<h3>Message</h3><p>${message.replace(/\n/g,'<br>')}</p><hr><small>VEPA Website Contact Form</small>`
-        }
-      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Could not send your message');
 
       form.reset();
+      document.getElementById('contact-email').value = currentUser.email || '';
       document.getElementById('char-count').textContent = '0';
-      statusMsg.textContent = '✓ Message sent! We\'ll be in touch soon.';
-      statusMsg.className = 'success show';
+      statusMsg.textContent = data.warning || '✓ Message sent! We\'ll be in touch soon.';
+      statusMsg.className = data.warning ? 'error show' : 'success show';
     } catch (err) {
       console.error('Contact form error:', err);
-      statusMsg.textContent = 'Something went wrong. Please call us at (518) 456-5682.';
+      statusMsg.textContent = err.message || 'Something went wrong. Please call us at (518) 456-5682.';
       statusMsg.className = 'error show';
     } finally {
       submitBtn.disabled = false;
@@ -567,5 +608,6 @@ document.getElementById('cookie-dismiss').addEventListener('click',()=>{
     <button class="btn-cookie-dismiss" id="cookie-dismiss">Dismiss</button>
   </div>
 </div>
+  <script type="module" src="site-session.js"></script>
 </body>
 </html>

@@ -128,6 +128,23 @@ function fmtService(key) {
   return map[key] || key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 }
 
+
+function fmtServices(booking) {
+  if (Array.isArray(booking.serviceNames) && booking.serviceNames.length) {
+    return booking.serviceNames.join(' + ');
+  }
+  if (Array.isArray(booking.services) && booking.services.length) {
+    return booking.services.map(fmtService).join(' + ');
+  }
+  return fmtService(booking.service || 'service');
+}
+
+function fmtEstimate(min, max) {
+  if (!Number.isFinite(min) || !Number.isFinite(max)) return '';
+  const money = n => new Intl.NumberFormat('en-US', { style:'currency', currency:'USD' }).format(n);
+  return min === max ? money(min) : `${money(min)}–${money(max)}`;
+}
+
 /* ─── Date / time formatters ────────────────────── */
 function fmtDate(isoOrString) {
   const d = new Date(isoOrString);
@@ -158,13 +175,15 @@ function fmtTime(isoOrString) {
  */
 function confirmationEmail(booking) {
   const {
-    bookingId, service, start, end,
+    bookingId, service, services, serviceNames, start, end,
     customerName, vehicleMakeModel, vehicleYear,
-    additionalNotes, duration,
+    additionalNotes, duration, estimateMin, estimateMax, estimateDisclaimer,
   } = booking;
 
   const firstName = (customerName || '').split(' ')[0] || 'there';
   const vehicle   = [vehicleYear, vehicleMakeModel].filter(Boolean).join(' ');
+  const serviceLabel = fmtServices({ service, services, serviceNames });
+  const estimateLabel = fmtEstimate(estimateMin, estimateMax);
 
   const bodyHtml = `
   <tr>
@@ -206,12 +225,14 @@ function confirmationEmail(booking) {
     <td style="padding:24px 32px 0;">
       <p style="margin:0 0 14px;font-size:12px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:${BRAND.muted};">Appointment Details</p>
       <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
-        ${detailRow('Service',  fmtService(service))}
+        ${detailRow((services?.length || serviceNames?.length) > 1 ? 'Services' : 'Service', serviceLabel)}
         ${detailRow('Date',     fmtDate(start))}
         ${detailRow('Time',     fmtTime(start))}
         ${detailRow('Duration', `${duration} minutes`)}
+        ${estimateLabel ? detailRow('Estimated Total', estimateLabel) : ''}
         ${vehicle ? detailRow('Vehicle', vehicle) : ''}
         ${additionalNotes ? detailRow('Notes', additionalNotes) : ''}
+        ${estimateLabel && estimateDisclaimer ? detailRow('Estimate Note', estimateDisclaimer) : ''}
       </table>
     </td>
   </tr>
@@ -272,17 +293,18 @@ function confirmationEmail(booking) {
     </td>
   </tr>`;
 
-  const subject = `Appointment Confirmed – ${fmtService(service)} on ${fmtDate(start)}`;
+  const subject = `Appointment Confirmed – ${serviceLabel} on ${fmtDate(start)}`;
 
   const text = `Hi ${firstName},
 
 Your appointment at VEPA AutoCare is confirmed!
 
 Booking Reference: ${bookingId}
-Service: ${fmtService(service)}
+Services: ${serviceLabel}
 Date: ${fmtDate(start)}
 Time: ${fmtTime(start)}
 Duration: ${duration} minutes
+${estimateLabel ? `Estimated Total: ${estimateLabel}` : ''}
 ${vehicle ? `Vehicle: ${vehicle}` : ''}
 ${additionalNotes ? `Notes: ${additionalNotes}` : ''}
 
@@ -306,12 +328,15 @@ ${SHOP.url}`;
  */
 function cancellationEmail(booking) {
   const {
-    bookingId, service, start,
+    bookingId, service, services, serviceNames, start,
     customerName, vehicleMakeModel, vehicleYear, duration,
+    estimateMin, estimateMax,
   } = booking;
 
   const firstName = (customerName || '').split(' ')[0] || 'there';
   const vehicle   = [vehicleYear, vehicleMakeModel].filter(Boolean).join(' ');
+  const serviceLabel = fmtServices({ service, services, serviceNames });
+  const estimateLabel = fmtEstimate(estimateMin, estimateMax);
 
   const bodyHtml = `
   <tr>
@@ -334,10 +359,11 @@ function cancellationEmail(booking) {
       <p style="margin:0 0 14px;font-size:12px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:${BRAND.muted};">Cancelled Appointment</p>
       <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="opacity:0.6;">
         ${detailRow('Booking ID', bookingId)}
-        ${detailRow('Service',    fmtService(service))}
+        ${detailRow((services?.length || serviceNames?.length) > 1 ? 'Services' : 'Service', serviceLabel)}
         ${detailRow('Date',       fmtDate(start))}
         ${detailRow('Time',       fmtTime(start))}
         ${detailRow('Duration',   `${duration} minutes`)}
+        ${estimateLabel ? detailRow('Estimated Total', estimateLabel) : ''}
         ${vehicle ? detailRow('Vehicle', vehicle) : ''}
       </table>
     </td>
@@ -371,14 +397,14 @@ function cancellationEmail(booking) {
     </td>
   </tr>`;
 
-  const subject = `Appointment Cancelled – ${fmtService(service)} on ${fmtDate(start)}`;
+  const subject = `Appointment Cancelled – ${serviceLabel} on ${fmtDate(start)}`;
 
   const text = `Hi ${firstName},
 
 Your appointment has been cancelled.
 
 Booking Reference: ${bookingId}
-Service: ${fmtService(service)}
+Services: ${serviceLabel}
 Date: ${fmtDate(start)}
 Time: ${fmtTime(start)}
 
@@ -400,12 +426,14 @@ ${SHOP.url}`;
  */
 function staffNotificationEmail(booking) {
   const {
-    bookingId, service, start, end,
+    bookingId, service, services, serviceNames, start, end,
     customerName, customerEmail, vehicleMakeModel, vehicleYear,
-    additionalNotes, duration,
+    additionalNotes, duration, estimateMin, estimateMax,
   } = booking;
 
   const vehicle = [vehicleYear, vehicleMakeModel].filter(Boolean).join(' ');
+  const serviceLabel = fmtServices({ service, services, serviceNames });
+  const estimateLabel = fmtEstimate(estimateMin, estimateMax);
 
   const bodyHtml = `
   <tr>
@@ -417,7 +445,7 @@ function staffNotificationEmail(booking) {
   <tr>
     <td style="padding:28px 32px 0;">
       <p style="margin:0 0 4px;font-size:21px;font-weight:700;color:${BRAND.dark};">
-        ${fmtService(service)}
+        ${serviceLabel}
       </p>
       <p style="margin:0;font-size:15px;color:${BRAND.muted};">
         ${fmtDate(start)}  ·  ${fmtTime(start)}  ·  ${duration} min
@@ -431,6 +459,8 @@ function staffNotificationEmail(booking) {
       <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
         ${detailRow('Name',     customerName || '—')}
         ${detailRow('Email',    customerEmail)}
+        ${detailRow((services?.length || serviceNames?.length) > 1 ? 'Services' : 'Service', serviceLabel)}
+        ${estimateLabel ? detailRow('Estimated Total', estimateLabel) : ''}
         ${vehicle ? detailRow('Vehicle', vehicle) : ''}
         ${additionalNotes ? detailRow('Notes', `<em>${additionalNotes}</em>`) : ''}
       </table>
@@ -452,8 +482,8 @@ function staffNotificationEmail(booking) {
     </td>
   </tr>`;
 
-  const subject = `[New Booking] ${fmtService(service)} – ${customerName || customerEmail}`;
-  const text = `NEW BOOKING: ${fmtService(service)} for ${customerName} on ${fmtDate(start)}. Manage at ${SHOP.url}/admin`;
+  const subject = `[New Booking] ${serviceLabel} – ${customerName || customerEmail}`;
+  const text = `NEW BOOKING: ${serviceLabel} for ${customerName} on ${fmtDate(start)}${estimateLabel ? ` · Est. ${estimateLabel}` : ''}. Manage at ${SHOP.url}/admin`;
 
   return { subject, html: wrap(bodyHtml), text };
 }
